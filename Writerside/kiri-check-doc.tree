@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE instance-profile
+        SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
+
+<instance-profile id="kiri-check-doc"
+                  name="kiri-check"
+                  start-page="Get-started.topic">
+
+    <toc-element topic="Get-started.topic"/>
+    <toc-element topic="Quickstart.md"/>
+    <toc-element topic="Write-properties.md"/>
+    <toc-element topic="Configure-tests.md"/>
+    <toc-element topic="Arbitraries.md"/>
+    <toc-element topic="Generation.md"/>
+    <toc-element topic="Shrinking.md"/>
+    <toc-element topic="Statistics.md"/>
+</instance-profile>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic
+        SYSTEM "https://resources.jetbrains.com/writerside/1.0/xhtml-entities.dtd">
+<topic xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/topic.v2.xsd"
+       title="Get started" id="Get-started" help-id="Section-Starting-Page">
+
+    <section-starting-page>
+        <title>Get started</title>
+        <description>
+            These topics will help you get started property-based testing with kiri-check.
+        </description>
+
+        <spotlight>
+            <a href="Quickstart.md" type="learn" summary="Learn how to set up and quickly write properties."/>
+            <a href="Arbitraries.md" type="library"
+               summary="Arbitraries provide test data generation and shrink counterexamples."/>
+        </spotlight>
+
+        <primary>
+            <title>Basics</title>
+            <a href="Write-properties.md" summary="Write property-based tests using arbitraries."/>
+            <a href="Configure-tests.md" summary="Customize test settings."/>
+            <a href="Write-properties.md#integrate-with-package-test"
+               summary="Add properties to existing tests using package:test."/>
+        </primary>
+
+        <secondary>
+            <title>Arbitraries</title>
+            <a href="Arbitraries.md#basic-data-types" summary="Generate nulls, booleans, numbers, etc."/>
+            <a href="Arbitraries.md#strings" summary="Generate runes and strings."/>
+            <a href="Arbitraries.md#collections" summary="Generate lists, maps, sets."/>
+            <a href="Arbitraries.md#composition" summary="Combine existing arbitraries to generate new ones."/>
+            <a href="Arbitraries.md#custom-data-types"
+               summary="Write new arbitraries to create values of custom data types."/>
+        </secondary>
+
+        <misc>
+            <cards>
+                <title>Generation</title>
+                <a href="Generation.md" summary="Manage or influence the generation of test data."/>
+                <a href="Generation.md#generate-edge-cases" summary="Generate tests for edge cases."/>
+                <a href="Generation.md#generate-enums" summary="Use arbitraries to generate enum values."/>
+                <a href="Shrinking.md" summary="Overview of the shrinking process behavior."/>
+                <a href="Statistics.md" summary="Collect metrics for a test."/>
+            </cards>
+        </misc>
+    </section-starting-page>
+</topic>
