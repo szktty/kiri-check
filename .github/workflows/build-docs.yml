@@ -11,7 +11,7 @@ permissions:
 
 env:
   INSTANCE: 'Writerside/kiri-check-doc'
-  ARTIFACT: 'webHelpHI2-all.zip'
+  ARTIFACT: 'webHelpKIRI-CHECK-DOC2-all.zip'
   DOCKER_VERSION: '241.15989'
 
 jobs:
