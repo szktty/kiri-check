@@ -44,7 +44,7 @@ void main() {
       testForAll(
         deck(),
         (d) {
-          final x = d.draw(integer(min: 0));
+          final _ = d.draw(integer(min: 0));
           final y = d.draw(integer(min: 0));
           expect(y, lessThanOrEqualTo(100));
         },

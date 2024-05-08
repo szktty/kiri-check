@@ -359,7 +359,8 @@ Arbitrary<R> combine8<R, E1, E2, E3, E4, E5, E6, E7, E8>(
 ) =>
     CombineArbitraries.combine8(a1, a2, a3, a4, a5, a6, a7, a8, combinator);
 
-/// Returns an arbitrary that generates a value from one of the provided arbitraries.
+/// Returns an arbitrary that generates a value from
+/// one of the provided arbitraries.
 ///
 /// Parameters:
 /// - `arbitraries`: The list of arbitraries to choose from.
@@ -380,7 +381,8 @@ Arbitrary<dynamic> frequency(List<(int, Arbitrary<dynamic>)> arbitraries) =>
 /// using the provided `base` and `extend` functions.
 ///
 /// The `extend` function is called with the result of the `base` function or
-/// the last `extend` invocation, allowing for progressive construction of complex data structures.
+/// the last `extend` invocation, allowing for progressive construction
+/// of complex data structures.
 ///
 /// Parameters:
 /// - `base`: A function that returns an arbitrary used for generating

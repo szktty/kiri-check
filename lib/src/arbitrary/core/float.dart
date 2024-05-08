@@ -153,7 +153,6 @@ final class FloatArbitrary extends ArbitraryBase<double> {
     if (range.min.isNaN || range.min.isInfinite) {
       return range.min;
     } else {
-      final value = random.nextDouble() * (range.max - range.min) + range.min;
       return strategy
           .adjust(random.nextDouble() * (range.max - range.min) + range.min);
     }
