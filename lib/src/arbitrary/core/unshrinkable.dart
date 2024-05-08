@@ -2,7 +2,7 @@
 
 import 'package:kiri_check/src/arbitrary.dart';
 
-abstract mixin class UnshrinkableArbitrary<T> implements Arbitrary<T> {
+abstract mixin class UnshrinkableArbitrary<T> implements ArbitraryInternal<T> {
   @override
   ShrinkingDistance calculateDistance(T value) {
     return ShrinkingDistance(0);
