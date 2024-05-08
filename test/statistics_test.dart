@@ -16,7 +16,6 @@ void main() {
         final result = Statistics.getResult();
         expect(result.entries.length, examples.length);
         for (var i = 0; i < examples.length; i++) {
-          final entry = result.entries[i];
           expect(result.entries[i].values.first, examples[i]);
         }
       },

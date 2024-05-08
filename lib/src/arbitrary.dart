@@ -47,8 +47,8 @@ abstract class ArbitraryInternal<T> extends Arbitrary<T> {
   ShrinkingDistance calculateDistance(T value);
 
   /// Returns a list of shrink values.
-  /// There is no limit to the size of the list.
-  /// The number of shrink values should be increased according to the granularity of the distance.
+  /// The number of shrink values should be increased according to
+  /// the granularity of the distance.
   List<T> shrink(T value, ShrinkingDistance distance);
 
   // Returns a string representation of the example.

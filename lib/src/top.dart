@@ -2,6 +2,8 @@ import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/property.dart';
 import 'package:kiri_check/src/property_settings.dart';
 import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/state/property.dart';
+import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/statistics.dart';
 import 'package:meta/meta.dart';
 import 'package:test/test.dart';
@@ -100,7 +102,7 @@ void forAll<T>(
   void Function(T)? onFalsify,
   bool? ignoreFalsify,
 }) {
-  final property = Property(
+  final property = StatelessProperty(
     arbitrary: arbitrary as ArbitraryInternal<T>,
     settings: PropertySettings<T>(
       maxExamples: maxExamples,
@@ -119,6 +121,47 @@ void forAll<T>(
     block: block,
     setUp: setUp,
     tearDown: tearDown,
+  );
+  PropertyTestManager.addProperty(property);
+}
+
+void forAllStates<T extends State>(
+  T state, {
+  int? maxExamples,
+  int? maxTries,
+  int? maxShrinkingTries,
+  RandomContext? random,
+  int? seed,
+  GenerationPolicy? generationPolicy,
+  ShrinkingPolicy? shrinkingPolicy,
+  EdgeCasePolicy? edgeCasePolicy,
+  void Function()? setUp,
+  void Function()? tearDown,
+  void Function(T)? onGenerate,
+  void Function(T)? onShrink,
+  void Function(T)? onFalsify,
+  bool? ignoreFalsify,
+}) {
+  final property = StatefulProperty(
+    state,
+    settings: PropertySettings<T>(
+      maxExamples: maxExamples,
+      maxTries: maxTries,
+      maxShrinkingTries: maxShrinkingTries,
+      random: random,
+      seed: seed,
+      generationPolicy: generationPolicy,
+      shrinkingPolicy: shrinkingPolicy,
+      edgeCasePolicy: edgeCasePolicy,
+      onGenerate: onGenerate,
+      onShrink: onShrink,
+      onFalsify: onFalsify,
+      ignoreFalsify: ignoreFalsify,
+    ),
+    /*
+    setUp: setUp,
+    tearDown: tearDown,
+     */
   );
   PropertyTestManager.addProperty(property);
 }
