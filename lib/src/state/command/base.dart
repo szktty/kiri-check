@@ -40,8 +40,15 @@ final class Update<T> extends Command {
 }
 
 final class Action extends Command {
-  Action(super.description, this.action, {this.bundles = const []});
+  Action(
+    super.description,
+    this.action, {
+    this.bundles = const [],
+    super.precondition,
+    super.postcondition,
+  });
 
+  // TODO: require などにすべきかも
   final List<Bundle<dynamic>> bundles;
   final void Function() action;
 
