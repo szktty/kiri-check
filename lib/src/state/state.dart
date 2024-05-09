@@ -1,6 +1,6 @@
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/state/command/base.dart';
-import 'package:meta/meta.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 abstract class State {
   List<Command> build();
@@ -32,6 +32,26 @@ class Bundle<T> {
     _value = value;
   }
 
+  Bundle<T> copy() {
+    final bundle = Bundle<T>(description);
+    bundle._value = _copyValue(_value!) as T;
+    return bundle;
+  }
+
+  dynamic _copyValue(dynamic value) {
+    if (value is List<dynamic>) {
+      return value.map(_copyValue).toList() as T;
+    } else if (value is Map) {
+      return value.map((key, value) => MapEntry(key, _copyValue(value))) as T;
+    } else if (value is tz.TZDateTime) {
+      return value.copyWith();
+    } else if (value is DateTime) {
+      return DateTime.fromMillisecondsSinceEpoch(value.millisecondsSinceEpoch);
+    } else {
+      return value;
+    }
+  }
+
   // ignore: use_to_and_as_if_applicable
   Bundle<T> consumer() => BundleConsumer(this);
 }
@@ -41,5 +61,9 @@ final class BundleConsumer<T> extends Bundle<T> {
 
   final Bundle<T> bundle;
 
+  @override
   T get value => bundle.value;
+
+  @override
+  Bundle<T> copy() => BundleConsumer(bundle.copy());
 }
