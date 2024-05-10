@@ -135,6 +135,7 @@ void forAllStates<T extends State>(
   GenerationPolicy? generationPolicy,
   ShrinkingPolicy? shrinkingPolicy,
   EdgeCasePolicy? edgeCasePolicy,
+  int? maxStatefulCycles,
   int? maxStatefulSteps,
   void Function()? setUp,
   void Function()? tearDown,
@@ -154,16 +155,15 @@ void forAllStates<T extends State>(
       generationPolicy: generationPolicy,
       shrinkingPolicy: shrinkingPolicy,
       edgeCasePolicy: edgeCasePolicy,
+      maxStatefulCycles: maxStatefulCycles,
       maxStatefulSteps: maxStatefulSteps,
       onGenerate: onGenerate,
       onShrink: onShrink,
       onFalsify: onFalsify,
       ignoreFalsify: ignoreFalsify,
     ),
-    /*
     setUp: setUp,
     tearDown: tearDown,
-     */
   );
   PropertyTestManager.addProperty(property);
 }

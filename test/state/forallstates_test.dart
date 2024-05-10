@@ -10,7 +10,7 @@ final class MyState extends State {
 
   // TODO: List<Command> get commands にすべき？
   @override
-  List<Command> build() => [
+  List<Command> get commandPool => [
         Action(
           'increment',
           () {
@@ -19,7 +19,7 @@ final class MyState extends State {
           },
           bundles: [count, previous],
           postcondition: () {
-            expect(count.value, previous.value + 1);
+            expect(count.value, previous.value + 2);
           },
         ),
         Action(
@@ -48,7 +48,7 @@ final class MyState extends State {
 
   // TODO: List<Command> get initializer にすべき？
   @override
-  List<Command> initialize() => [
+  List<Command> get initializeCommands => [
         Update('update count', count, constant(0)),
       ];
 }

@@ -1,3 +1,5 @@
+import 'dart:html';
+
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/state/command/base.dart';
 import 'package:kiri_check/src/state/property.dart';
@@ -66,4 +68,24 @@ final class TraversalPath {
 
   final Traversal traversal;
   final List<TraversalStep> steps;
+
+  List<TraversalPath> shrink(int granularity) {
+    if (granularity < 1) {
+      throw PropertyException(
+          'Granularity must be greater than or equal to 1.');
+    }
+    // TODO
+    final shrunkPaths = <TraversalPath>[];
+    final division = granularity + 1;
+    for (var i = 0; i < division; i++) {
+      final shrunkSteps =
+          steps.sublist(0, (steps.length ~/ division) * (i + 1));
+      print('division $division, ${steps.length ~/ division} * ${(i + 1)}');
+      print('shrunk steps: ${steps.length} -> ${shrunkSteps.length}');
+      final shrunkPath = TraversalPath(traversal, shrunkSteps);
+      shrunkPaths.add(shrunkPath);
+    }
+
+    return shrunkPaths;
+  }
 }
