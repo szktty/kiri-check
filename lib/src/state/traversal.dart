@@ -1,5 +1,6 @@
 import 'dart:html';
 
+import 'package:collection/collection.dart';
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/state/command/base.dart';
 import 'package:kiri_check/src/state/property.dart';
@@ -77,11 +78,17 @@ final class TraversalPath {
     // TODO
     final shrunkPaths = <TraversalPath>[];
     final division = granularity + 1;
+    var previousSteps = <TraversalStep>[];
     for (var i = 0; i < division; i++) {
       final shrunkSteps =
           steps.sublist(0, (steps.length ~/ division) * (i + 1));
       print('division $division, ${steps.length ~/ division} * ${(i + 1)}');
       print('shrunk steps: ${steps.length} -> ${shrunkSteps.length}');
+      if (previousSteps.length == shrunkSteps.length &&
+          const DeepCollectionEquality().equals(previousSteps, shrunkSteps)) {
+        continue;
+      }
+      previousSteps = shrunkSteps;
       final shrunkPath = TraversalPath(traversal, shrunkSteps);
       shrunkPaths.add(shrunkPath);
     }
