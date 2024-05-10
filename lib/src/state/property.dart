@@ -76,9 +76,13 @@ final class StatefulProperty<S extends State> extends Property<S> {
       }
     }
 
+    // TODO: 毎回状態の初期化が必要
+    // TODO: エラー時のバンドルの状態を保存しておき、再利用したい
+    // 乱数の状態を再現できないものか
     print('--------------------------------------------');
     print('Run command sequence...');
     final traversal = Traversal(context, commandPool);
+    TraversalPath? shrunkPath;
     try {
       while (traversal.hasNextPath) {
         traversal.nextPath();
@@ -96,26 +100,56 @@ final class StatefulProperty<S extends State> extends Property<S> {
     } catch (e) {
       // TODO: shrink
       print('Error: $e');
-      _shrink(traversal);
+      shrunkPath = _shrinkPath(traversal);
+
       print('--------------------------------------------');
     }
 
     print('Tear down...');
     (tearDown ?? state.tearDown).call();
+
+    // TODO: return shrunkPath
   }
 
   // 1. パスを短縮する
   // 2. バンドルの値を短縮する
-  void _shrink(Traversal traversal) {
+  TraversalPath _shrinkPath(Traversal traversal) {
     // TODO
-    for (var cycle = 0; cycle < maxShrinkingCycles; cycle++) {
+    final start = traversal.currentPath!;
+    var granularity = 1;
+    var cycle = 0;
+    var failed = start;
+    while (cycle < maxShrinkingCycles) {
       print('--------------------------------------------');
-      print('Shrinking cycle #${cycle + 1}');
-      for (var path in traversal.paths) {
-        final granularity = cycle + 1;
-        final paths = path.shrink(granularity);
-        // TODO
+      final paths = start.shrink(granularity);
+      for (final path in paths) {
+        print('Shrink cycle ${cycle + 1}');
+        for (var i = 0; i < path.steps.length; i++) {
+          // TODO: 最後にエラーになったパスの短縮の繰り返し
+          final step = path.steps[i];
+          final command = step.command;
+          print('Shrink step ${i + 1}: ${command.description}');
+          try {
+            command.precondition?.call();
+            command.run(traversal.context);
+            command.postcondition?.call();
+          } catch (e) {
+            print('Error: $e');
+            failed = path;
+            continue;
+          }
+          // passのシュリンク終了
+          _shrinkBundles(path);
+          return failed;
+        }
+        cycle++;
       }
     }
+    return failed;
+  }
+
+  void _shrinkBundles(TraversalPath path) {
+    // TODO
+    print('Shrink bundles...');
   }
 }
