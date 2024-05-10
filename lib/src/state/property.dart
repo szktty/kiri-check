@@ -1,4 +1,5 @@
 import 'package:kiri_check/src/arbitrary.dart';
+import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/property.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/state/traversal.dart';
@@ -55,27 +56,34 @@ final class StatefulProperty<S extends State> extends Property<S> {
     for (var i = 0; i < initializers.length; i++) {
       final command = initializers[i];
       print('Step #$i: ${command.description}');
-      command.run(context);
+      try {
+        command.run(context);
+      } catch (e) {
+        throw PropertyException(
+            'Initialization failed: Step #$i: ${command.description}: $e');
+      }
     }
 
     print('Run commands...');
     final traversal = Traversal(context, commands);
-    while (traversal.hasNextPath) {
-      traversal.nextPath();
-      print('--------------------------------------------');
-      print('Cycle #${traversal.currentCycle}');
-      while (traversal.hasNextStep) {
-        final command = traversal.nextStep();
-        print('Step #${traversal.currentStep}: ${command.description}');
-        // TODO: preconditionを評価する
-        command.run(context);
-
-        // TODO: postconditionを評価する
+    try {
+      while (traversal.hasNextPath) {
+        traversal.nextPath();
+        print('--------------------------------------------');
+        print('Cycle #${traversal.currentCycle}');
+        while (traversal.hasNextStep) {
+          final command = traversal.nextStep();
+          print('Step #${traversal.currentStep}: ${command.description}');
+          command.precondition?.call();
+          command.run(context);
+          command.postcondition?.call();
+        }
       }
+    } catch (e) {
+      // TODO: shrink
+      print('Error: $e');
     }
     print('--------------------------------------------');
-
-    // TODO: シュリンク
 
     print('Tear down...');
     state.tearDown();
