@@ -14,10 +14,11 @@ final class PropertySettings<T> {
     this.seed,
     this.generationPolicy,
     this.shrinkingPolicy,
+    this.edgeCasePolicy,
+    this.maxStatefulSteps,
     this.onGenerate,
     this.onShrink,
     this.onFalsify,
-    this.edgeCasePolicy,
     bool? ignoreFalsify,
   }) {
     this.ignoreFalsify = ignoreFalsify ?? false;
@@ -32,6 +33,7 @@ final class PropertySettings<T> {
   final GenerationPolicy? generationPolicy;
   final ShrinkingPolicy? shrinkingPolicy;
   final EdgeCasePolicy? edgeCasePolicy;
+  final int? maxStatefulSteps;
   final void Function(T)? onGenerate;
   final void Function(T)? onShrink;
   final void Function(T)? onFalsify;

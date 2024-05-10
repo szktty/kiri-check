@@ -44,6 +44,12 @@ abstract class KiriCheck {
   static set edgeCasePolicy(EdgeCasePolicy value) =>
       Settings.shared.edgeCasePolicy = value;
 
+  /// The number of steps to run for stateful properties.
+  static int? get maxStatefulSteps => Settings.shared.maxStatefulSteps;
+
+  static set maxStatefulSteps(int? value) =>
+      Settings.shared.maxStatefulSteps = value;
+
   /// Sets a timeout for the test. If the test runs longer, it will be marked as failed.
   static Timeout? get timeout => Settings.shared.timeout;
 
@@ -96,6 +102,7 @@ final class Settings {
     GenerationPolicy? generationPolicy,
     ShrinkingPolicy? shrinkingPolicy,
     EdgeCasePolicy? edgeCasePolicy,
+    int? maxStatefulSteps,
     this.timeout,
     Verbosity? verbosity,
   }) {
@@ -105,6 +112,7 @@ final class Settings {
     this.generationPolicy = generationPolicy ?? GenerationPolicy.auto;
     this.shrinkingPolicy = shrinkingPolicy ?? ShrinkingPolicy.bounded;
     this.edgeCasePolicy = edgeCasePolicy ?? EdgeCasePolicy.mixin;
+    this.maxStatefulSteps = maxStatefulSteps ?? 50;
     this.verbosity = verbosity ?? Verbosity.normal;
   }
 
@@ -115,6 +123,7 @@ final class Settings {
   late GenerationPolicy generationPolicy;
   late ShrinkingPolicy shrinkingPolicy;
   late EdgeCasePolicy edgeCasePolicy;
+  int? maxStatefulSteps;
   Timeout? timeout;
   late Verbosity verbosity;
 

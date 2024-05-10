@@ -54,7 +54,6 @@ final class StatefulProperty<S extends State> extends Property<S> {
     final context = StateContextImpl(this, test);
     for (var i = 0; i < initializers.length; i++) {
       final command = initializers[i];
-      // TODO: step でいいのか？
       print('Step #$i: ${command.description}');
       command.run(context);
     }
