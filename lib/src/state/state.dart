@@ -3,9 +3,9 @@ import 'package:kiri_check/src/state/command/base.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 abstract class State {
-  List<Command> build();
+  List<Command> get commandPool;
 
-  List<Command> initialize() => [];
+  List<Command> get initializeCommands => [];
 
   void setUp() {}
 

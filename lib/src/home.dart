@@ -44,10 +44,16 @@ abstract class KiriCheck {
   static set edgeCasePolicy(EdgeCasePolicy value) =>
       Settings.shared.edgeCasePolicy = value;
 
-  /// The number of steps to run for stateful properties.
-  static int? get maxStatefulSteps => Settings.shared.maxStatefulSteps;
+  /// The maximum number of cycles to run for stateful properties.
+  static int get maxStatefulCycles => Settings.shared.maxStatefulCycles;
 
-  static set maxStatefulSteps(int? value) =>
+  static set maxStatefulCycles(int value) =>
+      Settings.shared.maxStatefulCycles = value;
+
+  /// The maximum number of steps to run for stateful properties.
+  static int get maxStatefulSteps => Settings.shared.maxStatefulSteps;
+
+  static set maxStatefulSteps(int value) =>
       Settings.shared.maxStatefulSteps = value;
 
   /// Sets a timeout for the test. If the test runs longer, it will be marked as failed.
@@ -102,6 +108,7 @@ final class Settings {
     GenerationPolicy? generationPolicy,
     ShrinkingPolicy? shrinkingPolicy,
     EdgeCasePolicy? edgeCasePolicy,
+    int? maxStatefulCycles,
     int? maxStatefulSteps,
     this.timeout,
     Verbosity? verbosity,
@@ -112,6 +119,7 @@ final class Settings {
     this.generationPolicy = generationPolicy ?? GenerationPolicy.auto;
     this.shrinkingPolicy = shrinkingPolicy ?? ShrinkingPolicy.bounded;
     this.edgeCasePolicy = edgeCasePolicy ?? EdgeCasePolicy.mixin;
+    this.maxStatefulCycles = maxStatefulCycles ?? 100;
     this.maxStatefulSteps = maxStatefulSteps ?? 50;
     this.verbosity = verbosity ?? Verbosity.normal;
   }
@@ -123,7 +131,8 @@ final class Settings {
   late GenerationPolicy generationPolicy;
   late ShrinkingPolicy shrinkingPolicy;
   late EdgeCasePolicy edgeCasePolicy;
-  int? maxStatefulSteps;
+  late int maxStatefulCycles;
+  late int maxStatefulSteps;
   Timeout? timeout;
   late Verbosity verbosity;
 
