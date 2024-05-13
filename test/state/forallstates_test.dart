@@ -4,11 +4,28 @@ import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/top.dart';
 import 'package:test/test.dart';
 
-final class MyState extends State {
+enum CounterEvent {
+  initialize,
+  increment,
+  decrement,
+  reset,
+}
+
+final class CounterBehavior extends Behavior {
+  @override
+  CounterState createState() => CounterState();
+}
+
+final class CounterState extends State<CounterBehavior> {
   final count = Bundle<int>('count');
   final previous = Bundle<int>('previous');
 
-  // TODO: List<Command> get commands にすべき？
+  final events = <CounterEvent>[];
+
+  void addEvent(CounterEvent event) {
+    events.add(event);
+  }
+
   @override
   List<Command> get commandPool => [
         Action(
@@ -46,11 +63,15 @@ final class MyState extends State {
         ),
       ];
 
-  // TODO: List<Command> get initializer にすべき？
   @override
   List<Command> get initializeCommands => [
         Update('update count', count, constant(0)),
       ];
+
+  @override
+  void setUp() {
+    events.clear();
+  }
 }
 
 void main() {
@@ -58,7 +79,7 @@ void main() {
 
   group('StatefulProperty', () {
     property('basic', () {
-      forAllStates(MyState());
+      forAllStates(CounterBehavior());
     });
   });
 }

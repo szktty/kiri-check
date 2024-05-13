@@ -1,14 +1,32 @@
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/state/command/base.dart';
+import 'package:meta/meta.dart';
 import 'package:timezone/timezone.dart' as tz;
 
-abstract class State {
+// ignore: one_member_abstracts
+abstract class Behavior {
+  @protected
+  @factory
+  State<Behavior> createState();
+
+  State<Behavior> _createState() => createState().._behavior = this;
+}
+
+abstract class State<T extends Behavior> {
+  T get behavior => _behavior!;
+
+  late T? _behavior;
+
+  @protected
   List<Command> get commandPool;
 
-  List<Command> get initializeCommands => [];
+  @protected
+  List<Command> get initializeCommands;
 
+  @protected
   void setUp() {}
 
+  @protected
   void tearDown() {}
 }
 
@@ -17,19 +35,30 @@ class Bundle<T> {
 
   final String description;
 
+  var _restoreMode = false;
+
+  var _history = <T>[];
+  var _step = 0;
+
   T get value {
-    if (_value != null) {
-      return _value!;
+    if (!_restoreMode) {
+      if (_value != null) {
+        return _value!;
+      }
+      // TODO: エラー内容
+      throw PropertyException('The value is not set.');
+    } else {
+      return _history[_step++]!;
     }
-    // TODO: エラー内容
-    throw PropertyException('The value is not set.');
   }
 
   T? _value;
 
   set value(T value) {
-    // TODO: ログを取る？
-    _value = value;
+    if (!_restoreMode) {
+      _value = value;
+      _history.add(value);
+    }
   }
 
   Bundle<T> copy() {
@@ -54,6 +83,19 @@ class Bundle<T> {
 
   // ignore: use_to_and_as_if_applicable
   Bundle<T> consumer() => BundleConsumer(this);
+
+  @internal
+  void beginRestore() {
+    _restoreMode = true;
+    _step = 0;
+  }
+}
+
+extension BundlePrivate<T> on Bundle<T> {
+  void restore() {
+    _restoreMode = true;
+    _step = 0;
+  }
 }
 
 final class BundleConsumer<T> extends Bundle<T> {

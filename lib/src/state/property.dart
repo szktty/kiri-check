@@ -79,6 +79,7 @@ final class StatefulProperty<S extends State> extends Property<S> {
     // TODO: 毎回状態の初期化が必要
     // TODO: エラー時のバンドルの状態を保存しておき、再利用したい
     // 乱数の状態を再現できないものか
+    // バンドル側で、ステップと値を結びつけて保持しておけばいいのでは
     print('--------------------------------------------');
     print('Run command sequence...');
     final traversal = Traversal(context, commandPool);
