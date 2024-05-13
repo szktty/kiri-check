@@ -4,25 +4,16 @@ import 'package:meta/meta.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 // ignore: one_member_abstracts
-abstract class Behavior {
+abstract class Behavior<T extends State> {
   @protected
   @factory
-  State<Behavior> createState();
+  T createState();
 
-  State<Behavior> _createState() => createState().._behavior = this;
+  @protected
+  List<Command<T>> generateCommands(T state);
 }
 
-abstract class State<T extends Behavior> {
-  T get behavior => _behavior!;
-
-  late T? _behavior;
-
-  @protected
-  List<Command> get commandPool;
-
-  @protected
-  List<Command> get initializeCommands;
-
+abstract class State {
   @protected
   void setUp() {}
 
@@ -35,30 +26,18 @@ class Bundle<T> {
 
   final String description;
 
-  var _restoreMode = false;
-
-  var _history = <T>[];
-  var _step = 0;
-
   T get value {
-    if (!_restoreMode) {
-      if (_value != null) {
-        return _value!;
-      }
-      // TODO: エラー内容
-      throw PropertyException('The value is not set.');
-    } else {
-      return _history[_step++]!;
+    if (_value != null) {
+      return _value!;
     }
+    // TODO: エラー内容
+    throw PropertyException('The value is not set.');
   }
 
   T? _value;
 
   set value(T value) {
-    if (!_restoreMode) {
-      _value = value;
-      _history.add(value);
-    }
+    _value = value;
   }
 
   Bundle<T> copy() {
@@ -82,20 +61,7 @@ class Bundle<T> {
   }
 
   // ignore: use_to_and_as_if_applicable
-  Bundle<T> consumer() => BundleConsumer(this);
-
-  @internal
-  void beginRestore() {
-    _restoreMode = true;
-    _step = 0;
-  }
-}
-
-extension BundlePrivate<T> on Bundle<T> {
-  void restore() {
-    _restoreMode = true;
-    _step = 0;
-  }
+  Bundle<T> get consumer => BundleConsumer(this);
 }
 
 final class BundleConsumer<T> extends Bundle<T> {

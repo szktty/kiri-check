@@ -126,7 +126,7 @@ void forAll<T>(
 }
 
 void forAllStates<T extends State>(
-  T state, {
+  Behavior<T> behavior, {
   int? maxExamples,
   int? maxTries,
   int? maxShrinkingTries,
@@ -145,7 +145,7 @@ void forAllStates<T extends State>(
   bool? ignoreFalsify,
 }) {
   final property = StatefulProperty(
-    state,
+    behavior,
     settings: PropertySettings<T>(
       maxExamples: maxExamples,
       maxTries: maxTries,
