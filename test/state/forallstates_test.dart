@@ -11,62 +11,61 @@ enum CounterEvent {
   reset,
 }
 
-final class CounterBehavior extends Behavior {
+final class CounterBehavior extends Behavior<CounterState> {
   @override
-  CounterState createState() => CounterState();
+  CounterState createState() {
+    final state = CounterState();
+    state.count = 0;
+    state.previous = 0;
+    return state;
+  }
+
+  @override
+  List<Command<CounterState>> generateCommands(CounterState s) {
+    return [
+      Action(
+        'increment',
+        (s) {
+          s.previous = s.count;
+          s.count++;
+        },
+        postcondition: (s) {
+          return s.count == s.previous + 2;
+        },
+      ),
+      Action(
+        'decrement',
+        (s) {
+          s.previous = s.count;
+          s.count--;
+        },
+        postcondition: (s) {
+          return s.count == s.previous - 1;
+        },
+      ),
+      Action(
+        'reset',
+        (s) {
+          s.previous = s.count;
+          s.count = 0;
+        },
+        postcondition: (s) {
+          return s.count == 0;
+        },
+      ),
+    ];
+  }
 }
 
-final class CounterState extends State<CounterBehavior> {
-  final count = Bundle<int>('count');
-  final previous = Bundle<int>('previous');
+final class CounterState extends State {
+  int count = 0;
+  int previous = 0;
 
   final events = <CounterEvent>[];
 
   void addEvent(CounterEvent event) {
     events.add(event);
   }
-
-  @override
-  List<Command> get commandPool => [
-        Action(
-          'increment',
-          () {
-            previous.value = count.value;
-            count.value++;
-          },
-          bundles: [count, previous],
-          postcondition: () {
-            expect(count.value, previous.value + 2);
-          },
-        ),
-        Action(
-          'decrement',
-          () {
-            previous.value = count.value;
-            count.value--;
-          },
-          bundles: [count, previous],
-          postcondition: () {
-            expect(count.value, previous.value - 1);
-          },
-        ),
-        Action(
-          'reset',
-          () {
-            previous.value = count.value;
-            count.value = 0;
-          },
-          bundles: [count, previous],
-          postcondition: () {
-            expect(count.value, 0);
-          },
-        ),
-      ];
-
-  @override
-  List<Command> get initializeCommands => [
-        Update('update count', count, constant(0)),
-      ];
 
   @override
   void setUp() {

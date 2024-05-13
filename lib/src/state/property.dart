@@ -5,31 +5,18 @@ import 'package:kiri_check/src/property.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/state/traversal.dart';
 
-abstract class StateContext<S extends State> {
-  S get state;
+final class StateContext<T extends State> {
+  StateContext(this.property, this.test);
 
-  T draw<T>(Arbitrary<T> arbitrary);
-}
-
-final class StateContextImpl<S extends State> extends StateContext<S> {
-  StateContextImpl(this.property, this.test);
-
-  final StatefulProperty<S> property;
+  final StatefulProperty<T> property;
   final PropertyTest test;
 
-  @override
-  S get state => property.state;
-
-  @override
-  T draw<T>(Arbitrary<T> arbitrary) {
-    final base = arbitrary as ArbitraryBase<T>;
-    return base.generate(property.random);
-  }
+  Behavior<T> get behavior => property.behavior;
 }
 
-final class StatefulProperty<S extends State> extends Property<S> {
+final class StatefulProperty<T extends State> extends Property<T> {
   StatefulProperty(
-    this.state, {
+    this.behavior, {
     required super.settings,
     super.setUp,
     super.tearDown,
@@ -43,7 +30,7 @@ final class StatefulProperty<S extends State> extends Property<S> {
     maxShrinkingCycles = 50;
   }
 
-  final S state;
+  final Behavior<T> behavior;
 
   late final int maxCycles;
   late final int maxShrinkingCycles;
