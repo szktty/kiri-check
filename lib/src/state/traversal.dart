@@ -15,8 +15,8 @@ final class Traversal<T extends State> {
     this.maxPaths = 100,
   });
 
-  final StateContextImpl<T> context;
-  final List<Command> commands;
+  final StateContext<T> context;
+  final List<Command<T>> commands;
   final int maxSteps;
   final int maxPaths;
 
@@ -43,7 +43,7 @@ final class Traversal<T extends State> {
   }
 
   // ランダムにコマンドを選択
-  Command nextStep() {
+  Command<T> nextStep() {
     if (!hasNextStep) {
       throw PropertyException('No more steps.');
     }
@@ -57,18 +57,18 @@ final class Traversal<T extends State> {
   }
 }
 
-final class TraversalStep {
+final class TraversalStep<T extends State> {
   TraversalStep(this.number, this.command);
 
   final int number;
-  final Command command;
+  final Command<T> command;
 }
 
-final class TraversalPath {
+final class TraversalPath<T extends State> {
   TraversalPath(this.traversal, this.steps);
 
   final Traversal traversal;
-  final List<TraversalStep> steps;
+  final List<TraversalStep<T>> steps;
 
   List<TraversalPath> shrink(int granularity) {
     if (granularity < 1) {

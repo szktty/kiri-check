@@ -2,12 +2,14 @@ import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/property.dart';
+import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/state/traversal.dart';
 
 final class StateContext<T extends State> {
-  StateContext(this.property, this.test);
+  StateContext(this.state, this.property, this.test);
 
+  final T state;
   final StatefulProperty<T> property;
   final PropertyTest test;
 
@@ -37,71 +39,56 @@ final class StatefulProperty<T extends State> extends Property<T> {
 
   @override
   void check(PropertyTest test) {
-    // TODO: implement check
-    print('Check state: ${state.runtimeType}');
+    print('Check behavior: ${behavior.runtimeType}');
 
-    final initializers = state.initializeCommands;
-    final commandPool = state.commandPool;
-
-    print('Analyze commandPool...');
-    // TODO: バンドルの依存関係
-
-    print('Set up...');
-    (setUp ?? state.setUp).call();
-
-    print('Initialize state...');
-    print('--------------------------------------------');
-    final context = StateContextImpl(this, test);
-    for (var i = 0; i < initializers.length; i++) {
-      final command = initializers[i];
-      print('Step #${i + 1}: ${command.description}');
+    for (var i = 0; i < maxShrinkingCycles; i++) {
+      var state = behavior.createState()..random = random;
+      print('Create state: ${state.runtimeType}');
+      final commands = behavior.generateCommands(state);
+      final context = StateContext(state, this, test);
+      print('Run command sequence...');
+      final traversal = Traversal(context, commands);
+      TraversalPath? shrunkPath;
       try {
-        command.run(context);
-      } catch (e) {
-        throw PropertyException(
-            'Initialization failed: Step #${i + 1}: ${command.description}: $e');
-      }
-    }
-
-    // TODO: 毎回状態の初期化が必要
-    // TODO: エラー時のバンドルの状態を保存しておき、再利用したい
-    // 乱数の状態を再現できないものか
-    // バンドル側で、ステップと値を結びつけて保持しておけばいいのでは
-    print('--------------------------------------------');
-    print('Run command sequence...');
-    final traversal = Traversal(context, commandPool);
-    TraversalPath? shrunkPath;
-    try {
-      while (traversal.hasNextPath) {
         traversal.nextPath();
         print('--------------------------------------------');
-        print('Cycle #${traversal.currentCycle + 1}');
+        print('Cycle #${i + 1}');
+        print('Set up...');
+        (setUp ?? state.setUp).call();
         while (traversal.hasNextStep) {
           final command = traversal.nextStep();
-          print('Step #${traversal.currentStep + 1}: ${command.description}');
-          command.precondition?.call();
-          command.run(context);
-          command.postcondition?.call();
+          final i = traversal.currentStep + 1;
+          if (command.precondition?.call(state) ?? true) {
+            print('Step $i: ${command.description}');
+            command.run(state);
+            if (command.postcondition?.call(state) ?? true) {
+              state = command.nextState?.call(state) ?? state;
+            } else {
+              print('Postcondition is not satisfied');
+              throw PropertyException('postcondition is not satisfied');
+            }
+          }
         }
+      } catch (e) {
+        // TODO: shrink
+        print('Error: $e');
+        shrunkPath = _shrinkPath(context, traversal);
       }
-      print('--------------------------------------------');
-    } catch (e) {
-      // TODO: shrink
-      print('Error: $e');
-      shrunkPath = _shrinkPath(traversal);
 
+      print('Tear down...');
+      (tearDown ?? state.tearDown).call();
       print('--------------------------------------------');
+
+      if (shrunkPath != null) {
+        print('Shrink result');
+        throw PropertyException('Shrink failed: $shrunkPath');
+      }
     }
-
-    print('Tear down...');
-    (tearDown ?? state.tearDown).call();
-
-    // TODO: return shrunkPath
   }
 
   // 1. パスを短縮する
   // 2. バンドルの値を短縮する
-  TraversalPath _shrinkPath(Traversal traversal) {
+  TraversalPath _shrinkPath(StateContext<T> context, Traversal traversal) {
     // TODO
     final start = traversal.currentPath!;
     var granularity = 1;
@@ -118,16 +105,16 @@ final class StatefulProperty<T extends State> extends Property<T> {
           final command = step.command;
           print('Shrink step ${i + 1}: ${command.description}');
           try {
-            command.precondition?.call();
-            command.run(traversal.context);
-            command.postcondition?.call();
+            command.precondition?.call(context.state);
+            command.run(context.state);
+            command.postcondition?.call(context.state);
           } catch (e) {
             print('Error: $e');
             failed = path;
             continue;
           }
           // passのシュリンク終了
-          _shrinkBundles(path);
+          _shrinkValue(path);
           return failed;
         }
         cycle++;
@@ -136,7 +123,7 @@ final class StatefulProperty<T extends State> extends Property<T> {
     return failed;
   }
 
-  void _shrinkBundles(TraversalPath path) {
+  void _shrinkValue(TraversalPath path) {
     // TODO
     print('Shrink bundles...');
   }
