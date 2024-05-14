@@ -13,14 +13,38 @@ enum CounterEvent {
 final class CounterBehavior extends Behavior<CounterState> {
   @override
   CounterState createState() {
-    final state = CounterState();
-    state.count = 0;
-    state.previous = 0;
-    return state;
+    return CounterState();
   }
 
   @override
   List<Command<CounterState>> generateCommands(CounterState s) {
+    // TODO: 依存関係のテスト
+    /*
+    final a = Action<CounterState>(
+      'a',
+      (s) {
+        s.previous = s.count;
+        s.count++;
+        s.addEvent(CounterEvent.increment);
+      },
+      postcondition: (s) {
+        return s.count == s.previous + 1;
+      },
+    );
+    final b = Action<CounterState>(
+      'b',
+      (s) {
+        s.previous = s.count;
+        s.count--;
+        s.addEvent(CounterEvent.decrement);
+      },
+      dependencies: [a],
+      postcondition: (s) {
+        return s.count == s.previous - 1;
+      },
+    );
+    a.addDependency(b);
+     */
     return [
       Generate(
         'set',
