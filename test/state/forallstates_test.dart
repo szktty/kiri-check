@@ -5,10 +5,9 @@ import 'package:kiri_check/src/top.dart';
 import 'package:test/test.dart';
 
 enum CounterEvent {
-  initialize,
   increment,
   decrement,
-  reset,
+  set,
 }
 
 final class CounterBehavior extends Behavior<CounterState> {
@@ -23,14 +22,25 @@ final class CounterBehavior extends Behavior<CounterState> {
   @override
   List<Command<CounterState>> generateCommands(CounterState s) {
     return [
+      Generate(
+        'set',
+        integer(),
+        (s, value) {
+          s
+            ..previous = s.count
+            ..count = value
+            ..addEvent(CounterEvent.set);
+        },
+      ),
       Action(
         'increment',
         (s) {
           s.previous = s.count;
           s.count++;
+          s.addEvent(CounterEvent.increment);
         },
         postcondition: (s) {
-          return s.count == s.previous + 2;
+          return s.count == s.previous + 1;
         },
       ),
       Action(
@@ -38,19 +48,10 @@ final class CounterBehavior extends Behavior<CounterState> {
         (s) {
           s.previous = s.count;
           s.count--;
+          s.addEvent(CounterEvent.decrement);
         },
         postcondition: (s) {
           return s.count == s.previous - 1;
-        },
-      ),
-      Action(
-        'reset',
-        (s) {
-          s.previous = s.count;
-          s.count = 0;
-        },
-        postcondition: (s) {
-          return s.count == 0;
         },
       ),
     ];
@@ -70,6 +71,12 @@ final class CounterState extends State {
   @override
   void setUp() {
     events.clear();
+  }
+
+  @override
+  void tearDown() {
+    print('events: $events');
+    expect(events, isNotEmpty);
   }
 }
 

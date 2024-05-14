@@ -18,22 +18,24 @@ abstract class Command<T extends State> {
   void run(T state);
 }
 
-final class Update<T extends State> extends Command<T> {
-  Update(
+final class Generate<T extends State, U> extends Command<T> {
+  Generate(
     super.description,
-    this.target,
-    this.arbitrary, {
+    this.arbitrary,
+    this.action, {
     super.precondition,
     super.postcondition,
     super.nextState,
   });
 
-  final Bundle<T> target;
-  final Arbitrary<T> arbitrary;
+  final Arbitrary<U> arbitrary;
+  final void Function(T, U) action;
 
   @override
   void run(T state) {
-    // プロパティ側で処理する
+    final base = arbitrary as ArbitraryBase<U>;
+    final value = base.generate(state.random);
+    action(state, value);
   }
 }
 

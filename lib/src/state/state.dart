@@ -1,23 +1,22 @@
 import 'package:kiri_check/src/exception.dart';
+import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/state/command/base.dart';
 import 'package:meta/meta.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 // ignore: one_member_abstracts
 abstract class Behavior<T extends State> {
-  @protected
   @factory
   T createState();
 
-  @protected
   List<Command<T>> generateCommands(T state);
 }
 
 abstract class State {
-  @protected
+  late RandomContext random;
+
   void setUp() {}
 
-  @protected
   void tearDown() {}
 }
 
