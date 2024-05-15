@@ -81,10 +81,11 @@ final class StatefulProperty<T extends State> extends Property<T> {
 
   void _check(PropertyTest test) {
     print('Check behavior: ${behavior.runtimeType}');
+    setUp?.call();
 
     final propertyContext = StatefulPropertyContext(this, test);
     for (propertyContext.cycle = 0;
-        propertyContext.cycle < maxShrinkingCycles;
+        propertyContext.cycle < maxCycles;
         propertyContext.cycle++) {
       var state = behavior.createState()..random = random;
       print('Create state: ${state.runtimeType}');
@@ -102,7 +103,7 @@ final class StatefulProperty<T extends State> extends Property<T> {
         print('--------------------------------------------');
         print('Cycle #${propertyContext.cycle + 1}');
         print('Set up...');
-        (setUp ?? state.setUp).call();
+        state.setUp.call();
         while (traversal.hasNextStep) {
           final command = traversal.nextStep();
           final i = traversal.currentStep + 1;
@@ -118,16 +119,19 @@ final class StatefulProperty<T extends State> extends Property<T> {
       }
 
       print('Tear down...');
-      (tearDown ?? state.tearDown).call();
+      state.tearDown.call();
       print('--------------------------------------------');
 
       if (shrunkPath != null) {
         print('Shrink result');
+        tearDown?.call();
         throw PropertyException('Shrink failed: $shrunkPath');
       }
 
       body(state);
     }
+
+    tearDown?.call();
   }
 
   T _executeCommand(T state, Command<T> command) {
