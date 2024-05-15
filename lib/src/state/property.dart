@@ -192,8 +192,8 @@ final class StatefulProperty<T extends State> extends Property<T> {
   }
 }
 
-final class CircularDependencyException extends PropertyException {
-  CircularDependencyException(super.message);
+final class CommandDependencyException extends PropertyException {
+  CommandDependencyException(super.message);
 }
 
 // TODO
@@ -210,9 +210,12 @@ final class CommandDependencyGraph<T extends State> {
   void _analyze() {
     for (final command in commands) {
       final dependencies = <Command<T>>[];
-      for (final c in commands) {
-        if (c.dependencies.contains(command)) {
-          dependencies.add(c);
+      for (final dep in command.dependencies) {
+        if (commands.contains(dep)) {
+          dependencies.add(dep);
+        } else {
+          throw CommandDependencyException(
+              'Unknown dependency: ${dep.description}');
         }
       }
       this.dependencies[command] = CommandDependency(command, dependencies);
@@ -246,7 +249,7 @@ final class CommandDependencyGraph<T extends State> {
 
     for (final command in commands) {
       if (dfs(command)) {
-        throw CircularDependencyException(
+        throw CommandDependencyException(
             'Cycle detected in command dependencies: ${command.description}');
       }
     }
