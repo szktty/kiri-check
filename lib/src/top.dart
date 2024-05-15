@@ -126,7 +126,8 @@ void forAll<T>(
 }
 
 void forAllStates<T extends State>(
-  Behavior<T> behavior, {
+  Behavior<T> behavior,
+  void Function(T) body, {
   int? maxExamples,
   int? maxTries,
   int? maxShrinkingTries,
@@ -143,9 +144,11 @@ void forAllStates<T extends State>(
   void Function(T)? onShrink,
   void Function(T)? onFalsify,
   bool? ignoreFalsify,
+  @internal void Function(void Function())? onCheck,
 }) {
   final property = StatefulProperty(
     behavior,
+    body,
     settings: PropertySettings<T>(
       maxExamples: maxExamples,
       maxTries: maxTries,
@@ -164,6 +167,7 @@ void forAllStates<T extends State>(
     ),
     setUp: setUp,
     tearDown: tearDown,
+    onCheck: onCheck,
   );
   PropertyTestManager.addProperty(property);
 }
