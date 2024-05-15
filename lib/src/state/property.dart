@@ -35,10 +35,12 @@ final class StatefulPropertyContext<T extends State> {
 
 final class StatefulProperty<T extends State> extends Property<T> {
   StatefulProperty(
-    this.behavior, {
+    this.behavior,
+    this.body, {
     required super.settings,
     super.setUp,
     super.tearDown,
+    this.onCheck,
   }) {
     maxCycles = settings.maxStatefulCycles ?? KiriCheck.maxStatefulCycles;
     /*
@@ -51,14 +53,34 @@ final class StatefulProperty<T extends State> extends Property<T> {
 
   final Behavior<T> behavior;
 
+  final void Function(T) body;
+  final void Function(void Function())? onCheck;
+
   late final int maxCycles;
   late final int maxShrinkingCycles;
 
   @override
   void check(PropertyTest test) {
-    print('Check behavior: ${behavior.runtimeType}');
+    if (onCheck != null) {
+      var called = false;
+      onCheck!(() {
+        if (called) {
+          throw PropertyException('onCheck is called more than once');
+        } else {
+          called = true;
+          _check(test);
+        }
+      });
+      if (!called) {
+        throw PropertyException('onCheck is not called');
+      }
+    } else {
+      _check(test);
+    }
+  }
 
-    // TODO: dependencies
+  void _check(PropertyTest test) {
+    print('Check behavior: ${behavior.runtimeType}');
 
     final propertyContext = StatefulPropertyContext(this, test);
     for (propertyContext.cycle = 0;
@@ -103,6 +125,8 @@ final class StatefulProperty<T extends State> extends Property<T> {
         print('Shrink result');
         throw PropertyException('Shrink failed: $shrunkPath');
       }
+
+      body(state);
     }
   }
 
@@ -168,12 +192,16 @@ final class StatefulProperty<T extends State> extends Property<T> {
   }
 }
 
+final class CircularDependencyException extends PropertyException {
+  CircularDependencyException(super.message);
+}
+
 // TODO
 final class CommandDependencyGraph<T extends State> {
   // TODO: 解析し、循環があればエラー
   CommandDependencyGraph(this.commands) {
     _analyze();
-    _checkCycle();
+    _checkCircularDependency();
   }
 
   final List<Command<T>> commands;
@@ -191,7 +219,7 @@ final class CommandDependencyGraph<T extends State> {
     }
   }
 
-  void _checkCycle() {
+  void _checkCircularDependency() {
     final visited = <Command<T>>{};
     final recStack = <Command<T>>{};
 
@@ -218,7 +246,7 @@ final class CommandDependencyGraph<T extends State> {
 
     for (final command in commands) {
       if (dfs(command)) {
-        throw PropertyException(
+        throw CircularDependencyException(
             'Cycle detected in command dependencies: ${command.description}');
       }
     }

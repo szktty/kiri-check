@@ -18,33 +18,6 @@ final class CounterBehavior extends Behavior<CounterState> {
 
   @override
   List<Command<CounterState>> generateCommands(CounterState s) {
-    // TODO: 依存関係のテスト
-    /*
-    final a = Action<CounterState>(
-      'a',
-      (s) {
-        s.previous = s.count;
-        s.count++;
-        s.addEvent(CounterEvent.increment);
-      },
-      postcondition: (s) {
-        return s.count == s.previous + 1;
-      },
-    );
-    final b = Action<CounterState>(
-      'b',
-      (s) {
-        s.previous = s.count;
-        s.count--;
-        s.addEvent(CounterEvent.decrement);
-      },
-      dependencies: [a],
-      postcondition: (s) {
-        return s.count == s.previous - 1;
-      },
-    );
-    a.addDependency(b);
-     */
     return [
       Generate(
         'set',
@@ -109,7 +82,7 @@ void main() {
 
   group('StatefulProperty', () {
     property('basic', () {
-      forAllStates(CounterBehavior());
+      forAllStates(CounterBehavior(), (_) {});
     });
   });
 }
