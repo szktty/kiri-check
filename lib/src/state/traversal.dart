@@ -1,8 +1,10 @@
+import 'dart:collection';
 import 'dart:html';
 
 import 'package:collection/collection.dart';
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/state/command/base.dart';
+import 'package:kiri_check/src/state/command/initialize.dart';
 import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/src/state/state.dart';
 
@@ -13,15 +15,27 @@ final class Traversal<T extends State> {
     this.commands, {
     this.maxSteps = 10,
     this.maxPaths = 100,
-  });
+  }) {
+    for (final command in commands) {
+      if (command is Initialize) {
+        initializeCommands.add(command);
+      } else {
+        actionCommands.add(command);
+      }
+    }
+    _initializeCommandQueue = Queue.of(initializeCommands);
+  }
 
   final StateContext<T> context;
   final List<Command<T>> commands;
+  final List<Command<T>> initializeCommands = [];
+  final List<Command<T>> actionCommands = [];
   final int maxSteps;
   final int maxPaths;
 
   final List<TraversalPath> paths = [];
 
+  late final Queue<Command<T>> _initializeCommandQueue;
   TraversalPath? currentPath = null;
   int currentCycle = -1;
   int currentStep = 0;
@@ -48,10 +62,14 @@ final class Traversal<T extends State> {
       throw PropertyException('No more steps.');
     }
 
+    if (_initializeCommandQueue.isNotEmpty) {
+      return _initializeCommandQueue.removeFirst();
+    }
+
     // TODO: 重みづけ
     for (var tries = 0; tries < 10; tries++) {
-      final n = context.property.random.nextInt(commands.length);
-      final command = commands[n];
+      final n = context.property.random.nextInt(actionCommands.length);
+      final command = actionCommands[n];
       // 依存関係をチェック
       if (command.dependencies.every(context.executed.containsKey)) {
         return command;

@@ -27,6 +27,8 @@ abstract class Command<T extends State> {
   late final bool Function(T)? _postcondition;
   late final T Function(T)? _nextState;
 
+  List<Command<T>> get subcommands => const [];
+
   bool canExecute(T state) {
     return _canExecute?.call(state) ?? true;
   }

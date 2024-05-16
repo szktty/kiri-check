@@ -140,7 +140,7 @@ final class StatefulProperty<T extends State> extends Property<T> {
   T _executeCommand(StateContext<T> context, Command<T> command) {
     final state = context.state;
     if (command.requires(state)) {
-      context.executed[command] ??= (context.executed[command] ?? 0) + 1;
+      _markAsExecuted(context, command);
       command.execute(state);
       if (command.ensures(state)) {
         return command.nextState(state);
@@ -151,6 +151,13 @@ final class StatefulProperty<T extends State> extends Property<T> {
     } else {
       print('Precondition is not satisfied');
       throw PropertyException('precondition is not satisfied');
+    }
+  }
+
+  void _markAsExecuted(StateContext<T> context, Command<T> command) {
+    context.executed[command] ??= (context.executed[command] ?? 0) + 1;
+    for (final sub in command.subcommands) {
+      _markAsExecuted(context, sub);
     }
   }
 
