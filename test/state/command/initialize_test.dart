@@ -19,9 +19,11 @@ final class InitializeBehavior extends Behavior<InitializeState> {
   @override
   List<Command<InitializeState>> generateCommands(InitializeState s) {
     return [
-      Initialize(Action<InitializeState>('a', (s) {
-        s.history.add(Marker.a);
-      })),
+      Initialize(
+          'first',
+          Action<InitializeState>('a', (s) {
+            s.history.add(Marker.a);
+          })),
       Action<InitializeState>('b', (s) {
         s.history.add(Marker.b);
       }),
@@ -36,6 +38,7 @@ void main() {
   property('basic', () {
     forAllStates(InitializeBehavior(), (s) {
       expect(s.history.first, Marker.a);
+      expect(s.history.where((e) => e == Marker.a).length, 1);
     });
   });
 }
