@@ -13,7 +13,7 @@ abstract class Behavior<T extends State> {
 }
 
 abstract class State {
-  late RandomContext random;
+  late final RandomContext random;
 
   void setUp() {}
 

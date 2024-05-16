@@ -43,17 +43,21 @@ final class Traversal<T extends State> {
   }
 
   // ランダムにコマンドを選択
-  Command<T> nextStep() {
+  Command<T>? nextStep() {
     if (!hasNextStep) {
       throw PropertyException('No more steps.');
     }
 
     // TODO: 重みづけ
-    final n = context.property.random.nextInt(commands.length);
-    final command = commands[n];
-    currentPath!.steps.add(TraversalStep(currentStep, command));
-    currentStep++;
-    return command;
+    for (var tries = 0; tries < 10; tries++) {
+      final n = context.property.random.nextInt(commands.length);
+      final command = commands[n];
+      // 依存関係をチェック
+      if (command.dependencies.every(context.executed.containsKey)) {
+        return command;
+      }
+    }
+    return null;
   }
 }
 
