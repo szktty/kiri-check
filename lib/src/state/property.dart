@@ -13,6 +13,7 @@ final class StateContext<T extends State> {
   final StatefulProperty<T> property;
   final PropertyTest test;
   late CommandDependencyGraph<T> dependencyGraph;
+  final Map<Command<T>, int> executed = {};
 
   Behavior<T> get behavior => property.behavior;
 }
@@ -92,30 +93,32 @@ final class StatefulProperty<T extends State> extends Property<T> {
       final commands = behavior.generateCommands(state);
       final stateContext = StateContext(state, this, test);
 
-      print('Check command dependencies...');
+      print('Check command dependency...');
       stateContext.dependencyGraph = CommandDependencyGraph(commands);
 
-      print('Run command sequence...');
       final traversal = Traversal(stateContext, commands);
       TraversalPath? shrunkPath;
       try {
         traversal.nextPath();
         print('--------------------------------------------');
-        print('Cycle #${propertyContext.cycle + 1}');
+        print('Cycle ${propertyContext.cycle + 1}');
         print('Set up...');
         state.setUp.call();
         while (traversal.hasNextStep) {
           final command = traversal.nextStep();
-          final i = traversal.currentStep + 1;
-          if (command.isExecutable?.call(state) ?? true) {
-            print('Step $i: ${command.description}');
-            state = _executeCommand(state, command);
+          if (command == null) {
+            print('skip');
+            break;
           }
+          traversal.currentStep++;
+          print('Step ${traversal.currentStep}: ${command.description}');
+          state = _executeCommand(stateContext, command);
         }
       } catch (e) {
         // TODO: shrink
         print('Error: $e');
-        shrunkPath = _shrinkPath(propertyContext, stateContext, traversal);
+        // FIXME: 無限ループになる
+        // shrunkPath = _shrinkPath(propertyContext, stateContext, traversal);
       }
 
       print('Tear down...');
@@ -134,11 +137,13 @@ final class StatefulProperty<T extends State> extends Property<T> {
     tearDown?.call();
   }
 
-  T _executeCommand(T state, Command<T> command) {
-    if (command.precondition?.call(state) ?? true) {
+  T _executeCommand(StateContext<T> context, Command<T> command) {
+    final state = context.state;
+    if (command.requires(state)) {
+      context.executed[command] ??= (context.executed[command] ?? 0) + 1;
       command.execute(state);
-      if (command.postcondition?.call(state) ?? true) {
-        return command.nextState?.call(state) ?? state;
+      if (command.ensures(state)) {
+        return command.nextState(state);
       } else {
         print('Postcondition is not satisfied');
         throw PropertyException('postcondition is not satisfied');
@@ -172,9 +177,10 @@ final class StatefulProperty<T extends State> extends Property<T> {
           final command = step.command;
           print('Shrink step ${i + 1}: ${command.description}');
           try {
-            command.precondition?.call(stateContext.state);
-            command.execute(stateContext.state);
-            command.postcondition?.call(stateContext.state);
+            command
+              ..requires(stateContext.state)
+              ..execute(stateContext.state)
+              ..ensures(stateContext.state);
           } catch (e) {
             print('Error: $e');
             failed = path;

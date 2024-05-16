@@ -6,32 +6,54 @@ abstract class Command<T extends State> {
   Command(
     this.description, {
     List<Command<T>>? dependencies,
-    this.isExecutable,
-    this.precondition,
-    this.postcondition,
-    this.nextState,
+    bool Function(T)? canExecute,
+    bool Function(T)? precondition,
+    bool Function(T)? postcondition,
+    T Function(T)? nextState,
   }) {
-    this.dependencies = dependencies ?? [];
+    _dependencies = dependencies ?? [];
+    _canExecute = canExecute;
+    _precondition = precondition;
+    _postcondition = postcondition;
+    _nextState = nextState;
   }
 
   final String description;
 
-  late final List<Command<T>> dependencies;
+  late final List<Command<T>> _dependencies;
 
-  final bool Function(T)? isExecutable;
-  final bool Function(T)? precondition;
-  final bool Function(T)? postcondition;
-  final T Function(T)? nextState;
+  late final bool Function(T)? _canExecute;
+  late final bool Function(T)? _precondition;
+  late final bool Function(T)? _postcondition;
+  late final T Function(T)? _nextState;
 
-  void addDependency(Command<T> command) {
-    dependencies.add(command);
+  bool canExecute(T state) {
+    return _canExecute?.call(state) ?? true;
   }
 
-  void removeDependency(Command<T> command) {
-    dependencies.remove(command);
+  bool requires(T state) {
+    return _precondition?.call(state) ?? true;
+  }
+
+  bool ensures(T state) {
+    return _postcondition?.call(state) ?? true;
+  }
+
+  T nextState(T state) {
+    return _nextState?.call(state) ?? state;
   }
 
   void execute(T state);
+
+  List<Command<T>> get dependencies => List.unmodifiable(_dependencies);
+
+  void addDependency(Command<T> command) {
+    _dependencies.add(command);
+  }
+
+  void removeDependency(Command<T> command) {
+    _dependencies.remove(command);
+  }
 }
 
 final class Generate<T extends State, U> extends Command<T> {
@@ -40,7 +62,7 @@ final class Generate<T extends State, U> extends Command<T> {
     this.arbitrary,
     this.action, {
     super.dependencies,
-    super.isExecutable,
+    super.canExecute,
     super.precondition,
     super.postcondition,
     super.nextState,
@@ -62,7 +84,7 @@ final class Action<T extends State> extends Command<T> {
     super.description,
     this.action, {
     super.dependencies,
-    super.isExecutable,
+    super.canExecute,
     super.precondition,
     super.postcondition,
     super.nextState,
