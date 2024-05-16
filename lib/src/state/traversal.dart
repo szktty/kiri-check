@@ -4,6 +4,7 @@ import 'dart:html';
 import 'package:collection/collection.dart';
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/state/command/base.dart';
+import 'package:kiri_check/src/state/command/finalize.dart';
 import 'package:kiri_check/src/state/command/initialize.dart';
 import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/src/state/state.dart';
@@ -19,16 +20,20 @@ final class Traversal<T extends State> {
     for (final command in commands) {
       if (command is Initialize) {
         initializeCommands.add(command);
+      } else if (command is Finalize) {
+        finalizeCommands.add(command);
       } else {
         actionCommands.add(command);
       }
     }
     _initializeCommandQueue = Queue.of(initializeCommands);
+    _finalizeCommandQueue = Queue.of(finalizeCommands);
   }
 
   final StateContext<T> context;
   final List<Command<T>> commands;
   final List<Command<T>> initializeCommands = [];
+  final List<Command<T>> finalizeCommands = [];
   final List<Command<T>> actionCommands = [];
   final int maxSteps;
   final int maxPaths;
@@ -36,6 +41,8 @@ final class Traversal<T extends State> {
   final List<TraversalPath> paths = [];
 
   late final Queue<Command<T>> _initializeCommandQueue;
+  late final Queue<Command<T>> _finalizeCommandQueue;
+
   TraversalPath? currentPath = null;
   int currentCycle = -1;
   int currentStep = 0;
@@ -64,6 +71,8 @@ final class Traversal<T extends State> {
 
     if (_initializeCommandQueue.isNotEmpty) {
       return _initializeCommandQueue.removeFirst();
+    } else if (currentStep + finalizeCommands.length >= maxSteps) {
+      return _finalizeCommandQueue.removeFirst();
     }
 
     // TODO: 重みづけ

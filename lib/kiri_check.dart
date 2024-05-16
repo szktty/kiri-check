@@ -31,6 +31,7 @@ export 'src/home.dart' show KiriCheck, Verbosity;
 export 'src/property_settings.dart'
     show EdgeCasePolicy, GenerationPolicy, ShrinkingPolicy;
 export 'src/state/command/base.dart' show Action, Command, Generate;
+export 'src/state/command/finalize.dart' show Finalize;
 export 'src/state/command/initialize.dart' show Initialize;
 export 'src/state/state.dart' show Bundle, State;
 export 'src/top.dart' show collect, forAll, forAllStates, property;

@@ -9,31 +9,31 @@ enum Marker {
   d,
 }
 
-final class InitializeState extends State {
+final class FinalizeState extends State {
   final List<Marker> history = [];
 }
 
-final class InitializeBehavior extends Behavior<InitializeState> {
+final class FinalizeBehavior extends Behavior<FinalizeState> {
   @override
-  InitializeState createState() => InitializeState();
+  FinalizeState createState() => FinalizeState();
 
   @override
-  List<Command<InitializeState>> generateCommands(InitializeState s) {
+  List<Command<FinalizeState>> generateCommands(FinalizeState s) {
     return [
-      Initialize(
-          'first a',
-          Action<InitializeState>('a', (s) {
+      Finalize(
+          'final a',
+          Action<FinalizeState>('a', (s) {
             s.history.add(Marker.a);
           })),
-      Initialize(
-          'first b',
-          Action<InitializeState>('b', (s) {
+      Finalize(
+          'final b',
+          Action<FinalizeState>('b', (s) {
             s.history.add(Marker.b);
           })),
-      Action<InitializeState>('c', (s) {
+      Action<FinalizeState>('c', (s) {
         s.history.add(Marker.c);
       }),
-      Action<InitializeState>('d', (s) {
+      Action<FinalizeState>('d', (s) {
         s.history.add(Marker.d);
       }),
     ];
@@ -42,9 +42,9 @@ final class InitializeBehavior extends Behavior<InitializeState> {
 
 void main() {
   property('basic', () {
-    forAllStates(InitializeBehavior(), (s) {
-      expect(s.history.first, Marker.a);
-      expect(s.history[1], Marker.b);
+    forAllStates(FinalizeBehavior(), (s) {
+      expect(s.history[s.history.length - 2], Marker.a);
+      expect(s.history.last, Marker.b);
       expect(s.history.where((e) => e == Marker.a).length, 1);
       expect(s.history.where((e) => e == Marker.b).length, 1);
     });
