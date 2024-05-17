@@ -14,7 +14,7 @@
     <toc-element topic="Generation.md"/>
     <toc-element topic="Shrinking.md"/>
     <toc-element topic="Stateful-testing.md">
-        <toc-element topic="Example.md"/>
+        <toc-element topic="Stateful-testing-quickstart.md"/>
         <toc-element topic="Commands.md"/>
     </toc-element>
     <toc-element topic="Statistics.md"/>
