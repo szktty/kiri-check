@@ -6,6 +6,33 @@ import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/top.dart';
 import 'package:test/test.dart';
 
+final class CallbackTestState extends State {
+  var didSetUp = false;
+  var didTearDown = false;
+
+  @override
+  void setUp() {
+    didSetUp = true;
+  }
+
+  @override
+  void tearDown() {
+    didTearDown = true;
+  }
+}
+
+final class CallbackTestBehavior extends Behavior<CallbackTestState> {
+  @override
+  CallbackTestState createState() => CallbackTestState();
+
+  @override
+  List<Command<CallbackTestState>> generateCommands(CallbackTestState s) {
+    return [
+      Action<CallbackTestState>('no op', (s) {}),
+    ];
+  }
+}
+
 final class DependencyTestState extends State {
   int a = 0;
   int b = 0;
@@ -61,6 +88,20 @@ final class CircularDependencyTest extends Behavior<State> {
 
 void main() {
   KiriCheck.verbosity = Verbosity.verbose;
+
+  // TODO: precondition, postcondition, canExecute, nextState
+
+  group('callbacks', () {
+    property('set up and tear down', () {
+      forAllStates(
+        CallbackTestBehavior(),
+        (s) {
+          expect(s.didSetUp, isTrue);
+          expect(s.didTearDown, isTrue);
+        },
+      );
+    });
+  });
 
   group('dependency', () {
     property('basic', () {
