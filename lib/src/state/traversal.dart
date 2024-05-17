@@ -74,12 +74,12 @@ final class Traversal<T extends State> {
       return _finalizeCommandQueue.removeFirst();
     }
 
-    // TODO: 重みづけ
     for (var tries = 0; tries < 10; tries++) {
       final n = context.property.random.nextInt(actionCommands.length);
       final command = actionCommands[n];
       // 依存関係をチェック
-      if (command.dependencies.every(context.executed.containsKey)) {
+      if (command.canExecute(context.state) &&
+          command.dependencies.every(context.executed.containsKey)) {
         return command;
       }
     }
