@@ -3,6 +3,7 @@ import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/property.dart';
 import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/state/traversal.dart';
 

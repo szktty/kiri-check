@@ -1,23 +1,16 @@
-import 'package:kiri_check/src/state/command/base.dart';
+import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/state.dart';
 
 final class Finalize<T extends State> extends Command<T> {
   Finalize(
-    String description,
+    super.description,
     this.command, {
-    List<Command<T>> dependencies = const [],
-    bool Function(T)? canExecute,
-    bool Function(T)? precondition,
-    bool Function(T)? postcondition,
-    T Function(T)? nextState,
-  }) : super(
-          description,
-          dependencies: dependencies,
-          canExecute: canExecute,
-          precondition: precondition,
-          postcondition: postcondition,
-          nextState: nextState,
-        );
+    List<Command<T>> super.dependencies = const [],
+    super.canExecute,
+    super.precondition,
+    super.postcondition,
+    super.nextState,
+  });
 
   final Command<T> command;
 

@@ -1,9 +1,8 @@
 import 'dart:collection';
-import 'dart:html';
 
 import 'package:collection/collection.dart';
 import 'package:kiri_check/src/exception.dart';
-import 'package:kiri_check/src/state/command/base.dart';
+import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/command/finalize.dart';
 import 'package:kiri_check/src/state/command/initialize.dart';
 import 'package:kiri_check/src/state/property.dart';

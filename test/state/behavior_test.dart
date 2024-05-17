@@ -1,6 +1,6 @@
 import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/src/exception.dart';
-import 'package:kiri_check/src/state/command/base.dart';
+import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/top.dart';

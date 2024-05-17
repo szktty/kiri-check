@@ -1,6 +1,6 @@
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/random.dart';
-import 'package:kiri_check/src/state/command/base.dart';
+import 'package:kiri_check/src/state/command.dart';
 import 'package:meta/meta.dart';
 import 'package:timezone/timezone.dart' as tz;
 
