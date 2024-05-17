@@ -10,7 +10,7 @@ import 'package:kiri_check/src/state/traversal.dart';
 final class StateContext<T extends State> {
   StateContext(this.state, this.property, this.test);
 
-  final T state;
+  T state;
   final StatefulProperty<T> property;
   final PropertyTest test;
   late CommandDependencyGraph<T> dependencyGraph;
@@ -114,6 +114,7 @@ final class StatefulProperty<T extends State> extends Property<T> {
           traversal.currentStep++;
           print('Step ${traversal.currentStep}: ${command.description}');
           state = _executeCommand(stateContext, command);
+          stateContext.state = state;
         }
       } catch (e) {
         // TODO: shrink

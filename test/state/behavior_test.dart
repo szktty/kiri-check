@@ -12,7 +12,7 @@ final class DependencyTestState extends State {
   int c = 0;
 }
 
-final class DependencyTest extends Behavior<DependencyTestState> {
+final class DependencyTestBehavior extends Behavior<DependencyTestState> {
   @override
   DependencyTestState createState() => DependencyTestState();
 
@@ -31,7 +31,7 @@ final class DependencyTest extends Behavior<DependencyTestState> {
   }
 }
 
-final class UnknownDependencyTest extends Behavior<State> {
+final class UnknownDependencyTestBehavior extends Behavior<State> {
   @override
   State createState() => DependencyTestState();
 
@@ -67,7 +67,7 @@ void main() {
       var aZero = false;
       var bZero = false;
       forAllStates(
-        DependencyTest(),
+        DependencyTestBehavior(),
         (s) {
           if (s.a == 0) {
             aZero = true;
@@ -91,7 +91,7 @@ void main() {
 
     property('unknown dependency', () {
       forAllStates(
-        UnknownDependencyTest(),
+        UnknownDependencyTestBehavior(),
         (_) {},
         onCheck: (f) {
           expect(f, throwsA(isA<CommandDependencyException>()));
