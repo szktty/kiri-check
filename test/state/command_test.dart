@@ -1,5 +1,6 @@
 import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/src/state/property.dart';
+import 'package:kiri_check/stateful_test.dart';
 import 'package:test/test.dart';
 
 final class ConditionalTestState extends State {
