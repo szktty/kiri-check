@@ -103,6 +103,7 @@ final class StatefulProperty<T extends State> extends Property<T> {
         traversal.nextPath();
         print('--------------------------------------------');
         print('Cycle ${propertyContext.cycle + 1}');
+        state.setUp();
         while (traversal.hasNextStep) {
           final command = traversal.nextStep();
           if (command == null) {
@@ -130,6 +131,7 @@ final class StatefulProperty<T extends State> extends Property<T> {
       }
 
       body(state);
+      state.tearDown();
     }
 
     tearDown?.call();

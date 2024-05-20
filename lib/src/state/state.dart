@@ -17,4 +17,8 @@ abstract class State {
   // 乱数が必要な場合はこれを使うこと
   // これを使うと、シードの指定で再現可能になる
   late final Random random;
+
+  void setUp() {}
+
+  void tearDown() {}
 }
