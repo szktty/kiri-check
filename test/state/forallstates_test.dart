@@ -20,7 +20,7 @@ final class CounterBehavior extends Behavior<CounterState> {
   @override
   List<Command<CounterState>> generateCommands(CounterState s) {
     return [
-      Generate(
+      Action(
         'set',
         integer(),
         (s, value) {
@@ -30,7 +30,7 @@ final class CounterBehavior extends Behavior<CounterState> {
             ..addEvent(CounterEvent.set);
         },
       ),
-      Action(
+      Action0(
         'increment',
         (s) {
           s.previous = s.count;
@@ -41,7 +41,7 @@ final class CounterBehavior extends Behavior<CounterState> {
           return s.count == s.previous + 1;
         },
       ),
-      Action(
+      Action0(
         'decrement',
         (s) {
           s.previous = s.count;

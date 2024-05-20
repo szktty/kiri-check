@@ -41,8 +41,8 @@ abstract class Command<T extends State> {
     return _postcondition?.call(state) ?? true;
   }
 
-  T nextState(T state) {
-    return _nextState?.call(state) ?? state;
+  T? nextState(T state) {
+    return _nextState?.call(state);
   }
 
   void execute(T state);
