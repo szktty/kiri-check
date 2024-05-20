@@ -103,8 +103,6 @@ final class StatefulProperty<T extends State> extends Property<T> {
         traversal.nextPath();
         print('--------------------------------------------');
         print('Cycle ${propertyContext.cycle + 1}');
-        print('Set up...');
-        state.setUp.call();
         while (traversal.hasNextStep) {
           final command = traversal.nextStep();
           if (command == null) {
@@ -113,7 +111,7 @@ final class StatefulProperty<T extends State> extends Property<T> {
           }
           traversal.currentStep++;
           print('Step ${traversal.currentStep}: ${command.description}');
-          state = _executeCommand(stateContext, command);
+          state = _executeCommand(stateContext, command, random);
           stateContext.state = state;
         }
       } catch (e) {
@@ -123,8 +121,6 @@ final class StatefulProperty<T extends State> extends Property<T> {
         // shrunkPath = _shrinkPath(propertyContext, stateContext, traversal);
       }
 
-      print('Tear down...');
-      state.tearDown.call();
       print('--------------------------------------------');
 
       if (shrunkPath != null) {
@@ -139,13 +135,22 @@ final class StatefulProperty<T extends State> extends Property<T> {
     tearDown?.call();
   }
 
-  T _executeCommand(StateContext<T> context, Command<T> command) {
+  T _executeCommand(
+    StateContext<T> context,
+    Command<T> command,
+    RandomContext random,
+  ) {
     final state = context.state;
     if (command.requires(state)) {
       _markAsExecuted(context, command);
       command.execute(state);
       if (command.ensures(state)) {
-        return command.nextState(state);
+        final next = command.nextState(state);
+        if (next != null) {
+          return next..random = random;
+        } else {
+          return state;
+        }
       } else {
         print('Postcondition is not satisfied');
         throw PropertyException('postcondition is not satisfied');

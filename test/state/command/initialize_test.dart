@@ -23,18 +23,18 @@ final class InitializeBehavior extends Behavior<InitializeState> {
     return [
       Initialize(
           'first a',
-          Action<InitializeState>('a', (s) {
+          Action0<InitializeState>('a', (s) {
             s.history.add(Marker.a);
           })),
       Initialize(
           'first b',
-          Action<InitializeState>('b', (s) {
+          Action0<InitializeState>('b', (s) {
             s.history.add(Marker.b);
           })),
-      Action<InitializeState>('c', (s) {
+      Action0<InitializeState>('c', (s) {
         s.history.add(Marker.c);
       }),
-      Action<InitializeState>('d', (s) {
+      Action0<InitializeState>('d', (s) {
         s.history.add(Marker.d);
       }),
     ];

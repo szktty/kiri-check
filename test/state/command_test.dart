@@ -15,7 +15,7 @@ final class ConditionalTestBehavior extends Behavior<ConditionalTestState> {
   @override
   List<Command<ConditionalTestState>> generateCommands(ConditionalTestState s) {
     return [
-      Action<ConditionalTestState>(
+      Action0<ConditionalTestState>(
         'no op',
         (s) {},
         precondition: (s) {
@@ -51,7 +51,7 @@ final class NextStateTestBehavior extends Behavior<NextStateTestState> {
   @override
   List<Command<NextStateTestState>> generateCommands(NextStateTestState s) {
     return [
-      Action<NextStateTestState>(
+      Action0<NextStateTestState>(
         'update',
         (s) {
           s.increment();
@@ -82,7 +82,7 @@ final class NonExecutableBehavior extends Behavior<NonExecutableState> {
   List<Command<NonExecutableState>> generateCommands(NonExecutableState s) {
     return [
       NonExecutableCommand('non executable'),
-      Action('executable', (s) {
+      Action0('executable', (s) {
         s.b++;
       }),
     ];
@@ -106,13 +106,13 @@ final class DependencyTestBehavior extends Behavior<DependencyTestState> {
 
   @override
   List<Command<DependencyTestState>> generateCommands(DependencyTestState s) {
-    final a = Action<DependencyTestState>('a', (s) {
+    final a = Action0<DependencyTestState>('a', (s) {
       s.a++;
     });
-    final b = Action<DependencyTestState>('b', (s) {
+    final b = Action0<DependencyTestState>('b', (s) {
       s.b++;
     }, dependencies: [a]);
-    final c = Action<DependencyTestState>('c', (s) {
+    final c = Action0<DependencyTestState>('c', (s) {
       s.c++;
     }, dependencies: [b]);
     return [a, b, c];
@@ -125,9 +125,9 @@ final class UnknownDependencyTestBehavior extends Behavior<State> {
 
   @override
   List<Command<State>> generateCommands(State s) {
-    final a = Action<State>('a', (_) {});
-    final b = Action<State>('b', (_) {}, dependencies: [a]);
-    final c = Action<State>('c', (_) {}, dependencies: [b]);
+    final a = Action0<State>('a', (_) {});
+    final b = Action0<State>('b', (_) {}, dependencies: [a]);
+    final c = Action0<State>('c', (_) {}, dependencies: [b]);
     return [b, c];
   }
 }
@@ -140,8 +140,8 @@ final class CircularDependencyTest extends Behavior<State> {
 
   @override
   List<Command<State>> generateCommands(State s) {
-    final a = Action<State>('a', (_) {});
-    final b = Action<State>('b', (_) {}, dependencies: [a]);
+    final a = Action0<State>('a', (_) {});
+    final b = Action0<State>('b', (_) {}, dependencies: [a]);
     a.addDependency(b);
     return [a, b];
   }

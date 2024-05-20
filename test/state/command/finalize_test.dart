@@ -23,18 +23,18 @@ final class FinalizeBehavior extends Behavior<FinalizeState> {
     return [
       Finalize(
           'final a',
-          Action<FinalizeState>('a', (s) {
+          Action0<FinalizeState>('a', (s) {
             s.history.add(Marker.a);
           })),
       Finalize(
           'final b',
-          Action<FinalizeState>('b', (s) {
+          Action0<FinalizeState>('b', (s) {
             s.history.add(Marker.b);
           })),
-      Action<FinalizeState>('c', (s) {
+      Action0<FinalizeState>('c', (s) {
         s.history.add(Marker.c);
       }),
-      Action<FinalizeState>('d', (s) {
+      Action0<FinalizeState>('d', (s) {
         s.history.add(Marker.d);
       }),
     ];

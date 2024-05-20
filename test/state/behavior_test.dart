@@ -29,7 +29,7 @@ final class CallbackTestBehavior extends Behavior<CallbackTestState> {
   @override
   List<Command<CallbackTestState>> generateCommands(CallbackTestState s) {
     return [
-      Action<CallbackTestState>('no op', (s) {}),
+      Action0<CallbackTestState>('no op', (s) {}),
     ];
   }
 }
