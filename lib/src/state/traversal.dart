@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:collection/collection.dart';
+import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/command/finalize.dart';
@@ -9,6 +10,8 @@ import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/src/state/state.dart';
 
 // ランダムにコマンドを選択
+// TODO: パスの数は考慮しない。純粋にパスのみ生成する
+// ステップも一度にすべて生成する
 final class Traversal<T extends State> {
   Traversal(
     this.context,
@@ -42,7 +45,7 @@ final class Traversal<T extends State> {
   late final Queue<Command<T>> _initializeCommandQueue;
   late final Queue<Command<T>> _finalizeCommandQueue;
 
-  TraversalPath? currentPath = null;
+  TraversalPath? currentPath;
   int currentCycle = -1;
   int currentStep = 0;
 
@@ -77,9 +80,7 @@ final class Traversal<T extends State> {
     for (var tries = 0; tries < 10; tries++) {
       final n = context.property.random.nextInt(actionCommands.length);
       final command = actionCommands[n];
-      // 依存関係をチェック
-      if (command.canExecute(context.state) &&
-          command.dependencies.every(context.executed.containsKey)) {
+      if (command.canExecute(context.state)) {
         return command;
       }
     }
@@ -100,29 +101,38 @@ final class TraversalPath<T extends State> {
   final Traversal traversal;
   final List<TraversalStep<T>> steps;
 
-  List<TraversalPath> shrink(int granularity) {
+  static bool equals<T extends State>(
+    List<TraversalPath<T>> a,
+    List<TraversalPath<T>> b,
+  ) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (var i = 0; i < a.length; i++) {
+      if (!const DeepCollectionEquality().equals(a[i].steps, b[i].steps)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  List<TraversalPath<T>> shrink(int granularity) {
     if (granularity < 1) {
       throw PropertyException(
           'Granularity must be greater than or equal to 1.');
     }
-    // TODO
-    final shrunkPaths = <TraversalPath>[];
-    final division = granularity + 1;
-    var previousSteps = <TraversalStep>[];
-    for (var i = 0; i < division; i++) {
-      final shrunkSteps =
-          steps.sublist(0, (steps.length ~/ division) * (i + 1));
-      print('division $division, ${steps.length ~/ division} * ${(i + 1)}');
-      print('shrunk steps: ${steps.length} -> ${shrunkSteps.length}');
-      if (previousSteps.length == shrunkSteps.length &&
-          const DeepCollectionEquality().equals(previousSteps, shrunkSteps)) {
-        continue;
+    print('TraversalPath.shrink: steps ${steps.length}');
+    return ArbitraryUtils.shrinkLength(
+      steps.length,
+      minLength: 1,
+      granularity: granularity,
+    ).map((e) {
+      if (e > steps.length) {
+        return TraversalPath<T>(traversal, []);
+      } else {
+        final shrunkSteps = steps.sublist(0, e);
+        return TraversalPath(traversal, shrunkSteps);
       }
-      previousSteps = shrunkSteps;
-      final shrunkPath = TraversalPath(traversal, shrunkSteps);
-      shrunkPaths.add(shrunkPath);
-    }
-
-    return shrunkPaths;
+    }).toList();
   }
 }

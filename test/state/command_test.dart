@@ -94,59 +94,6 @@ final class NonExecutableState extends NextStateTestState {
   int b = 0;
 }
 
-final class DependencyTestState extends State {
-  int a = 0;
-  int b = 0;
-  int c = 0;
-}
-
-final class DependencyTestBehavior extends Behavior<DependencyTestState> {
-  @override
-  DependencyTestState createState() => DependencyTestState();
-
-  @override
-  List<Command<DependencyTestState>> generateCommands(DependencyTestState s) {
-    final a = Action0<DependencyTestState>('a', (s) {
-      s.a++;
-    });
-    final b = Action0<DependencyTestState>('b', (s) {
-      s.b++;
-    }, dependencies: [a]);
-    final c = Action0<DependencyTestState>('c', (s) {
-      s.c++;
-    }, dependencies: [b]);
-    return [a, b, c];
-  }
-}
-
-final class UnknownDependencyTestBehavior extends Behavior<State> {
-  @override
-  State createState() => DependencyTestState();
-
-  @override
-  List<Command<State>> generateCommands(State s) {
-    final a = Action0<State>('a', (_) {});
-    final b = Action0<State>('b', (_) {}, dependencies: [a]);
-    final c = Action0<State>('c', (_) {}, dependencies: [b]);
-    return [b, c];
-  }
-}
-
-final class CircularDependencyTestState extends State {}
-
-final class CircularDependencyTest extends Behavior<State> {
-  @override
-  State createState() => CircularDependencyTestState();
-
-  @override
-  List<Command<State>> generateCommands(State s) {
-    final a = Action0<State>('a', (_) {});
-    final b = Action0<State>('b', (_) {}, dependencies: [a]);
-    a.addDependency(b);
-    return [a, b];
-  }
-}
-
 void main() {
   property('conditional', () {
     forAllStates(ConditionalTestBehavior(), (s) {

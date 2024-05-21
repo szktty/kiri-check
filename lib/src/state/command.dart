@@ -5,14 +5,10 @@ import 'package:kiri_check/src/state/state.dart';
 abstract class Command<T extends State> {
   Command(
     this.description, {
-    List<Command<T>>? dependencies,
-    bool Function(T)? canExecute,
     bool Function(T)? precondition,
     bool Function(T)? postcondition,
     T Function(T)? nextState,
   }) {
-    _dependencies = dependencies ?? [];
-    _canExecute = canExecute;
     _precondition = precondition;
     _postcondition = postcondition;
     _nextState = nextState;
@@ -20,18 +16,11 @@ abstract class Command<T extends State> {
 
   final String description;
 
-  late final List<Command<T>> _dependencies;
-
-  late final bool Function(T)? _canExecute;
   late final bool Function(T)? _precondition;
   late final bool Function(T)? _postcondition;
   late final T Function(T)? _nextState;
 
   List<Command<T>> get subcommands => const [];
-
-  bool canExecute(T state) {
-    return _canExecute?.call(state) ?? true;
-  }
 
   bool requires(T state) {
     return _precondition?.call(state) ?? true;
@@ -46,14 +35,4 @@ abstract class Command<T extends State> {
   }
 
   void execute(T state);
-
-  List<Command<T>> get dependencies => List.unmodifiable(_dependencies);
-
-  void addDependency(Command<T> command) {
-    _dependencies.add(command);
-  }
-
-  void removeDependency(Command<T> command) {
-    _dependencies.remove(command);
-  }
 }

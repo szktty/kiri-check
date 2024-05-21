@@ -5,8 +5,6 @@ final class Finalize<T extends State> extends Command<T> {
   Finalize(
     super.description,
     this.command, {
-    List<Command<T>> super.dependencies = const [],
-    super.canExecute,
     super.precondition,
     super.postcondition,
     super.nextState,

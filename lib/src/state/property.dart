@@ -13,7 +13,6 @@ final class StateContext<T extends State> {
   T state;
   final StatefulProperty<T> property;
   final PropertyTest test;
-  final Map<Command<T>, int> executed = {};
 
   Behavior<T> get behavior => property.behavior;
 }
@@ -94,7 +93,9 @@ final class StatefulProperty<T extends State> extends Property<T> {
       final stateContext = StateContext(state, this, test);
 
       final traversal = Traversal(stateContext, commands);
-      TraversalPath? shrunkPath;
+      // TODO
+      dynamic shrinkResult = null;
+      var currentSteps = <TraversalStep<T>>[];
       try {
         traversal.nextPath();
         print('--------------------------------------------');
@@ -106,6 +107,7 @@ final class StatefulProperty<T extends State> extends Property<T> {
             print('skip');
             break;
           }
+          currentSteps.add(TraversalStep(traversal.currentStep, command));
           traversal.currentStep++;
           print('Step ${traversal.currentStep}: ${command.description}');
           state = _executeCommand(stateContext, command, random);
@@ -114,16 +116,21 @@ final class StatefulProperty<T extends State> extends Property<T> {
       } catch (e) {
         // TODO: shrink
         print('Error: $e');
-        // FIXME: 無限ループになる
-        // shrunkPath = _shrinkPath(propertyContext, stateContext, traversal);
+        final shrinker = _StatefulPropertyShrinker(
+          propertyContext,
+          stateContext,
+          TraversalPath(traversal, currentSteps),
+        );
+        // TODO: result
+        shrinker.shrink();
       }
 
       print('--------------------------------------------');
 
-      if (shrunkPath != null) {
+      if (shrinkResult != null) {
         print('Shrink result');
         tearDown?.call();
-        throw PropertyException('Shrink failed: $shrunkPath');
+        throw PropertyException('Shrink failed: $shrinkResult');
       }
 
       body(state);
@@ -140,7 +147,6 @@ final class StatefulProperty<T extends State> extends Property<T> {
   ) {
     final state = context.state;
     if (command.requires(state)) {
-      _markAsExecuted(context, command);
       command.execute(state);
       if (command.ensures(state)) {
         final next = command.nextState(state);
@@ -158,55 +164,111 @@ final class StatefulProperty<T extends State> extends Property<T> {
       throw PropertyException('precondition is not satisfied');
     }
   }
+}
 
-  void _markAsExecuted(StateContext<T> context, Command<T> command) {
-    context.executed[command] ??= (context.executed[command] ?? 0) + 1;
-    for (final sub in command.subcommands) {
-      _markAsExecuted(context, sub);
-    }
+final class _StatefulPropertyShrinker<T extends State> {
+  _StatefulPropertyShrinker(
+    this.propertyContext,
+    this.stateContext,
+    this.originalPath,
+  );
+
+  final StatefulPropertyContext<T> propertyContext;
+  final StateContext<T> stateContext;
+  final TraversalPath<T> originalPath;
+
+  void shrink() {
+    // TODO
+    _shrinkPaths();
   }
 
-  // 1. パスを短縮する
-  // 2. バンドルの値を短縮する
+  int get _shrinkCycle => propertyContext.shrinkCycle;
+
+  bool get _hasShrinkCycle =>
+      _shrinkCycle < propertyContext.property.maxShrinkingCycles;
+
+  TraversalPath<T> _shrinkPaths() {
+    propertyContext.shrinkCycle = 0;
+    var basePath = originalPath;
+    var previousPaths = <TraversalPath<T>>[];
+    while (_hasShrinkCycle) {
+      final granularity = _shrinkCycle + 1;
+      final paths = basePath.shrink(granularity);
+      if (TraversalPath.equals(previousPaths, paths)) {
+        break;
+      }
+      previousPaths = paths;
+
+      for (final path in paths) {
+        print('Shrink cycle ${_shrinkCycle + 1}');
+        if (_checkPath(path)) {
+          break;
+        } else {
+          basePath = path;
+          propertyContext.shrinkCycle++;
+          if (!_hasShrinkCycle) {
+            break;
+          }
+        }
+      }
+    }
+    return basePath;
+  }
+
+  bool _checkPath(TraversalPath<T> path) {
+    print('Check path: ${path.steps.length} steps');
+    return true;
+  }
+
+  /*
   TraversalPath _shrinkPath(
     StatefulPropertyContext<T> propertyContext,
     StateContext<T> stateContext,
-    Traversal traversal,
+    TraversalPath originalPath,
   ) {
-    // TODO
-    final start = traversal.currentPath!;
-    var granularity = 1;
-    var failed = start;
+    var basePath = originalPath;
+    var failed = originalPath;
     propertyContext.shrinkCycle = 0;
     while (propertyContext.shrinkCycle < maxShrinkingCycles) {
       print('--------------------------------------------');
-      final paths = start.shrink(granularity);
+      final paths = basePath.shrink(propertyContext.shrinkCycle);
+      if (TraversalPath.equals(paths, basePath)) {
+        return failed;
+      }
+
       for (final path in paths) {
         print('Shrink cycle ${propertyContext.shrinkCycle + 1}');
         for (var i = 0; i < path.steps.length; i++) {
-          // TODO: 最後にエラーになったパスの短縮の繰り返し
           final step = path.steps[i];
           final command = step.command;
           print('Shrink step ${i + 1}: ${command.description}');
           try {
-            command
-              ..requires(stateContext.state)
-              ..execute(stateContext.state)
-              ..ensures(stateContext.state);
+            if (command.requires(stateContext.state)) {
+              command.execute(stateContext.state);
+              if (command.ensures(stateContext.state)) {
+                // 成功
+                basePath = path;
+                break;
+              } else {
+                print('Postcondition is not satisfied');
+                throw PropertyException('postcondition is not satisfied');
+              }
+            } else {
+              print('Precondition is not satisfied');
+              throw PropertyException('precondition is not satisfied');
+            }
           } catch (e) {
             print('Error: $e');
             failed = path;
-            continue;
           }
-          // passのシュリンク終了
-          _shrinkValue(path);
-          return failed;
         }
         propertyContext.shrinkCycle++;
       }
     }
     return failed;
   }
+
+   */
 
   void _shrinkValue(TraversalPath path) {
     // TODO
