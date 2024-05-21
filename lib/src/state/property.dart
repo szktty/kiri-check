@@ -13,7 +13,6 @@ final class StateContext<T extends State> {
   T state;
   final StatefulProperty<T> property;
   final PropertyTest test;
-  late CommandDependencyGraph<T> dependencyGraph;
   final Map<Command<T>, int> executed = {};
 
   Behavior<T> get behavior => property.behavior;
@@ -93,9 +92,6 @@ final class StatefulProperty<T extends State> extends Property<T> {
       print('Create state: ${state.runtimeType}');
       final commands = behavior.generateCommands(state);
       final stateContext = StateContext(state, this, test);
-
-      print('Check command dependency...');
-      stateContext.dependencyGraph = CommandDependencyGraph(commands);
 
       final traversal = Traversal(stateContext, commands);
       TraversalPath? shrunkPath;
@@ -216,75 +212,4 @@ final class StatefulProperty<T extends State> extends Property<T> {
     // TODO
     print('Shrink bundles...');
   }
-}
-
-final class CommandDependencyException extends PropertyException {
-  CommandDependencyException(super.message);
-}
-
-// TODO
-final class CommandDependencyGraph<T extends State> {
-  // TODO: 解析し、循環があればエラー
-  CommandDependencyGraph(this.commands) {
-    _analyze();
-    _checkCircularDependency();
-  }
-
-  final List<Command<T>> commands;
-  final Map<Command<T>, CommandDependency<T>> dependencies = {};
-
-  void _analyze() {
-    for (final command in commands) {
-      final dependencies = <Command<T>>[];
-      for (final dep in command.dependencies) {
-        if (commands.contains(dep)) {
-          dependencies.add(dep);
-        } else {
-          throw CommandDependencyException(
-              'Unknown dependency: ${dep.description}');
-        }
-      }
-      this.dependencies[command] = CommandDependency(command, dependencies);
-    }
-  }
-
-  void _checkCircularDependency() {
-    final visited = <Command<T>>{};
-    final recStack = <Command<T>>{};
-
-    bool dfs(Command<T> command) {
-      if (!visited.contains(command)) {
-        // Mark the current node as visited and part of the recursion stack
-        visited.add(command);
-        recStack.add(command);
-
-        // Recur for all the vertices adjacent to this vertex
-        final commandDependencies = dependencies[command]?.dependencies ?? [];
-        for (final dep in commandDependencies) {
-          if (!visited.contains(dep) && dfs(dep)) {
-            return true;
-          } else if (recStack.contains(dep)) {
-            return true;
-          }
-        }
-      }
-      // Remove the vertex from recursion stack
-      recStack.remove(command);
-      return false;
-    }
-
-    for (final command in commands) {
-      if (dfs(command)) {
-        throw CommandDependencyException(
-            'Cycle detected in command dependencies: ${command.description}');
-      }
-    }
-  }
-}
-
-final class CommandDependency<T extends State> {
-  CommandDependency(this.command, this.dependencies);
-
-  final Command<T> command;
-  final List<Command<T>> dependencies;
 }
