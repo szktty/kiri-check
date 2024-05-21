@@ -9,8 +9,6 @@ final class Action<T extends State, U> extends Command<T> {
     super.description,
     Arbitrary<U> arbitrary,
     void Function(T, U) action, {
-    super.dependencies,
-    super.canExecute,
     super.precondition,
     super.postcondition,
     super.nextState,
@@ -34,8 +32,6 @@ final class Action0<T extends State> extends Action<T, void> {
   Action0(
     String description,
     void Function(T) action, {
-    super.dependencies,
-    super.canExecute,
     super.precondition,
     super.postcondition,
     super.nextState,
@@ -48,8 +44,6 @@ final class Action2<T extends State, E1, E2> extends Action<T, (E1, E2)> {
     Arbitrary<E1> arbitrary1,
     Arbitrary<E2> arbitrary2,
     void Function(T, E1, E2) action, {
-    super.dependencies,
-    super.canExecute,
     super.precondition,
     super.postcondition,
     super.nextState,
@@ -68,8 +62,6 @@ final class Action3<T extends State, E1, E2, E3>
     Arbitrary<E2> arbitrary2,
     Arbitrary<E3> arbitrary3,
     void Function(T, E1, E2, E3) action, {
-    super.dependencies,
-    super.canExecute,
     super.precondition,
     super.postcondition,
     super.nextState,
@@ -89,8 +81,6 @@ final class Action4<T extends State, E1, E2, E3, E4>
     Arbitrary<E3> arbitrary3,
     Arbitrary<E4> arbitrary4,
     void Function(T, E1, E2, E3, E4) action, {
-    super.dependencies,
-    super.canExecute,
     super.precondition,
     super.postcondition,
     super.nextState,
@@ -112,8 +102,6 @@ final class Action5<T extends State, E1, E2, E3, E4, E5>
     Arbitrary<E4> arbitrary4,
     Arbitrary<E5> arbitrary5,
     void Function(T, E1, E2, E3, E4, E5) action, {
-    super.dependencies,
-    super.canExecute,
     super.precondition,
     super.postcondition,
     super.nextState,
@@ -136,8 +124,6 @@ final class Action6<T extends State, E1, E2, E3, E4, E5, E6>
     Arbitrary<E5> arbitrary5,
     Arbitrary<E6> arbitrary6,
     void Function(T, E1, E2, E3, E4, E5, E6) action, {
-    super.dependencies,
-    super.canExecute,
     super.precondition,
     super.postcondition,
     super.nextState,
@@ -162,8 +148,6 @@ final class Action7<T extends State, E1, E2, E3, E4, E5, E6, E7>
     Arbitrary<E6> arbitrary6,
     Arbitrary<E7> arbitrary7,
     void Function(T, E1, E2, E3, E4, E5, E6, E7) action, {
-    super.dependencies,
-    super.canExecute,
     super.precondition,
     super.postcondition,
     super.nextState,
@@ -196,8 +180,6 @@ final class Action8<T extends State, E1, E2, E3, E4, E5, E6, E7, E8>
     Arbitrary<E7> arbitrary7,
     Arbitrary<E8> arbitrary8,
     void Function(T, E1, E2, E3, E4, E5, E6, E7, E8) action, {
-    super.dependencies,
-    super.canExecute,
     super.precondition,
     super.postcondition,
     super.nextState,
