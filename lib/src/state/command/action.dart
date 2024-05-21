@@ -20,11 +20,30 @@ final class Action<T extends State, U> extends Command<T> {
   late final Arbitrary<U> _arbitrary;
   late final void Function(T, U) _action;
 
+  U? _cache;
+
+  bool _inShrinking = false;
+
   @override
   void execute(T state) {
-    final base = _arbitrary as ArbitraryBase<U>;
-    final value = base.generate(state.random as RandomContext);
-    _action(state, value);
+    if (_inShrinking) {
+      _action(state, _cache as U);
+    } else {
+      final base = _arbitrary as ArbitraryBase<U>;
+      final value = base.generate(state.random as RandomContext);
+      _cache = value;
+      _action(state, value);
+    }
+  }
+}
+
+extension ActionPrivate<T extends State, U> on Action<T, U> {
+  void beginShrink() {
+    _inShrinking = true;
+  }
+
+  void endShrink() {
+    _inShrinking = false;
   }
 }
 

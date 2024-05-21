@@ -82,62 +82,55 @@ final class StatefulProperty<T extends State> extends Property<T> {
   void _check(PropertyTest test) {
     print('Check behavior: ${behavior.runtimeType}');
     setUp?.call();
+    _checkPaths(test);
+    tearDown?.call();
+  }
 
+  void _checkPaths(PropertyTest test) {
     final propertyContext = StatefulPropertyContext(this, test);
     for (propertyContext.cycle = 0;
         propertyContext.cycle < maxCycles;
         propertyContext.cycle++) {
-      var state = behavior.createState()..random = random;
-      print('Create state: ${state.runtimeType}');
-      final commands = behavior.generateCommands(state);
-      final stateContext = StateContext(state, this, test);
-
-      final traversal = Traversal(stateContext, commands);
-      // TODO
-      dynamic shrinkResult = null;
-      var currentSteps = <TraversalStep<T>>[];
-      try {
-        traversal.nextPath();
+      for (var cycle = 0; cycle < maxCycles; cycle++) {
         print('--------------------------------------------');
-        print('Cycle ${propertyContext.cycle + 1}');
+        print('Cycle ${cycle + 1}');
+
+        var state = behavior.createState()..random = random;
+        print('Create state: ${state.runtimeType}');
+        final stateContext = StateContext(state, this, test);
+        final commands = behavior.generateCommands(state);
+        final traversal = Traversal(propertyContext, commands);
+        final path = traversal.generatePath();
+
         state.setUp();
-        while (traversal.hasNextStep) {
-          final command = traversal.nextStep();
-          if (command == null) {
-            print('skip');
-            break;
+
+        for (var i = 0; i < path.steps.length; i++) {
+          final step = path.steps[i];
+          final command = step.command;
+          print('Step ${i + 1}: ${command.description}');
+          try {
+            state = _executeCommand(stateContext, command, random);
+            stateContext.state = state;
+          } catch (e) {
+            print('Error: $e');
+            state.tearDown();
+            final shrinker = _StatefulPropertyShrinker(
+              propertyContext,
+              stateContext,
+              TraversalPath(path.steps.sublist(0, i + 1)),
+            );
+            // TODO: result
+            shrinker.shrink();
+            throw PropertyException('Shrink failed');
           }
-          currentSteps.add(TraversalStep(traversal.currentStep, command));
-          traversal.currentStep++;
-          print('Step ${traversal.currentStep}: ${command.description}');
-          state = _executeCommand(stateContext, command, random);
-          stateContext.state = state;
         }
-      } catch (e) {
-        // TODO: shrink
-        print('Error: $e');
-        final shrinker = _StatefulPropertyShrinker(
-          propertyContext,
-          stateContext,
-          TraversalPath(traversal, currentSteps),
-        );
-        // TODO: result
-        shrinker.shrink();
+
+        body(state);
+        state.tearDown();
       }
 
       print('--------------------------------------------');
-
-      if (shrinkResult != null) {
-        print('Shrink result');
-        tearDown?.call();
-        throw PropertyException('Shrink failed: $shrinkResult');
-      }
-
-      body(state);
-      state.tearDown();
     }
-
-    tearDown?.call();
   }
 
   T _executeCommand(
@@ -217,6 +210,17 @@ final class _StatefulPropertyShrinker<T extends State> {
 
   bool _checkPath(TraversalPath<T> path) {
     print('Check path: ${path.steps.length} steps');
+    // TODO: 最小のステップ数を見つける
+    // TODO: 単純に末尾以前をカットしても意味がない。すべて成功するから
+    /*
+    List<TraversalPath<T>>? minShrunkPath;
+    for (var granularity = 1; granularity < 10; granularity++) {
+      final shrunkPaths = path.shrink(granularity);
+      if (_checkShrinkedPath(shrinkedPath)) {
+        return true;
+      }
+    }
+     */
     return true;
   }
 
