@@ -16,8 +16,7 @@ final class Traversal<T extends State> {
   Traversal(
     this.context,
     this.commands, {
-    this.maxSteps = 10,
-    this.maxPaths = 100,
+    this.maxSteps = 30,
   }) {
     for (final command in commands) {
       if (command is Initialize) {
@@ -28,63 +27,26 @@ final class Traversal<T extends State> {
         actionCommands.add(command);
       }
     }
-    _initializeCommandQueue = Queue.of(initializeCommands);
-    _finalizeCommandQueue = Queue.of(finalizeCommands);
   }
 
-  final StateContext<T> context;
+  final StatefulPropertyContext<T> context;
   final List<Command<T>> commands;
   final List<Command<T>> initializeCommands = [];
   final List<Command<T>> finalizeCommands = [];
   final List<Command<T>> actionCommands = [];
   final int maxSteps;
-  final int maxPaths;
 
-  final List<TraversalPath> paths = [];
-
-  late final Queue<Command<T>> _initializeCommandQueue;
-  late final Queue<Command<T>> _finalizeCommandQueue;
-
-  TraversalPath? currentPath;
-  int currentCycle = -1;
-  int currentStep = 0;
-
-  bool get hasNextPath => paths.length < maxPaths;
-
-  bool get hasNextStep => currentPath != null && currentStep < maxSteps;
-
-  void nextPath() {
-    if (!hasNextPath) {
-      throw PropertyException('No more paths.');
+  TraversalPath<T> generatePath() {
+    final path = TraversalPath<T>();
+    for (final command in commands) {
+      path.addStep(command);
     }
-
-    currentPath = TraversalPath(this, []);
-    paths.add(currentPath!);
-
-    currentCycle++;
-    currentStep = 0;
-  }
-
-  // ランダムにコマンドを選択
-  Command<T>? nextStep() {
-    if (!hasNextStep) {
-      throw PropertyException('No more steps.');
-    }
-
-    if (_initializeCommandQueue.isNotEmpty) {
-      return _initializeCommandQueue.removeFirst();
-    } else if (currentStep + finalizeCommands.length >= maxSteps) {
-      return _finalizeCommandQueue.removeFirst();
-    }
-
-    for (var tries = 0; tries < 10; tries++) {
+    for (var tries = 0; tries < maxSteps; tries++) {
       final n = context.property.random.nextInt(actionCommands.length);
       final command = actionCommands[n];
-      if (command.canExecute(context.state)) {
-        return command;
-      }
+      path.addStep(command);
     }
-    return null;
+    return path;
   }
 }
 
@@ -96,10 +58,15 @@ final class TraversalStep<T extends State> {
 }
 
 final class TraversalPath<T extends State> {
-  TraversalPath(this.traversal, this.steps);
+  TraversalPath([List<TraversalStep<T>> steps = const []]) {
+    this.steps.addAll(steps);
+  }
 
-  final Traversal traversal;
-  final List<TraversalStep<T>> steps;
+  final List<TraversalStep<T>> steps = [];
+
+  void addStep(Command<T> command) {
+    steps.add(TraversalStep(steps.length, command));
+  }
 
   static bool equals<T extends State>(
     List<TraversalPath<T>> a,
@@ -124,15 +91,11 @@ final class TraversalPath<T extends State> {
     print('TraversalPath.shrink: steps ${steps.length}');
     return ArbitraryUtils.shrinkLength(
       steps.length,
-      minLength: 1,
+      minLength: 0,
       granularity: granularity,
     ).map((e) {
-      if (e > steps.length) {
-        return TraversalPath<T>(traversal, []);
-      } else {
-        final shrunkSteps = steps.sublist(0, e);
-        return TraversalPath(traversal, shrunkSteps);
-      }
+      final shrunkSteps = steps.sublist(0, e);
+      return TraversalPath(shrunkSteps);
     }).toList();
   }
 }

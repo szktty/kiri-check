@@ -33,7 +33,7 @@ final class BankAccountBehavior extends Behavior<BankAccountState> {
         integer(min: 0, max: s.maxWithdraw * 2),
         (s, amount) {
           print('withdraw: $amount');
-          expect(s.withdraw(amount), isTrue);
+          expect(s.withdraw(amount), isNull);
         },
       ),
       /*
@@ -49,10 +49,10 @@ final class BankAccountBehavior extends Behavior<BankAccountState> {
 }
 
 final class BankAccountState extends State {
-  int balance = 100000;
+  int balance = 10000;
   int maxDeposit = 5000;
   int maxWithdraw = 5000;
-  int maxBalance = 10000;
+  int maxBalance = 100000;
   int minBalance = 0;
   bool locked = false;
   double chargeRate = 0.03;
