@@ -41,19 +41,11 @@ abstract class Command<T extends State> {
   bool useCache = false;
 
   @internal
-  bool isShrinkable() {
-    return false;
-  }
-
-  @internal
-  bool tryShrink() {
-    return true;
-  }
-
-  // TODO: 不要かも
-  @internal
-  void successShrink() {}
+  bool nextShrink() => false;
 
   @internal
   void failShrink() {}
+
+  @internal
+  dynamic get falsifyingExample => null;
 }

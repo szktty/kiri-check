@@ -61,17 +61,12 @@ final class Action<T extends State, U> extends Command<T> {
   U? _minShrunk;
   U? _lastShrunk;
 
-  // TODO: fix
-  U get minShrunk => _minShrunk!;
-
   @override
-  bool isShrinkable() {
-    return true;
-  }
+  dynamic get falsifyingExample => _minShrunk;
 
-  // TODO: 最小値を求める
+  // TODO: 最小値を求め続ける
   @override
-  bool tryShrink() {
+  bool nextShrink() {
     switch (_shrinkState) {
       case ActionShrinkingState.notStarted:
         _shrinkState = ActionShrinkingState.running;

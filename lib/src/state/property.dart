@@ -125,6 +125,9 @@ final class StatefulProperty<T extends State> extends Property<T> {
           } catch (e) {
             print('Error: $e');
             state.tearDown();
+
+            // TODO: 次に一部のコマンドをカットするフェーズを挟む
+
             final shrinker = _StatefulPropertyShrinker(
               propertyContext,
               stateContext,
@@ -138,7 +141,7 @@ final class StatefulProperty<T extends State> extends Property<T> {
               final command = step.command;
               print('Step ${i + 1}: ${command.description}');
               if (command is Action) {
-                print('Shrunk value: ${(command as Action).minShrunk}');
+                print('Shrunk value: ${command.falsifyingExample}');
               }
             }
 
@@ -253,22 +256,23 @@ final class _StatefulPropertyShrinker<T extends State> {
   }
 
   void _checkValues(TraversalPath<T> path) {
-    while (_hasShrinkCycle) {
+    var allShrinkDone = false;
+    while (_hasShrinkCycle && !allShrinkDone) {
       print('Shrink cycle ${_shrinkCycle + 1}');
       final state = propertyContext.behavior.createState()
         ..random = property.random;
       final stateContext = StateContext(state, property, propertyContext.test);
+      allShrinkDone = true;
       for (var i = 0; i < path.steps.length; i++) {
         final step = path.steps[i];
         final command = step.command;
         print('Shrink step ${i + 1}: ${command.description}');
         try {
-          // TODO: すべてのコマンドのシュリンクが終了するまで繰り返す
-          if (command.isShrinkable() && !command.tryShrink()) {
-            return;
+          // サイクル制限に達するか、すべてのコマンドのシュリンクが終了するまで繰り返す
+          if (command.nextShrink()) {
+            allShrinkDone = false;
           }
           stateContext.executeCommand(command);
-          command.successShrink();
         } catch (e) {
           print('Error: $e');
           command.failShrink();
