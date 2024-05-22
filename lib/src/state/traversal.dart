@@ -89,13 +89,22 @@ final class TraversalPath<T extends State> {
           'Granularity must be greater than or equal to 1.');
     }
     print('TraversalPath.shrink: steps ${steps.length}');
-    return ArbitraryUtils.shrinkLength(
+    final range = ArbitraryUtils.shrinkLength(
       steps.length,
       minLength: 0,
       granularity: granularity,
-    ).map((e) {
-      final shrunkSteps = steps.sublist(0, e);
-      return TraversalPath(shrunkSteps);
-    }).toList();
+    );
+    var start = 0;
+    final paths = <TraversalPath<T>>[];
+    for (final length in range) {
+      final end = start + length;
+      final substeps = steps.sublist(start, end);
+      if (substeps.isNotEmpty) {
+        final path = TraversalPath(substeps);
+        paths.add(path);
+      }
+      start = end;
+    }
+    return paths;
   }
 }
