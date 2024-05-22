@@ -1,8 +1,17 @@
+import 'dart:collection';
+
+import 'package:collection/collection.dart';
 import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/state.dart';
+
+enum ActionShrinkingState {
+  notStarted,
+  running,
+  finished,
+}
 
 final class Action<T extends State, U> extends Command<T> {
   Action(
@@ -15,35 +24,90 @@ final class Action<T extends State, U> extends Command<T> {
   }) {
     _arbitrary = arbitrary;
     _action = action;
+    _distance = null;
+    _shrunkQueue = null;
   }
 
   late final Arbitrary<U> _arbitrary;
+
+  ArbitraryBase<U> get _arbitraryBase => _arbitrary as ArbitraryBase<U>;
   late final void Function(T, U) _action;
 
   U? _cache;
 
-  bool _inShrinking = false;
-
   @override
   void execute(T state) {
-    if (_inShrinking) {
+    if (_shrinkState == ActionShrinkingState.running) {
+      if (_shrunkQueue!.isNotEmpty) {
+        _lastShrunk = _shrunkQueue!.removeFirst();
+        _action(state, _lastShrunk as U);
+      } else {
+        throw StateError('No more shrunk values');
+      }
+    } else if (useCache) {
       _action(state, _cache as U);
     } else {
-      final base = _arbitrary as ArbitraryBase<U>;
-      final value = base.generate(state.random as RandomContext);
+      final value = _arbitraryBase.generate(state.random as RandomContext);
       _cache = value;
       _action(state, value);
     }
   }
-}
 
-extension ActionPrivate<T extends State, U> on Action<T, U> {
-  void beginShrink() {
-    _inShrinking = true;
+  ActionShrinkingState _shrinkState = ActionShrinkingState.notStarted;
+  ShrinkingDistance? _distance;
+  int _shrinkGranularity = 1;
+  List<U>? _previousShrunk;
+  Queue<U>? _shrunkQueue;
+  U? _minShrunk;
+  U? _lastShrunk;
+
+  // TODO: fix
+  U get minShrunk => _minShrunk!;
+
+  @override
+  bool isShrinkable() {
+    return true;
   }
 
-  void endShrink() {
-    _inShrinking = false;
+  // TODO: 最小値を求める
+  @override
+  bool tryShrink() {
+    switch (_shrinkState) {
+      case ActionShrinkingState.notStarted:
+        _shrinkState = ActionShrinkingState.running;
+        _distance = _arbitraryBase.calculateDistance(_cache as U)
+          ..granularity = _shrinkGranularity;
+        final shrunk = _arbitraryBase.shrink(_cache as U, _distance!);
+        print('first shrink: $shrunk');
+        _previousShrunk = shrunk;
+        _shrunkQueue = Queue.of(shrunk);
+        _minShrunk = _cache;
+        return true;
+      case ActionShrinkingState.running:
+        if (_shrunkQueue!.isNotEmpty) {
+          return true;
+        } else {
+          _shrinkGranularity++;
+          _distance!.granularity = _shrinkGranularity;
+          final shrunk = _arbitraryBase.shrink(_cache as U, _distance!);
+          print('next shrink: $shrunk');
+          if (const DeepCollectionEquality().equals(shrunk, _previousShrunk)) {
+            _shrinkState = ActionShrinkingState.finished;
+            return false;
+          } else {
+            _previousShrunk = shrunk;
+            _shrunkQueue = Queue.of(shrunk);
+            return true;
+          }
+        }
+      case ActionShrinkingState.finished:
+        return false;
+    }
+  }
+
+  @override
+  void failShrink() {
+    _minShrunk = _lastShrunk;
   }
 }
 

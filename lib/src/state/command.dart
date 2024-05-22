@@ -1,6 +1,7 @@
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/src/state/state.dart';
+import 'package:meta/meta.dart';
 
 abstract class Command<T extends State> {
   Command(
@@ -35,4 +36,24 @@ abstract class Command<T extends State> {
   }
 
   void execute(T state);
+
+  @internal
+  bool useCache = false;
+
+  @internal
+  bool isShrinkable() {
+    return false;
+  }
+
+  @internal
+  bool tryShrink() {
+    return true;
+  }
+
+  // TODO: 不要かも
+  @internal
+  void successShrink() {}
+
+  @internal
+  void failShrink() {}
 }
