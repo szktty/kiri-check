@@ -44,7 +44,7 @@ abstract class Command<T extends State> {
   bool nextShrink() => false;
 
   @internal
-  void failShrink() {}
+  void failShrunk() {}
 
   @internal
   dynamic get falsifyingExample => null;

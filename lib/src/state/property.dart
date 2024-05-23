@@ -275,7 +275,7 @@ final class _StatefulPropertyShrinker<T extends State> {
           stateContext.executeCommand(command);
         } catch (e) {
           print('Error: $e');
-          command.failShrink();
+          command.failShrunk();
         }
       }
       propertyContext.shrinkCycle++;
