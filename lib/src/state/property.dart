@@ -196,9 +196,11 @@ final class _StatefulPropertyShrinker<T extends State> {
   StatefulProperty<T> get property => propertyContext.property;
 
   StatefulShrinkingResult<T> shrink() {
-    final minSubpath = _checkSubpaths();
-    _checkValues(minSubpath);
-    return StatefulShrinkingResult(stateContext.state, minSubpath);
+    final subpath = _checkSubpaths();
+    // TODO: 一部のパスをカットしてチェック
+
+    _checkValues(subpath);
+    return StatefulShrinkingResult(stateContext.state, subpath);
   }
 
   int get _shrinkCycle => propertyContext.shrinkCycle;
