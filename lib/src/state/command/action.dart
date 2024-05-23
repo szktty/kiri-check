@@ -64,7 +64,6 @@ final class Action<T extends State, U> extends Command<T> {
   @override
   dynamic get falsifyingExample => _minShrunk;
 
-  // TODO: 最小値を求め続ける
   @override
   bool nextShrink() {
     switch (_shrinkState) {
