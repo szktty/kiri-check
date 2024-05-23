@@ -101,7 +101,7 @@ final class Action<T extends State, U> extends Command<T> {
   }
 
   @override
-  void failShrink() {
+  void failShrunk() {
     _minShrunk = _lastShrunk;
   }
 }
