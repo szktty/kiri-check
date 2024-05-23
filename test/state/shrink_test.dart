@@ -2,8 +2,11 @@ import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/stateful_test.dart';
 import 'package:test/test.dart';
 
-enum BankAccountError {
+enum BankAccountResult {
+  success,
   locked,
+  underMinDepositPerOnce,
+  underMinWithdrawPerOnce,
   overMaxDepositPerOnce,
   overMaxDepositPerDay,
   overMaxWithdrawPerOnce,
@@ -20,7 +23,9 @@ enum BankAccountOperation {
 }
 
 // TODO: 確認したいシュリンク内容ごとにBehaviorを用意したほうがよさそう
-final class BankAccountBehavior extends Behavior<BankAccountState> {
+
+// TODO: 完全な実装。すべて成功すべき
+final class BankAccountFullBehavior extends Behavior<BankAccountState> {
   @override
   BankAccountState createState() {
     return BankAccountState();
@@ -29,72 +34,125 @@ final class BankAccountBehavior extends Behavior<BankAccountState> {
   @override
   List<Command<BankAccountState>> generateCommands(BankAccountState s) {
     return [
+      Action0(
+        'next day',
+        (s) {
+          s.nextDay();
+        },
+      ),
       Action(
-        'small deposit',
-        integer(min: 0, max: s.maxDepositPerOnce),
+        'under min deposit per once',
+        integer(min: 0, max: s.minDepositPerOnce - 1),
+        (s, amount) {
+          expect(s.deposit(amount), BankAccountResult.underMinDepositPerOnce);
+        },
+      ),
+      Action(
+        'under deposit per once',
+        integer(min: s.minDepositPerOnce, max: s.maxDepositPerOnce),
         (s, amount) {
           expect(
               s.deposit(amount),
               anyOf(
-                isNull,
-                BankAccountError.overMaxDepositPerDay,
-                BankAccountError.overBalance,
-                BankAccountError.overMaxSameOperationsPerDay,
-                BankAccountError.overMaxOperationsPerDay,
+                BankAccountResult.success,
+                BankAccountResult.overBalance,
+                BankAccountResult.overMaxSameOperationsPerDay,
+                BankAccountResult.overMaxOperationsPerDay,
               ));
         },
       ),
       Action(
-        'deposit over per once and under per day',
-        integer(min: s.maxDepositPerOnce + 1, max: s.maxDepositPerDay),
+        'under deposit per day',
+        integer(min: s.maxDepositPerOnce, max: s.maxDepositPerDay),
         (s, amount) {
           expect(
               s.deposit(amount),
               anyOf(
-                BankAccountError.overMaxDepositPerOnce,
-                BankAccountError.overMaxSameOperationsPerDay,
-                BankAccountError.overMaxOperationsPerDay,
+                BankAccountResult.success,
+                BankAccountResult.overBalance,
+                BankAccountResult.overMaxDepositPerOnce,
+                BankAccountResult.overMaxSameOperationsPerDay,
+                BankAccountResult.overMaxOperationsPerDay,
               ));
         },
       ),
       Action(
-        'deposit under balance',
+        'over max deposit per day',
         integer(min: s.maxDepositPerDay + 1),
         (s, amount) {
           expect(
               s.deposit(amount),
               anyOf(
-                BankAccountError.overMaxDepositPerDay,
-                BankAccountError.overMaxSameOperationsPerDay,
-                BankAccountError.overMaxOperationsPerDay,
+                BankAccountResult.overMaxDepositPerDay,
+                BankAccountResult.overMaxSameOperationsPerDay,
+                BankAccountResult.overMaxOperationsPerDay,
               ));
         },
       ),
       Action(
-        'small withdraw',
-        integer(min: 0, max: s.maxWithdrawPerOnce),
+        'deposit under balance',
+        integer(min: s.maxDepositPerDay + 1, max: s.maxBalance),
         (s, amount) {
-          expect(s.withdraw(amount), isNull);
+          expect(
+              s.deposit(amount),
+              anyOf(
+                BankAccountResult.success,
+                BankAccountResult.overBalance,
+              ));
         },
       ),
       Action(
-        'withdraw over per once and under per day',
-        integer(min: s.maxWithdrawPerOnce + 1, max: s.maxWithdrawPerDay),
+        'deposit over balance',
+        integer(min: s.maxBalance + 1),
         (s, amount) {
-          expect(s.withdraw(amount), BankAccountError.overMaxWithdrawPerOnce);
+          expect(s.deposit(amount), BankAccountResult.overBalance);
+        },
+      ),
+      Action(
+        'under min withdraw per once',
+        integer(min: 0, max: s.minWithdrawPerOnce - 1),
+        (s, amount) {
+          expect(s.withdraw(amount), BankAccountResult.underMinWithdrawPerOnce);
+        },
+      ),
+      Action(
+        'under max withdraw per once',
+        integer(min: s.minWithdrawPerOnce, max: s.maxWithdrawPerOnce),
+        (s, amount) {
+          expect(s.withdraw(amount), BankAccountResult.overMaxWithdrawPerOnce);
+        },
+      ),
+      Action(
+        'under max withdraw per day',
+        integer(min: s.minWithdrawPerOnce + 1, max: s.maxWithdrawPerDay),
+        (s, amount) {
+          expect(s.withdraw(amount), BankAccountResult.overMaxWithdrawPerDay);
+        },
+      ),
+      Action(
+        'over max withdraw per day',
+        integer(min: s.maxWithdrawPerDay + 1),
+        (s, amount) {
+          expect(s.withdraw(amount), BankAccountResult.overMaxWithdrawPerDay);
         },
       ),
       Action(
         'withdraw under balance',
-        integer(min: s.maxWithdrawPerDay + 1, max: s.maxBalance),
+        integer(min: s.minWithdrawPerOnce + 1, max: s.maxWithdrawPerDay),
         (s, amount) {
-          expect(s.withdraw(amount), BankAccountError.underBalance);
+          expect(
+              s.withdraw(amount),
+              anyOf(
+                BankAccountResult.success,
+                BankAccountResult.underBalance,
+              ));
         },
       ),
-      Action0(
-        'next day',
-        (s) {
-          s.nextDay();
+      Action(
+        'withdraw over balance',
+        integer(min: s.maxWithdrawPerDay + 1),
+        (s, amount) {
+          expect(s.withdraw(amount), BankAccountResult.underBalance);
         },
       ),
     ];
@@ -117,6 +175,9 @@ final class BankAccountState extends State {
   // 引き出しと振込をそれぞれ一定回数行うとロックする
   // 異なる操作が複数回必要になる
 
+  int minDepositPerOnce = 1000;
+  int minWithdrawPerOnce = 1000;
+
   int maxDepositPerOnce = 500000;
   int maxDepositPerDay = 1000000;
   int maxWithdrawPerOnce = 200000;
@@ -131,6 +192,8 @@ final class BankAccountState extends State {
   int withdrawPerDay = 0;
 
   List<BankAccountOperation> history = [];
+  int maxSameOperationsPerDay = 10;
+  int maxOperationsPerDay = 20;
 
   int countOfOperationPerDay(BankAccountOperation operation) =>
       history.where((o) => o == operation).length;
@@ -161,38 +224,38 @@ final class BankAccountState extends State {
     locked = false;
   }
 
-  BankAccountError? deposit(int amount) {
+  BankAccountResult deposit(int amount) {
     if (locked) {
-      return BankAccountError.locked;
+      return BankAccountResult.locked;
     } else if (amount > maxDepositPerOnce) {
-      return BankAccountError.overMaxDepositPerOnce;
+      return BankAccountResult.overMaxDepositPerOnce;
     } else if (balance + amount > maxBalance) {
-      return BankAccountError.overBalance;
+      return BankAccountResult.overBalance;
     } else if (depositPerDay + amount > maxDepositPerDay) {
-      return BankAccountError.overMaxDepositPerDay;
+      return BankAccountResult.overMaxDepositPerDay;
     } else {
       depositPerDay += amount;
       balance += amount;
       history.add(BankAccountOperation.deposit);
-      return null;
+      return BankAccountResult.success;
     }
   }
 
-  BankAccountError? withdraw(int amount) {
+  BankAccountResult withdraw(int amount) {
     final charged = (amount + amount * chargeRate).toInt();
     if (locked) {
-      return BankAccountError.locked;
+      return BankAccountResult.locked;
     } else if (amount > maxWithdrawPerOnce) {
-      return BankAccountError.overMaxWithdrawPerOnce;
+      return BankAccountResult.overMaxWithdrawPerOnce;
     } else if (balance - charged < minBalance) {
-      return BankAccountError.underBalance;
+      return BankAccountResult.underBalance;
     } else if (withdrawPerDay + charged > maxWithdrawPerDay) {
-      return BankAccountError.overMaxWithdrawPerDay;
+      return BankAccountResult.overMaxWithdrawPerDay;
     } else {
       withdrawPerDay += charged;
       balance -= charged;
       history.add(BankAccountOperation.withdraw);
-      return null;
+      return BankAccountResult.success;
     }
   }
 }
@@ -203,7 +266,7 @@ void main() {
   group('shrink', () {
     property('shrink', () {
       forAllStates(
-        BankAccountBehavior(),
+        BankAccountFullBehavior(),
         (s) {
           // TODO
         },
