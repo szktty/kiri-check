@@ -38,10 +38,11 @@ final class Traversal<T extends State> {
 
   TraversalPath<T> generatePath() {
     final path = TraversalPath<T>();
-    for (final command in commands) {
+    for (final command in initializeCommands) {
       path.addStep(command);
     }
-    for (var tries = 0; tries < maxSteps; tries++) {
+    final count = context.property.random.nextIntInclusive(maxSteps);
+    for (var i = 0; i < count; i++) {
       final n = context.property.random.nextInt(actionCommands.length);
       final command = actionCommands[n];
       path.addStep(command);
@@ -89,15 +90,17 @@ final class TraversalPath<T extends State> {
           'Granularity must be greater than or equal to 1.');
     }
     print('TraversalPath.shrink: steps ${steps.length}');
+    // TODO: アービトラリーのシュリンクだと分割が細か過ぎる
     final range = ArbitraryUtils.shrinkLength(
       steps.length,
       minLength: 0,
       granularity: granularity,
-    );
+    )..sort();
+    print('range = $range');
     var start = 0;
     final paths = <TraversalPath<T>>[];
-    for (final length in range) {
-      final end = start + length;
+    for (final end in range) {
+      print('Shrink path: $start - $end');
       final substeps = steps.sublist(start, end);
       if (substeps.isNotEmpty) {
         final path = TraversalPath(substeps);
