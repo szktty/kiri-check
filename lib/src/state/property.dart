@@ -212,20 +212,26 @@ final class _StatefulPropertyShrinker<T extends State> {
     propertyContext.shrinkCycle = 0;
     var previousPaths = <TraversalPath<T>>[];
     var minShrunkPath = originalPath;
+    var minShrunkNum = originalPath.steps.length;
     while (_hasShrinkCycle) {
-      final granularity = _shrinkCycle + 1;
-      final shrunkPaths = minShrunkPath.shrink(granularity);
+      final shrunkPaths = minShrunkPath.shrink();
+      print('Shrunk paths: ${shrunkPaths.length}');
+      assert(shrunkPaths.length <= 3);
       if (TraversalPath.equals(previousPaths, shrunkPaths)) {
         break;
       }
       previousPaths = shrunkPaths;
 
-      for (final shrunkPath in shrunkPaths) {
-        print('Shrink cycle ${_shrinkCycle + 1}');
+      for (var i = 0; i < shrunkPaths.length; i++) {
+        final shrunkPath = shrunkPaths[i];
+        print(
+            'Shrink cycle ${_shrinkCycle + 1}: ${shrunkPath.steps.length} steps');
         if (!_checkShrunkPath(shrunkPath)) {
-          // 最も短い操作列を最小とする
-          if (shrunkPath.steps.length < minShrunkPath.steps.length) {
+          // 先頭に近い部分列を最小とする
+          if (i < minShrunkNum) {
+            print('min shrunk path: $i, ${shrunkPath.steps.length} steps');
             minShrunkPath = shrunkPath;
+            minShrunkNum = i;
           }
         }
         propertyContext.shrinkCycle++;

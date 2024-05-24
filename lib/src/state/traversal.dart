@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:kiri_check/src/arbitrary.dart';
@@ -84,30 +85,12 @@ final class TraversalPath<T extends State> {
     return true;
   }
 
-  List<TraversalPath<T>> shrink(int granularity) {
-    if (granularity < 1) {
-      throw PropertyException(
-          'Granularity must be greater than or equal to 1.');
-    }
+  List<TraversalPath<T>> shrink() {
     print('TraversalPath.shrink: steps ${steps.length}');
-    // TODO: アービトラリーのシュリンクだと分割が細か過ぎる
-    final range = ArbitraryUtils.shrinkLength(
-      steps.length,
-      minLength: 0,
-      granularity: granularity,
-    )..sort();
-    print('range = $range');
-    var start = 0;
-    final paths = <TraversalPath<T>>[];
-    for (final end in range) {
-      print('Shrink path: $start - $end');
-      final substeps = steps.sublist(start, end);
-      if (substeps.isNotEmpty) {
-        final path = TraversalPath(substeps);
-        paths.add(path);
-      }
-      start = end;
-    }
-    return paths;
+    final n = steps.length ~/ (steps.length <= 5 ? 2 : 3);
+    return steps
+        .splitAfterIndexed((i, _) => i > 0 && i % n == 0)
+        .map(TraversalPath<T>.new)
+        .toList();
   }
 }

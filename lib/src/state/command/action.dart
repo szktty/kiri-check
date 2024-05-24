@@ -42,7 +42,7 @@ final class Action<T extends State, U> extends Command<T> {
         _lastShrunk = _shrunkQueue!.removeFirst();
         _action(state, _lastShrunk as U);
       } else {
-        throw StateError('No more shrunk values');
+        _action(state, _lastShrunk as U);
       }
     } else if (useCache) {
       _action(state, _cache as U);
