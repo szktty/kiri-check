@@ -37,18 +37,18 @@ final class Traversal<T extends State> {
   final List<Command<T>> actionCommands = [];
   final int maxSteps;
 
-  TraversalPath<T> generatePath() {
-    final path = TraversalPath<T>();
+  TraversalSequence<T> generateSequence() {
+    final sequence = TraversalSequence<T>();
     for (final command in initializeCommands) {
-      path.addStep(command);
+      sequence.addStep(command);
     }
     final count = context.property.random.nextIntInclusive(maxSteps);
     for (var i = 0; i < count; i++) {
       final n = context.property.random.nextInt(actionCommands.length);
       final command = actionCommands[n];
-      path.addStep(command);
+      sequence.addStep(command);
     }
-    return path;
+    return sequence;
   }
 }
 
@@ -59,8 +59,8 @@ final class TraversalStep<T extends State> {
   final Command<T> command;
 }
 
-final class TraversalPath<T extends State> {
-  TraversalPath([List<TraversalStep<T>> steps = const []]) {
+final class TraversalSequence<T extends State> {
+  TraversalSequence([List<TraversalStep<T>> steps = const []]) {
     this.steps.addAll(steps);
   }
 
@@ -71,8 +71,8 @@ final class TraversalPath<T extends State> {
   }
 
   static bool equals<T extends State>(
-    List<TraversalPath<T>> a,
-    List<TraversalPath<T>> b,
+    List<TraversalSequence<T>> a,
+    List<TraversalSequence<T>> b,
   ) {
     if (a.length != b.length) {
       return false;
@@ -85,12 +85,12 @@ final class TraversalPath<T extends State> {
     return true;
   }
 
-  List<TraversalPath<T>> shrink() {
-    print('TraversalPath.shrink: steps ${steps.length}');
+  List<TraversalSequence<T>> shrink() {
+    print('TraversalSequence.shrink: steps ${steps.length}');
     final n = steps.length ~/ (steps.length <= 5 ? 2 : 3);
     return steps
         .splitAfterIndexed((i, _) => i > 0 && i % n == 0)
-        .map(TraversalPath<T>.new)
+        .map(TraversalSequence<T>.new)
         .toList();
   }
 }

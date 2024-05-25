@@ -94,11 +94,11 @@ final class StatefulProperty<T extends State> extends Property<T> {
   void _check(PropertyTest test) {
     print('Check behavior: ${behavior.runtimeType}');
     setUp?.call();
-    _checkPaths(test);
+    _checkSequences(test);
     tearDown?.call();
   }
 
-  void _checkPaths(PropertyTest test) {
+  void _checkSequences(PropertyTest test) {
     final propertyContext = StatefulPropertyContext(this, test);
     for (propertyContext.cycle = 0;
         propertyContext.cycle < maxCycles;
@@ -112,12 +112,12 @@ final class StatefulProperty<T extends State> extends Property<T> {
         final stateContext = StateContext(state, this, test);
         final commands = behavior.generateCommands(state);
         final traversal = Traversal(propertyContext, commands);
-        final path = traversal.generatePath();
+        final sequence = traversal.generateSequence();
 
         state.setUp();
 
-        for (var i = 0; i < path.steps.length; i++) {
-          final step = path.steps[i];
+        for (var i = 0; i < sequence.steps.length; i++) {
+          final step = sequence.steps[i];
           final command = step.command;
           print('Step ${i + 1}: ${command.description}');
           try {
@@ -131,13 +131,13 @@ final class StatefulProperty<T extends State> extends Property<T> {
             final shrinker = _StatefulPropertyShrinker(
               propertyContext,
               stateContext,
-              TraversalPath(path.steps.sublist(0, i + 1)),
+              TraversalSequence(sequence.steps.sublist(0, i + 1)),
             );
             final result = shrinker.shrink();
 
-            print('Falsified example path:');
-            for (var i = 0; i < result.path.steps.length; i++) {
-              final step = result.path.steps[i];
+            print('Falsified example sequence:');
+            for (var i = 0; i < result.sequence.steps.length; i++) {
+              final step = result.sequence.steps[i];
               final command = step.command;
               print('Step ${i + 1}: ${command.description}');
               if (command is Action) {
@@ -186,21 +186,21 @@ final class _StatefulPropertyShrinker<T extends State> {
   _StatefulPropertyShrinker(
     this.propertyContext,
     this.stateContext,
-    this.originalPath,
+    this.originalSequence,
   );
 
   final StatefulPropertyContext<T> propertyContext;
   final StateContext<T> stateContext;
-  final TraversalPath<T> originalPath;
+  final TraversalSequence<T> originalSequence;
 
   StatefulProperty<T> get property => propertyContext.property;
 
   StatefulShrinkingResult<T> shrink() {
-    final subpath = _checkSubpaths();
+    final subsequence = _checkPartialSequences();
     // TODO: 一部のパスをカットしてチェック
 
-    _checkValues(subpath);
-    return StatefulShrinkingResult(stateContext.state, subpath);
+    _checkValues(subsequence);
+    return StatefulShrinkingResult(stateContext.state, subsequence);
   }
 
   int get _shrinkCycle => propertyContext.shrinkCycle;
@@ -208,29 +208,30 @@ final class _StatefulPropertyShrinker<T extends State> {
   bool get _hasShrinkCycle =>
       _shrinkCycle < propertyContext.property.maxShrinkingCycles;
 
-  TraversalPath<T> _checkSubpaths() {
+  TraversalSequence<T> _checkPartialSequences() {
     propertyContext.shrinkCycle = 0;
-    var previousPaths = <TraversalPath<T>>[];
-    var minShrunkPath = originalPath;
-    var minShrunkNum = originalPath.steps.length;
+    var previousSequences = <TraversalSequence<T>>[];
+    var minShrunkSequence = originalSequence;
+    var minShrunkNum = originalSequence.steps.length;
     while (_hasShrinkCycle) {
-      final shrunkPaths = minShrunkPath.shrink();
-      print('Shrunk paths: ${shrunkPaths.length}');
-      assert(shrunkPaths.length <= 3);
-      if (TraversalPath.equals(previousPaths, shrunkPaths)) {
+      final shrunkSequences = minShrunkSequence.shrink();
+      print('Shrunk sequences: ${shrunkSequences.length}');
+      assert(shrunkSequences.length <= 3);
+      if (TraversalSequence.equals(previousSequences, shrunkSequences)) {
         break;
       }
-      previousPaths = shrunkPaths;
+      previousSequences = shrunkSequences;
 
-      for (var i = 0; i < shrunkPaths.length; i++) {
-        final shrunkPath = shrunkPaths[i];
+      for (var i = 0; i < shrunkSequences.length; i++) {
+        final shrunkSequence = shrunkSequences[i];
         print(
-            'Shrink cycle ${_shrinkCycle + 1}: ${shrunkPath.steps.length} steps');
-        if (!_checkShrunkPath(shrunkPath)) {
+            'Shrink cycle ${_shrinkCycle + 1}: ${shrunkSequence.steps.length} steps');
+        if (!_checkShrunkSequence(shrunkSequence)) {
           // 先頭に近い部分列を最小とする
           if (i < minShrunkNum) {
-            print('min shrunk path: $i, ${shrunkPath.steps.length} steps');
-            minShrunkPath = shrunkPath;
+            print(
+                'min shrunk sequence: $i, ${shrunkSequence.steps.length} steps');
+            minShrunkSequence = shrunkSequence;
             minShrunkNum = i;
           }
         }
@@ -240,16 +241,16 @@ final class _StatefulPropertyShrinker<T extends State> {
         }
       }
     }
-    return minShrunkPath;
+    return minShrunkSequence;
   }
 
-  bool _checkShrunkPath(TraversalPath<T> path) {
-    print('Check shrunk path: ${path.steps.length} steps');
+  bool _checkShrunkSequence(TraversalSequence<T> sequence) {
+    print('Check shrunk sequence: ${sequence.steps.length} steps');
     final state = propertyContext.behavior.createState()
       ..random = property.random;
     final stateContext = StateContext(state, property, propertyContext.test);
-    for (var i = 0; i < path.steps.length; i++) {
-      final step = path.steps[i];
+    for (var i = 0; i < sequence.steps.length; i++) {
+      final step = sequence.steps[i];
       final command = step.command;
       print('Shrink step ${i + 1}: ${command.description}');
       try {
@@ -263,7 +264,7 @@ final class _StatefulPropertyShrinker<T extends State> {
     return true;
   }
 
-  void _checkValues(TraversalPath<T> path) {
+  void _checkValues(TraversalSequence<T> sequence) {
     var allShrinkDone = false;
     while (_hasShrinkCycle && !allShrinkDone) {
       print('Shrink cycle ${_shrinkCycle + 1}');
@@ -271,8 +272,8 @@ final class _StatefulPropertyShrinker<T extends State> {
         ..random = property.random;
       final stateContext = StateContext(state, property, propertyContext.test);
       allShrinkDone = true;
-      for (var i = 0; i < path.steps.length; i++) {
-        final step = path.steps[i];
+      for (var i = 0; i < sequence.steps.length; i++) {
+        final step = sequence.steps[i];
         final command = step.command;
         print('Shrink step ${i + 1}: ${command.description}');
         try {
@@ -292,8 +293,8 @@ final class _StatefulPropertyShrinker<T extends State> {
 }
 
 final class StatefulShrinkingResult<T extends State> {
-  StatefulShrinkingResult(this.state, this.path);
+  StatefulShrinkingResult(this.state, this.sequence);
 
   final T state;
-  final TraversalPath<T> path;
+  final TraversalSequence<T> sequence;
 }
