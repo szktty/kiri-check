@@ -196,11 +196,10 @@ final class _StatefulPropertyShrinker<T extends State> {
   StatefulProperty<T> get property => propertyContext.property;
 
   StatefulShrinkingResult<T> shrink() {
-    final subsequence = _checkPartialSequences();
-    // TODO: 一部のパスをカットしてチェック
-
-    _checkValues(subsequence);
-    return StatefulShrinkingResult(stateContext.state, subsequence);
+    final partial = _checkPartialSequences(originalSequence);
+    final reduced = _checkReducedSequences(partial);
+    _checkValues(reduced);
+    return StatefulShrinkingResult(stateContext.state, reduced);
   }
 
   int get _shrinkCycle => propertyContext.shrinkCycle;
@@ -208,11 +207,12 @@ final class _StatefulPropertyShrinker<T extends State> {
   bool get _hasShrinkCycle =>
       _shrinkCycle < propertyContext.property.maxShrinkingCycles;
 
-  TraversalSequence<T> _checkPartialSequences() {
+  TraversalSequence<T> _checkPartialSequences(
+      TraversalSequence<T> baseSequence) {
     propertyContext.shrinkCycle = 0;
     var previousSequences = <TraversalSequence<T>>[];
-    var minShrunkSequence = originalSequence;
-    var minShrunkNum = originalSequence.steps.length;
+    var minShrunkSequence = baseSequence;
+    var minShrunkNum = baseSequence.steps.length;
     while (_hasShrinkCycle) {
       final shrunkSequences = minShrunkSequence.shrink();
       print('Shrunk sequences: ${shrunkSequences.length}');
@@ -241,6 +241,46 @@ final class _StatefulPropertyShrinker<T extends State> {
         }
       }
     }
+    return minShrunkSequence;
+  }
+
+  // 一部のコマンドを削除して検査する
+  TraversalSequence<T> _checkReducedSequences(
+      TraversalSequence<T> baseSequence) {
+    // コマンドのdescriptionの重複なしリストを作成する
+    // baseSequenceのコマンド列を走査し、descriptionが重複しないコマンドを取得する
+    final commandTypeSet = <String>{};
+    for (final step in baseSequence.steps) {
+      commandTypeSet.add(step.command.description);
+    }
+
+    var minShrunkSequence = baseSequence;
+    for (final target in commandTypeSet) {
+      if (!_hasShrinkCycle) {
+        break;
+      }
+
+      final shrunkSequence = TraversalSequence<T>();
+      for (var i = 0; i < minShrunkSequence.steps.length; i++) {
+        final step = minShrunkSequence.steps[i];
+        if (step.command.description != target) {
+          shrunkSequence.addStep(step.command);
+        }
+      }
+
+      if (shrunkSequence.steps.isNotEmpty &&
+          !_checkShrunkSequence(shrunkSequence)) {
+        if (shrunkSequence.steps.length < minShrunkSequence.steps.length) {
+          minShrunkSequence = shrunkSequence;
+        }
+      }
+    }
+
+    print('Reduced shrunk sequence: ${minShrunkSequence.steps.length} steps');
+    for (final step in minShrunkSequence.steps) {
+      print('Step: ${step.command.description}');
+    }
+
     return minShrunkSequence;
   }
 
