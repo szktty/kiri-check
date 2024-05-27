@@ -1,3 +1,0 @@
-# Commands
-
-Start typing here...
