@@ -24,6 +24,9 @@ final class StatefulFalsifiedException<T extends State> implements Exception {
         ..writeln('  Step ${i + 1}: ${command.description}')
         ..writeln('    Value: ${command.minValue}');
     }
+    if (result.exception != null) {
+      buffer.writeln(result.exception!.toString());
+    }
     return buffer.toString();
   }
 }
@@ -135,7 +138,7 @@ final class StatefulProperty<T extends State> extends Property<T> {
           print('Step ${i + 1}: ${command.description}');
           try {
             stateContext.executeCommand(command);
-          } catch (e) {
+          } on Exception catch (e) {
             print('Error: $e');
             state.tearDown();
 
@@ -205,6 +208,7 @@ final class _StatefulPropertyShrinker<T extends State> {
   final StatefulPropertyContext<T> propertyContext;
   final StateContext<T> stateContext;
   final TraversalSequence<T> originalSequence;
+  Exception? lastException;
 
   StatefulProperty<T> get property => propertyContext.property;
 
@@ -212,7 +216,11 @@ final class _StatefulPropertyShrinker<T extends State> {
     final partial = _checkPartialSequences(originalSequence);
     final reduced = _checkReducedSequences(partial);
     _checkValues(reduced);
-    return StatefulShrinkingResult(stateContext.state, reduced);
+    return StatefulShrinkingResult(
+      stateContext.state,
+      reduced,
+      exception: lastException,
+    );
   }
 
   int get _shrinkCycle => propertyContext.shrinkCycle;
@@ -309,8 +317,9 @@ final class _StatefulPropertyShrinker<T extends State> {
       try {
         command.useCache = true;
         stateContext.executeCommand(command);
-      } catch (e) {
+      } on Exception catch (e) {
         print('Error: $e');
+        lastException = e;
         return false;
       }
     }
@@ -335,8 +344,9 @@ final class _StatefulPropertyShrinker<T extends State> {
             allShrinkDone = false;
           }
           stateContext.executeCommand(command);
-        } catch (e) {
+        } on Exception catch (e) {
           print('Error: $e');
+          lastException = e;
           command.failShrunk();
         }
       }
@@ -346,8 +356,9 @@ final class _StatefulPropertyShrinker<T extends State> {
 }
 
 final class StatefulShrinkingResult<T extends State> {
-  StatefulShrinkingResult(this.state, this.sequence);
+  StatefulShrinkingResult(this.state, this.sequence, {this.exception});
 
   final T state;
   final TraversalSequence<T> sequence;
+  final Exception? exception;
 }
