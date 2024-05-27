@@ -62,7 +62,7 @@ final class Action<T extends State, U> extends Command<T> {
   U? _lastShrunk;
 
   @override
-  dynamic get falsifyingExample => _minShrunk;
+  dynamic get minValue => _minShrunk;
 
   @override
   bool nextShrink() {

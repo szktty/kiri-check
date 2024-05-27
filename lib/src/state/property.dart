@@ -13,6 +13,19 @@ final class StatefulFalsifiedException<T extends State> implements Exception {
 
   final Object? description;
   final StatefulShrinkingResult<T> result;
+
+  @override
+  String toString() {
+    final buffer = StringBuffer()..writeln('Falsifying command sequence:');
+    for (var i = 0; i < result.sequence.steps.length; i++) {
+      final step = result.sequence.steps[i];
+      final command = step.command;
+      buffer
+        ..writeln('  Step ${i + 1}: ${command.description}')
+        ..writeln('    Value: ${command.minValue}');
+    }
+    return buffer.toString();
+  }
 }
 
 final class StateContext<T extends State> {
@@ -141,7 +154,7 @@ final class StatefulProperty<T extends State> extends Property<T> {
               final command = step.command;
               print('Step ${i + 1}: ${command.description}');
               if (command is Action) {
-                print('Shrunk value: ${command.falsifyingExample}');
+                print('Shrunk value: ${command.minValue}');
               }
             }
 
