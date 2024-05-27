@@ -16,7 +16,10 @@ enum BankAccountResult {
   overBalance,
   underBalance,
   overMaxSameOperationsPerDay,
-  overMaxOperationsPerDay,
+  overMaxOperationsPerDay;
+
+  @override
+  String toString() => super.toString().split('.').last;
 }
 
 enum BankAccountOperation {
@@ -213,7 +216,10 @@ final class BankAccountBasicBehavior extends BankAccountBehaviorBase {
         'over max withdraw per day',
         success: false,
         min: s.maxWithdrawPerDay + 1,
-        result: [BankAccountResult.overMaxWithdrawPerDay],
+        result: [
+          BankAccountResult.overMaxWithdrawPerOnce,
+          BankAccountResult.overMaxWithdrawPerDay,
+        ],
       ),
     ];
   }
@@ -292,10 +298,11 @@ final class BankAccount extends State {
       return BankAccountResult.overMaxDepositPerDay;
     } else if (balance + amount > maxBalance) {
       return BankAccountResult.overBalance;
-    } else if (countOfLastOperationPerDay(BankAccountOperation.deposit) >
-        maxSameOperationsPerDay) {
+    } else if (checksHistory &&
+        countOfLastOperationPerDay(BankAccountOperation.deposit) >
+            maxSameOperationsPerDay) {
       return BankAccountResult.overMaxSameOperationsPerDay;
-    } else if (history.length > maxOperationsPerDay) {
+    } else if (checksHistory && history.length > maxOperationsPerDay) {
       return BankAccountResult.overMaxOperationsPerDay;
     } else {
       depositPerDay += amount;
@@ -317,10 +324,11 @@ final class BankAccount extends State {
       return BankAccountResult.overMaxWithdrawPerDay;
     } else if (balance - charged < minBalance) {
       return BankAccountResult.underBalance;
-    } else if (countOfLastOperationPerDay(BankAccountOperation.deposit) >
-        maxSameOperationsPerDay) {
+    } else if (checksHistory &&
+        countOfLastOperationPerDay(BankAccountOperation.deposit) >
+            maxSameOperationsPerDay) {
       return BankAccountResult.overMaxSameOperationsPerDay;
-    } else if (history.length > maxOperationsPerDay) {
+    } else if (checksHistory && history.length > maxOperationsPerDay) {
       return BankAccountResult.overMaxOperationsPerDay;
     } else {
       withdrawPerDay += charged;
