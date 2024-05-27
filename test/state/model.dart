@@ -35,50 +35,56 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
     return BankAccount();
   }
 
-  Action0<BankAccount> nextDayAction() => Action0(
-        'next day',
-        (s) {
-          s.nextDay();
-        },
-      );
+  Action0<BankAccount> nextDayAction() {
+    return Action0(
+      'next day',
+      (s) {
+        s.nextDay();
+      },
+    );
+  }
 
-  List<Action0<BankAccount>> freezeActions() => [
-        Action0(
-          'freeze',
-          (s) {
-            expect(
-                s.freeze(),
-                anyOf(
-                  BankAccountResult.success,
-                  BankAccountResult.alreadyFrozen,
-                ));
-          },
-        ),
-        Action0(
-          'unfreeze',
-          (s) {
-            expect(
-                s.unfreeze(),
-                anyOf(
-                  BankAccountResult.success,
-                  BankAccountResult.notFrozen,
-                ));
-          },
-        ),
-      ];
+  List<Action0<BankAccount>> freezeActions() {
+    BankAccountResult? freezeResult;
+    BankAccountResult? unfreezeResult;
+    return [
+      Action0(
+        'freeze',
+        (s) {
+          freezeResult = s.freeze();
+        },
+        postcondition: (s) {
+          return s.frozen &&
+              (freezeResult == BankAccountResult.success ||
+                  freezeResult == BankAccountResult.alreadyFrozen);
+        },
+      ),
+      Action0(
+        'unfreeze',
+        (s) {
+          unfreezeResult = s.unfreeze();
+        },
+        postcondition: (s) {
+          return !s.frozen &&
+              (unfreezeResult == BankAccountResult.success ||
+                  unfreezeResult == BankAccountResult.notFrozen);
+        },
+      ),
+    ];
+  }
 
   Action<BankAccount, int> amountAction(
     String description,
     BankAccountResult Function(BankAccount, int) action, {
     required bool success,
-    List<BankAccountResult>? result,
+    List<BankAccountResult>? expected,
     String? reason,
     int min = 0,
     int? max,
     bool freezable = true,
     bool checksHistory = true,
   }) {
-    final result0 = List<BankAccountResult>.from(result ?? []);
+    final result0 = List<BankAccountResult>.from(expected ?? []);
     if (checksHistory) {
       result0
         ..add(BankAccountResult.overMaxSameOperationsPerDay)
@@ -89,12 +95,7 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
       result0.add(BankAccountResult.success);
     }
 
-    final expected = result0.fold(
-      null,
-      (Matcher? prev, result) =>
-          prev == null ? equals(result) : anyOf(prev, result),
-    )!;
-
+    BankAccountResult? actual;
     return Action(
       description,
       integer(min: min, max: max),
@@ -102,16 +103,10 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
         s
           ..freezable = freezable
           ..checksHistory = checksHistory;
-
-        if (s.frozen) {
-          expect(
-            action(s, amount),
-            BankAccountResult.frozen,
-            reason: 'account frozen',
-          );
-        } else {
-          expect(action(s, amount), expected, reason: reason);
-        }
+        actual = action(s, amount);
+      },
+      postcondition: (s) {
+        return !s.frozen && result0.contains(actual);
       },
     );
   }
@@ -127,7 +122,7 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
       amountAction(
         description,
         (s, amount) => s.deposit(amount),
-        result: result,
+        expected: result,
         reason: reason,
         min: min,
         max: max,
@@ -145,7 +140,7 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
       amountAction(
         description,
         (s, amount) => s.withdraw(amount),
-        result: result,
+        expected: result,
         reason: reason,
         min: min,
         max: max,
