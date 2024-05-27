@@ -4,9 +4,9 @@ import 'package:test/test.dart';
 
 enum BankAccountResult {
   success,
-  locked,
-  alreadyLocked,
-  notLocked,
+  frozen,
+  alreadyFrozen,
+  notFrozen,
   underMinDepositPerOnce,
   underMinWithdrawPerOnce,
   overMaxDepositPerOnce,
@@ -42,26 +42,26 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
         },
       );
 
-  List<Action0<BankAccount>> lockActions() => [
+  List<Action0<BankAccount>> freezeActions() => [
         Action0(
-          'lock',
+          'freeze',
           (s) {
             expect(
-                s.lock(),
+                s.freeze(),
                 anyOf(
                   BankAccountResult.success,
-                  BankAccountResult.alreadyLocked,
+                  BankAccountResult.alreadyFrozen,
                 ));
           },
         ),
         Action0(
-          'unlock',
+          'unfreeze',
           (s) {
             expect(
-                s.unlock(),
+                s.unfreeze(),
                 anyOf(
                   BankAccountResult.success,
-                  BankAccountResult.notLocked,
+                  BankAccountResult.notFrozen,
                 ));
           },
         ),
@@ -75,7 +75,7 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
     String? reason,
     int min = 0,
     int? max,
-    bool canLock = true,
+    bool freezable = true,
     bool checksHistory = true,
   }) {
     final result0 = List<BankAccountResult>.from(result ?? []);
@@ -100,14 +100,14 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
       integer(min: min, max: max),
       (s, amount) {
         s
-          ..canLock = canLock
+          ..freezable = freezable
           ..checksHistory = checksHistory;
 
-        if (s.locked) {
+        if (s.frozen) {
           expect(
             action(s, amount),
-            BankAccountResult.locked,
-            reason: 'account locked',
+            BankAccountResult.frozen,
+            reason: 'account frozen',
           );
         } else {
           expect(action(s, amount), expected, reason: reason);
@@ -159,7 +159,7 @@ final class BankAccountBasicBehavior extends BankAccountBehaviorBase {
   List<Command<BankAccount>> generateCommands(BankAccount s) {
     return [
       nextDayAction(),
-      ...lockActions(),
+      ...freezeActions(),
       depositAction(
         'under min deposit per once',
         success: false,
@@ -237,8 +237,8 @@ final class BankAccount extends State {
   int minBalance = 0;
   double chargeRate = 0.03;
 
-  bool canLock = true;
-  bool locked = false;
+  bool freezable = true;
+  bool frozen = false;
   int balance = 1000000;
   int depositPerDay = 0;
   int withdrawPerDay = 0;
@@ -263,33 +263,49 @@ final class BankAccount extends State {
   }
 
   void nextDay() {
-    locked = false;
+    frozen = false;
     history.clear();
     depositPerDay = 0;
     withdrawPerDay = 0;
   }
 
-  BankAccountResult lock() {
-    if (locked) {
-      return BankAccountResult.alreadyLocked;
+  BankAccountResult freeze() {
+    if (!freezable) {
+      return BankAccountResult.success;
+    } else if (frozen) {
+      return BankAccountResult.alreadyFrozen;
     } else {
-      locked = true;
+      frozen = true;
       return BankAccountResult.success;
     }
   }
 
-  BankAccountResult unlock() {
-    if (locked) {
-      locked = false;
+  BankAccountResult unfreeze() {
+    if (!freezable) {
+      return BankAccountResult.success;
+    } else if (frozen) {
+      frozen = false;
       return BankAccountResult.success;
     } else {
-      return BankAccountResult.notLocked;
+      return BankAccountResult.notFrozen;
     }
   }
 
   BankAccountResult deposit(int amount) {
-    if (canLock && locked) {
-      return BankAccountResult.locked;
+    final result = validateDeposit(amount);
+    if (result != null) {
+      return result;
+    } else {
+      depositPerDay += amount;
+      balance += amount;
+      history.add(BankAccountOperation.deposit);
+      return BankAccountResult.success;
+    }
+  }
+
+  BankAccountResult? validateDeposit(int amount) {
+    if (freezable && frozen) {
+      return BankAccountResult.frozen;
     } else if (amount > maxDepositPerOnce) {
       return BankAccountResult.overMaxDepositPerOnce;
     } else if (amount < minDepositPerOnce) {
@@ -305,17 +321,16 @@ final class BankAccount extends State {
     } else if (checksHistory && history.length > maxOperationsPerDay) {
       return BankAccountResult.overMaxOperationsPerDay;
     } else {
-      depositPerDay += amount;
-      balance += amount;
-      history.add(BankAccountOperation.deposit);
-      return BankAccountResult.success;
+      return null;
     }
   }
 
-  BankAccountResult withdraw(int amount) {
-    final charged = (amount + amount * chargeRate).toInt();
-    if (canLock && locked) {
-      return BankAccountResult.locked;
+  int charge(int amount) => (amount + amount * chargeRate).toInt();
+
+  BankAccountResult? validateWithdraw(int amount) {
+    final charged = charge(amount);
+    if (freezable && frozen) {
+      return BankAccountResult.frozen;
     } else if (amount > maxWithdrawPerOnce) {
       return BankAccountResult.overMaxWithdrawPerOnce;
     } else if (amount < minWithdrawPerOnce) {
@@ -331,6 +346,16 @@ final class BankAccount extends State {
     } else if (checksHistory && history.length > maxOperationsPerDay) {
       return BankAccountResult.overMaxOperationsPerDay;
     } else {
+      return null;
+    }
+  }
+
+  BankAccountResult withdraw(int amount) {
+    final result = validateWithdraw(amount);
+    if (result != null) {
+      return result;
+    } else {
+      final charged = charge(amount);
       withdrawPerDay += charged;
       balance -= charged;
       history.add(BankAccountOperation.withdraw);
