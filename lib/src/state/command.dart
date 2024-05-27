@@ -47,5 +47,5 @@ abstract class Command<T extends State> {
   void failShrunk() {}
 
   @internal
-  dynamic get falsifyingExample => null;
+  dynamic get minValue => null;
 }
