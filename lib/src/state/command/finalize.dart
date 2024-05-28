@@ -1,22 +1,23 @@
+import 'dart:math';
+
 import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/state.dart';
 
-final class Finalize<T extends State> extends Command<T> {
+final class Finalize<State, System> extends Command<State, System> {
   Finalize(
     super.description,
     this.command, {
     super.precondition,
     super.postcondition,
-    super.nextState,
   });
 
-  final Command<T> command;
+  final Command<State, System> command;
 
   @override
-  List<Command<T>> get subcommands => [command];
+  List<Command<State, System>> get subcommands => [command];
 
   @override
-  void execute(T state) {
-    command.execute(state);
+  void execute(State state, System system, Random random) {
+    command.execute(state, system, random);
   }
 }

@@ -8,11 +8,11 @@ import 'package:kiri_check/src/state/command/action.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/state/traversal.dart';
 
-final class StatefulFalsifiedException<T extends State> implements Exception {
+final class StatefulFalsifiedException<State, System> implements Exception {
   StatefulFalsifiedException(this.description, this.result);
 
   final Object? description;
-  final StatefulShrinkingResult<T> result;
+  final StatefulShrinkingResult<State, System> result;
 
   @override
   String toString() {
@@ -31,24 +31,24 @@ final class StatefulFalsifiedException<T extends State> implements Exception {
   }
 }
 
-final class StateContext<T extends State> {
+final class StateContext<State, System> {
   StateContext(this.state, this.property, this.test);
 
-  T state;
-  final StatefulProperty<T> property;
+  State state;
+  final StatefulProperty<State, System> property;
   final PropertyTest test;
 
-  Behavior<T> get behavior => property.behavior;
+  Behavior<State, System> get behavior => property.behavior;
 
-  void executeCommand(Command<T> command) {
+  void executeCommand(Command<State, System> command) {
     state = property._executeCommand(this, command);
   }
 }
 
-final class StatefulPropertyContext<T extends State> {
+final class StatefulPropertyContext<State, System> {
   StatefulPropertyContext(this.property, this.test);
 
-  final StatefulProperty<T> property;
+  final StatefulProperty<State, System> property;
   final PropertyTest test;
   int cycle = 0;
   int step = 0;
@@ -58,10 +58,10 @@ final class StatefulPropertyContext<T extends State> {
 
   bool get hasNextShrinkCycle => shrinkCycle < property.maxShrinkingCycles;
 
-  Behavior<T> get behavior => property.behavior;
+  Behavior<State, System> get behavior => property.behavior;
 }
 
-final class StatefulProperty<T extends State> extends Property<T> {
+final class StatefulProperty<State, System> extends Property<State> {
   StatefulProperty(
     this.behavior,
     this.body, {
@@ -79,7 +79,7 @@ final class StatefulProperty<T extends State> extends Property<T> {
     maxShrinkingCycles = 50;
   }
 
-  final Behavior<T> behavior;
+  final Behavior<State, System> behavior;
 
   final void Function(T) body;
   final void Function(void Function())? onCheck;
@@ -174,8 +174,8 @@ final class StatefulProperty<T extends State> extends Property<T> {
   }
 
   T _executeCommand(
-    StateContext<T> context,
-    Command<T> command,
+    StateContext<State, System> context,
+    Command<State, System> command,
   ) {
     final state = context.state;
     if (command.requires(state)) {
@@ -198,21 +198,21 @@ final class StatefulProperty<T extends State> extends Property<T> {
   }
 }
 
-final class _StatefulPropertyShrinker<T extends State> {
+final class _StatefulPropertyShrinker<State, System> {
   _StatefulPropertyShrinker(
     this.propertyContext,
     this.stateContext,
     this.originalSequence,
   );
 
-  final StatefulPropertyContext<T> propertyContext;
-  final StateContext<T> stateContext;
-  final TraversalSequence<T> originalSequence;
+  final StatefulPropertyContext<State, System> propertyContext;
+  final StateContext<State, System> stateContext;
+  final TraversalSequence<State, System> originalSequence;
   Exception? lastException;
 
-  StatefulProperty<T> get property => propertyContext.property;
+  StatefulProperty<State, System> get property => propertyContext.property;
 
-  StatefulShrinkingResult<T> shrink() {
+  StatefulShrinkingResult<State, System> shrink() {
     final partial = _checkPartialSequences(originalSequence);
     final reduced = _checkReducedSequences(partial);
     _checkValues(reduced);
@@ -228,10 +228,10 @@ final class _StatefulPropertyShrinker<T extends State> {
   bool get _hasShrinkCycle =>
       _shrinkCycle < propertyContext.property.maxShrinkingCycles;
 
-  TraversalSequence<T> _checkPartialSequences(
-      TraversalSequence<T> baseSequence) {
+  TraversalSequence<State, System> _checkPartialSequences(
+      TraversalSequence<State, System> baseSequence) {
     propertyContext.shrinkCycle = 0;
-    var previousSequences = <TraversalSequence<T>>[];
+    var previousSequences = <TraversalSequence<State, System>>[];
     var minShrunkSequence = baseSequence;
     var minShrunkNum = baseSequence.steps.length;
     while (_hasShrinkCycle) {
@@ -266,8 +266,8 @@ final class _StatefulPropertyShrinker<T extends State> {
   }
 
   // 一部のコマンドを削除して検査する
-  TraversalSequence<T> _checkReducedSequences(
-      TraversalSequence<T> baseSequence) {
+  TraversalSequence<State, System> _checkReducedSequences(
+      TraversalSequence<State, System> baseSequence) {
     // コマンドのdescriptionの重複なしリストを作成する
     // baseSequenceのコマンド列を走査し、descriptionが重複しないコマンドを取得する
     final commandTypeSet = <String>{};
@@ -281,7 +281,7 @@ final class _StatefulPropertyShrinker<T extends State> {
         break;
       }
 
-      final shrunkSequence = TraversalSequence<T>();
+      final shrunkSequence = TraversalSequence<State, System>();
       for (var i = 0; i < minShrunkSequence.steps.length; i++) {
         final step = minShrunkSequence.steps[i];
         if (step.command.description != target) {
@@ -305,7 +305,7 @@ final class _StatefulPropertyShrinker<T extends State> {
     return minShrunkSequence;
   }
 
-  bool _checkShrunkSequence(TraversalSequence<T> sequence) {
+  bool _checkShrunkSequence(TraversalSequence<State, System> sequence) {
     print('Check shrunk sequence: ${sequence.steps.length} steps');
     final state = propertyContext.behavior.createState()
       ..random = property.random;
@@ -326,7 +326,7 @@ final class _StatefulPropertyShrinker<T extends State> {
     return true;
   }
 
-  void _checkValues(TraversalSequence<T> sequence) {
+  void _checkValues(TraversalSequence<State, System> sequence) {
     var allShrinkDone = false;
     while (_hasShrinkCycle && !allShrinkDone) {
       print('Shrink cycle ${_shrinkCycle + 1}');
@@ -355,10 +355,10 @@ final class _StatefulPropertyShrinker<T extends State> {
   }
 }
 
-final class StatefulShrinkingResult<T extends State> {
+final class StatefulShrinkingResult<State, System> {
   StatefulShrinkingResult(this.state, this.sequence, {this.exception});
 
   final T state;
-  final TraversalSequence<T> sequence;
+  final TraversalSequence<State, System> sequence;
   final Exception? exception;
 }

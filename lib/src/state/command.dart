@@ -1,41 +1,37 @@
+import 'dart:math';
+
 import 'package:kiri_check/src/arbitrary.dart';
+import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:meta/meta.dart';
 
-abstract class Command<T extends State> {
+abstract class Command<State, System> {
   Command(
     this.description, {
-    bool Function(T)? precondition,
-    bool Function(T)? postcondition,
-    T Function(T)? nextState,
+    bool Function(State)? precondition,
+    bool Function(State)? postcondition,
   }) {
     _precondition = precondition;
     _postcondition = postcondition;
-    _nextState = nextState;
   }
 
   final String description;
 
-  late final bool Function(T)? _precondition;
-  late final bool Function(T)? _postcondition;
-  late final T Function(T)? _nextState;
+  late final bool Function(State)? _precondition;
+  late final bool Function(State)? _postcondition;
 
-  List<Command<T>> get subcommands => const [];
+  List<Command<State, System>> get subcommands => const [];
 
-  bool requires(T state) {
+  bool requires(State state) {
     return _precondition?.call(state) ?? true;
   }
 
-  bool ensures(T state) {
+  bool ensures(State state) {
     return _postcondition?.call(state) ?? true;
   }
 
-  T? nextState(T state) {
-    return _nextState?.call(state);
-  }
-
-  void execute(T state);
+  void execute(State state, System system, Random random);
 
   @internal
   bool useCache = false;
