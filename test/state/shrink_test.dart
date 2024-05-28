@@ -7,13 +7,21 @@ import 'model.dart';
 void main() {
   KiriCheck.verbosity = Verbosity.verbose;
 
-  group('shrink', () {
-    property('shrink', () {
+  group('bank account', () {
+    /*
+    property('base', () {
       forAllStates(
         BankAccountBehavior(),
-        (s) {
-          // TODO
-        },
+        (s) {},
+      );
+    });
+     */
+
+    property('freeze not working', () {
+      forAllStates(
+        BankAccountFreezeNotWorkingBehavior(),
+        (s) {},
+        seed: 12345,
       );
     });
   });

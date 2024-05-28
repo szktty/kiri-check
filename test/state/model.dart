@@ -28,8 +28,6 @@ enum BankAccountOperation {
   withdraw,
 }
 
-// TODO: 確認したいシュリンク内容ごとにBehaviorを用意したほうがよさそう
-
 class BankAccountBehavior extends Behavior<BankAccount> {
   @override
   BankAccount createState() {
@@ -101,6 +99,7 @@ class BankAccountBehavior extends Behavior<BankAccount> {
     }
 
     BankAccountResult? actual;
+    int? before;
     return Action(
       description,
       integer(min: min, max: max),
@@ -108,10 +107,16 @@ class BankAccountBehavior extends Behavior<BankAccount> {
         s
           ..freezable = freezable
           ..checksHistory = checksHistory;
+        before = s.balance;
         actual = action(s, amount);
       },
       postcondition: (s) {
-        return result0.contains(actual);
+        print('postcondition: $actual, balance $before -> ${s.balance}');
+        if (s.frozen) {
+          return actual == BankAccountResult.frozen && s.balance == before;
+        } else {
+          return result0.contains(actual);
+        }
       },
     );
   }
@@ -335,6 +340,9 @@ final class BankAccount extends State {
     frozen = false;
   }
 
+  @protected
+  bool validateFrozen() => freezable && frozen;
+
   BankAccountResult tryDeposit(int amount) {
     final result = validateDeposit(amount);
     if (result != null) {
@@ -349,7 +357,7 @@ final class BankAccount extends State {
 
   @protected
   BankAccountResult? validateDeposit(int amount) {
-    if (freezable && frozen) {
+    if (validateFrozen()) {
       return BankAccountResult.frozen;
     } else if (checksDepositRange && amount > maxDepositPerOnce) {
       return BankAccountResult.overMaxDepositPerOnce;
@@ -401,7 +409,7 @@ final class BankAccount extends State {
   @protected
   BankAccountResult? validateWithdraw(int amount) {
     final charged = charge(amount);
-    if (freezable && frozen) {
+    if (validateFrozen()) {
       return BankAccountResult.frozen;
     } else if (checksWithdrawRange && amount > maxWithdrawPerOnce) {
       return BankAccountResult.overMaxWithdrawPerOnce;
@@ -436,4 +444,14 @@ final class BankAccount extends State {
   void didWithdraw(int amount, int before) {
     // override if needed at subclass
   }
+}
+
+final class BankAccountFreezeNotWorkingBehavior extends BankAccountBehavior {
+  @override
+  BankAccount createState() => BankAccountFreezeNotWorking();
+}
+
+final class BankAccountFreezeNotWorking extends BankAccount {
+  @override
+  bool validateFrozen() => false;
 }
