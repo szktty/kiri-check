@@ -6,19 +6,12 @@ import 'package:kiri_check/src/state/command.dart';
 import 'package:meta/meta.dart';
 
 // ignore: one_member_abstracts
-abstract class Behavior<T extends State> {
+abstract class Behavior<State, System> {
   @factory
-  T createState();
+  State createState();
 
-  List<Command<T>> generateCommands(T state);
-}
+  @factory
+  System createSystem(State state);
 
-abstract class State {
-  // 乱数が必要な場合はこれを使うこと
-  // これを使うと、シードの指定で再現可能になる
-  late final Random random;
-
-  void setUp() {}
-
-  void tearDown() {}
+  List<Command<State, System>> generateCommands(State state);
 }

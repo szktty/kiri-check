@@ -5,9 +5,9 @@ import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:meta/meta.dart';
 
-void forAllStates<T extends State>(
-  Behavior<T> behavior,
-  void Function(T) body, {
+void forAllStates<State, System>(
+  Behavior<State, System> behavior,
+  void Function(State, System) body, {
   int? maxExamples,
   int? maxTries,
   int? maxShrinkingTries,
@@ -20,16 +20,16 @@ void forAllStates<T extends State>(
   int? maxStatefulSteps,
   void Function()? setUp,
   void Function()? tearDown,
-  void Function(T)? onGenerate,
-  void Function(T)? onShrink,
-  void Function(T)? onFalsify,
+  void Function(State, System)? onGenerate,
+  void Function(State, System)? onShrink,
+  void Function(State, System)? onFalsify,
   bool? ignoreFalsify,
   @internal void Function(void Function())? onCheck,
 }) {
   final property = StatefulProperty(
     behavior,
     body,
-    settings: PropertySettings<T>(
+    settings: PropertySettings<State, System>(
       maxExamples: maxExamples,
       maxTries: maxTries,
       maxShrinkingTries: maxShrinkingTries,

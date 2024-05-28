@@ -1,22 +1,22 @@
-import 'package:kiri_check/src/state/command.dart';
-import 'package:kiri_check/src/state/state.dart';
+import 'dart:math';
 
-final class Initialize<T extends State> extends Command<T> {
+import 'package:kiri_check/src/state/command.dart';
+
+final class Initialize<State, System> extends Command<State, System> {
   Initialize(
     super.description,
     this.command, {
     super.precondition,
     super.postcondition,
-    super.nextState,
   });
 
-  final Command<T> command;
+  final Command<State, System> command;
 
   @override
-  List<Command<T>> get subcommands => [command];
+  List<Command<State, System>> get subcommands => [command];
 
   @override
-  void execute(T state) {
-    command.execute(state);
+  void execute(State state, System system, Random random) {
+    command.execute(state, system, random);
   }
 }
