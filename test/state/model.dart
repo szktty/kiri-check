@@ -1,12 +1,13 @@
 import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/stateful_test.dart';
+import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 
 enum BankAccountResult {
   success,
   frozen,
   alreadyFrozen,
-  notFrozen,
+  notFreezable,
   underMinDepositPerOnce,
   underMinWithdrawPerOnce,
   overMaxDepositPerOnce,
@@ -29,7 +30,7 @@ enum BankAccountOperation {
 
 // TODO: 確認したいシュリンク内容ごとにBehaviorを用意したほうがよさそう
 
-abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
+class BankAccountBehavior extends Behavior<BankAccount> {
   @override
   BankAccount createState() {
     return BankAccount();
@@ -51,7 +52,7 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
       Action0(
         'freeze',
         (s) {
-          freezeResult = s.freeze();
+          freezeResult = s.tryFreeze();
         },
         postcondition: (s) {
           return s.frozen &&
@@ -62,12 +63,12 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
       Action0(
         'unfreeze',
         (s) {
-          unfreezeResult = s.unfreeze();
+          unfreezeResult = s.tryUnfreeze();
         },
         postcondition: (s) {
           return !s.frozen &&
               (unfreezeResult == BankAccountResult.success ||
-                  unfreezeResult == BankAccountResult.notFrozen);
+                  unfreezeResult == BankAccountResult.notFreezable);
         },
       ),
     ];
@@ -84,7 +85,11 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
     bool freezable = true,
     bool checksHistory = true,
   }) {
-    final result0 = List<BankAccountResult>.from(expected ?? []);
+    final result0 = [BankAccountResult.frozen];
+    if (expected != null) {
+      result0.addAll(expected);
+    }
+
     if (checksHistory) {
       result0
         ..add(BankAccountResult.overMaxSameOperationsPerDay)
@@ -106,7 +111,7 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
         actual = action(s, amount);
       },
       postcondition: (s) {
-        return !s.frozen && result0.contains(actual);
+        return result0.contains(actual);
       },
     );
   }
@@ -121,7 +126,7 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
   }) =>
       amountAction(
         description,
-        (s, amount) => s.deposit(amount),
+        (s, amount) => s.tryDeposit(amount),
         expected: result,
         reason: reason,
         min: min,
@@ -139,83 +144,90 @@ abstract class BankAccountBehaviorBase extends Behavior<BankAccount> {
   }) =>
       amountAction(
         description,
-        (s, amount) => s.withdraw(amount),
+        (s, amount) => s.tryWithdraw(amount),
         expected: result,
         reason: reason,
         min: min,
         max: max,
         success: success,
       );
-}
 
-// 基本的な実装。すべて成功すべき
-final class BankAccountBasicBehavior extends BankAccountBehaviorBase {
+  List<Command<BankAccount>> basicDepositActions(BankAccount s) => [
+        depositAction(
+          'under min deposit per once',
+          success: false,
+          max: s.minDepositPerOnce - 1,
+          result: [
+            BankAccountResult.underMinDepositPerOnce,
+          ],
+        ),
+        depositAction(
+          'valid range deposit per once',
+          success: true,
+          min: s.minDepositPerOnce,
+          max: s.maxDepositPerOnce,
+          result: [
+            BankAccountResult.overMaxDepositPerDay,
+            BankAccountResult.overBalance,
+          ],
+        ),
+        depositAction(
+          'over max deposit per once',
+          success: false,
+          min: s.maxDepositPerOnce + 1,
+          max: s.maxDepositPerDay,
+          result: [BankAccountResult.overMaxDepositPerOnce],
+        ),
+        depositAction(
+          'over max deposit per day',
+          success: false,
+          min: s.maxDepositPerDay + 1,
+          result: [BankAccountResult.overMaxDepositPerOnce],
+        ),
+      ];
+
+  List<Command<BankAccount>> basicWithdrawActions(BankAccount s) => [
+        withdrawAction(
+          'under min withdraw per once',
+          success: false,
+          max: s.minWithdrawPerOnce - 1,
+          result: [BankAccountResult.underMinWithdrawPerOnce],
+        ),
+        withdrawAction(
+          'valid range withdraw per once',
+          success: true,
+          min: s.minWithdrawPerOnce,
+          max: s.maxWithdrawPerOnce,
+          result: [
+            BankAccountResult.overMaxWithdrawPerDay,
+            BankAccountResult.underBalance,
+          ],
+        ),
+        withdrawAction(
+          'over max withdraw per once',
+          success: false,
+          min: s.maxWithdrawPerOnce + 1,
+          max: s.maxWithdrawPerDay,
+          result: [BankAccountResult.overMaxWithdrawPerOnce],
+        ),
+        withdrawAction(
+          'over max withdraw per day',
+          success: false,
+          min: s.maxWithdrawPerDay + 1,
+          result: [
+            BankAccountResult.overMaxWithdrawPerOnce,
+            BankAccountResult.overMaxWithdrawPerDay,
+          ],
+        ),
+      ];
+
   @override
   List<Command<BankAccount>> generateCommands(BankAccount s) {
     return [
       nextDayAction(),
       ...freezeActions(),
-      depositAction(
-        'under min deposit per once',
-        success: false,
-        max: s.minDepositPerOnce - 1,
-        result: [BankAccountResult.underMinDepositPerOnce],
-      ),
-      depositAction(
-        'valid range deposit per once',
-        success: true,
-        min: s.minDepositPerOnce,
-        max: s.maxDepositPerOnce,
-        result: [
-          BankAccountResult.overMaxDepositPerDay,
-          BankAccountResult.overBalance,
-        ],
-      ),
-      depositAction(
-        'over max deposit per once',
-        success: false,
-        min: s.maxDepositPerOnce + 1,
-        max: s.maxDepositPerDay,
-        result: [BankAccountResult.overMaxDepositPerOnce],
-      ),
-      depositAction(
-        'over max deposit per day',
-        success: false,
-        min: s.maxDepositPerDay + 1,
-        result: [BankAccountResult.overMaxDepositPerOnce],
-      ),
-      withdrawAction(
-        'under min withdraw per once',
-        success: false,
-        max: s.minWithdrawPerOnce - 1,
-        result: [BankAccountResult.underMinWithdrawPerOnce],
-      ),
-      withdrawAction(
-        'valid range withdraw per once',
-        success: true,
-        min: s.minWithdrawPerOnce,
-        max: s.maxWithdrawPerOnce,
-        result: [
-          BankAccountResult.overMaxWithdrawPerDay,
-          BankAccountResult.underBalance,
-        ],
-      ),
-      withdrawAction(
-        'over max withdraw per once',
-        success: false,
-        min: s.maxWithdrawPerOnce + 1,
-        max: s.maxWithdrawPerDay,
-        result: [BankAccountResult.overMaxWithdrawPerOnce],
-      ),
-      withdrawAction(
-        'over max withdraw per day',
-        success: false,
-        min: s.maxWithdrawPerDay + 1,
-        result: [
-          BankAccountResult.overMaxWithdrawPerOnce,
-          BankAccountResult.overMaxWithdrawPerDay,
-        ],
-      ),
+      ...basicDepositActions(s),
+      ...basicWithdrawActions(s),
     ];
   }
 }
@@ -230,7 +242,7 @@ final class BankAccount extends State {
   int maxWithdrawPerDay = 500000;
   int maxBalance = 100000000;
   int minBalance = 0;
-  double chargeRate = 0.03;
+  double chargeRate = 0.01;
 
   bool freezable = true;
   bool frozen = false;
@@ -238,14 +250,21 @@ final class BankAccount extends State {
   int depositPerDay = 0;
   int withdrawPerDay = 0;
 
-  bool checksHistory = true;
   List<BankAccountOperation> history = [];
   int maxSameOperationsPerDay = 10;
   int maxOperationsPerDay = 20;
 
+  bool checksHistory = true;
+  bool checksDepositRange = true;
+  bool checksWithdrawRange = true;
+  bool checksBalanceRange = true;
+  bool checksChargeOnWithdraw = true;
+
+  @protected
   int countOfOperationPerDay(BankAccountOperation operation) =>
       history.where((o) => o == operation).length;
 
+  @protected
   int countOfLastOperationPerDay(BankAccountOperation operation) {
     var count = 0;
     for (var i = history.length - 1; i >= 0; i--) {
@@ -257,57 +276,89 @@ final class BankAccount extends State {
     return count;
   }
 
+  @protected
+  void addHistory(BankAccountOperation operation) {
+    history.add(operation);
+  }
+
   void nextDay() {
-    frozen = false;
+    unfreeze();
+    clearHistory();
+    clearDepositPerDay();
+    clearWithdrawPerDay();
+  }
+
+  @protected
+  void clearHistory() {
     history.clear();
+  }
+
+  @protected
+  void clearDepositPerDay() {
     depositPerDay = 0;
+  }
+
+  @protected
+  void clearWithdrawPerDay() {
     withdrawPerDay = 0;
   }
 
-  BankAccountResult freeze() {
+  BankAccountResult tryFreeze() {
     if (!freezable) {
-      return BankAccountResult.success;
+      return BankAccountResult.notFreezable;
     } else if (frozen) {
       return BankAccountResult.alreadyFrozen;
     } else {
-      frozen = true;
+      freeze();
       return BankAccountResult.success;
     }
   }
 
-  BankAccountResult unfreeze() {
+  @protected
+  void freeze() {
+    frozen = true;
+  }
+
+  BankAccountResult tryUnfreeze() {
     if (!freezable) {
-      return BankAccountResult.success;
+      return BankAccountResult.notFreezable;
     } else if (frozen) {
-      frozen = false;
+      unfreeze();
       return BankAccountResult.success;
     } else {
-      return BankAccountResult.notFrozen;
+      return BankAccountResult.notFreezable;
     }
   }
 
-  BankAccountResult deposit(int amount) {
+  @protected
+  void unfreeze() {
+    frozen = false;
+  }
+
+  BankAccountResult tryDeposit(int amount) {
     final result = validateDeposit(amount);
     if (result != null) {
       return result;
     } else {
-      depositPerDay += amount;
-      balance += amount;
-      history.add(BankAccountOperation.deposit);
+      final before = balance;
+      deposit(amount);
+      didDeposit(amount, before);
       return BankAccountResult.success;
     }
   }
 
+  @protected
   BankAccountResult? validateDeposit(int amount) {
     if (freezable && frozen) {
       return BankAccountResult.frozen;
-    } else if (amount > maxDepositPerOnce) {
+    } else if (checksDepositRange && amount > maxDepositPerOnce) {
       return BankAccountResult.overMaxDepositPerOnce;
-    } else if (amount < minDepositPerOnce) {
+    } else if (checksDepositRange && amount < minDepositPerOnce) {
       return BankAccountResult.underMinDepositPerOnce;
-    } else if (depositPerDay + amount > maxDepositPerDay) {
+    } else if (checksDepositRange &&
+        depositPerDay + amount > maxDepositPerDay) {
       return BankAccountResult.overMaxDepositPerDay;
-    } else if (balance + amount > maxBalance) {
+    } else if (checksBalanceRange && balance + amount > maxBalance) {
       return BankAccountResult.overBalance;
     } else if (checksHistory &&
         countOfLastOperationPerDay(BankAccountOperation.deposit) >
@@ -320,19 +371,47 @@ final class BankAccount extends State {
     }
   }
 
+  @protected
+  void deposit(int amount) {
+    depositPerDay += amount;
+    balance += amount;
+    addHistory(BankAccountOperation.deposit);
+  }
+
+  @protected
+  void didDeposit(int amount, int before) {
+    // override if needed at subclass
+  }
+
+  BankAccountResult tryWithdraw(int amount) {
+    final result = validateWithdraw(amount);
+    if (result != null) {
+      return result;
+    } else {
+      final before = balance;
+      withdraw(amount);
+      didWithdraw(amount, before);
+      return BankAccountResult.success;
+    }
+  }
+
+  @protected
   int charge(int amount) => (amount + amount * chargeRate).toInt();
 
+  @protected
   BankAccountResult? validateWithdraw(int amount) {
     final charged = charge(amount);
     if (freezable && frozen) {
       return BankAccountResult.frozen;
-    } else if (amount > maxWithdrawPerOnce) {
+    } else if (checksWithdrawRange && amount > maxWithdrawPerOnce) {
       return BankAccountResult.overMaxWithdrawPerOnce;
-    } else if (amount < minWithdrawPerOnce) {
+    } else if (checksWithdrawRange && amount < minWithdrawPerOnce) {
       return BankAccountResult.underMinWithdrawPerOnce;
-    } else if (amount > maxWithdrawPerDay) {
+    } else if (checksWithdrawRange && amount > maxWithdrawPerDay) {
       return BankAccountResult.overMaxWithdrawPerDay;
-    } else if (balance - charged < minBalance) {
+    } else if (checksBalanceRange &&
+        checksChargeOnWithdraw &&
+        balance - charged < minBalance) {
       return BankAccountResult.underBalance;
     } else if (checksHistory &&
         countOfLastOperationPerDay(BankAccountOperation.deposit) >
@@ -345,16 +424,16 @@ final class BankAccount extends State {
     }
   }
 
-  BankAccountResult withdraw(int amount) {
-    final result = validateWithdraw(amount);
-    if (result != null) {
-      return result;
-    } else {
-      final charged = charge(amount);
-      withdrawPerDay += charged;
-      balance -= charged;
-      history.add(BankAccountOperation.withdraw);
-      return BankAccountResult.success;
-    }
+  @protected
+  void withdraw(int amount) {
+    final charged = charge(amount);
+    withdrawPerDay += charged;
+    balance -= charged;
+    addHistory(BankAccountOperation.withdraw);
+  }
+
+  @protected
+  void didWithdraw(int amount, int before) {
+    // override if needed at subclass
   }
 }

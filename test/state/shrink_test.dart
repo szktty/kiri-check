@@ -10,7 +10,7 @@ void main() {
   group('shrink', () {
     property('shrink', () {
       forAllStates(
-        BankAccountBasicBehavior(),
+        BankAccountBehavior(),
         (s) {
           // TODO
         },
