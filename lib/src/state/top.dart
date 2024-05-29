@@ -4,45 +4,32 @@ import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:meta/meta.dart';
+import 'package:test/scaffolding.dart';
 
 void forAllStates<State, System>(
-  Behavior<State, System> behavior,
-  void Function(State, System) body, {
+  Behavior<State, System> behavior, {
   int? maxExamples,
   int? maxTries,
   int? maxShrinkingTries,
-  RandomContext? random,
   int? seed,
-  GenerationPolicy? generationPolicy,
-  ShrinkingPolicy? shrinkingPolicy,
-  EdgeCasePolicy? edgeCasePolicy,
-  int? maxStatefulCycles,
-  int? maxStatefulSteps,
+  int? maxCycles,
+  int? maxSteps,
+  Timeout? cycleTimeout,
   void Function()? setUp,
   void Function()? tearDown,
-  void Function(State, System)? onGenerate,
-  void Function(State, System)? onShrink,
-  void Function(State, System)? onFalsify,
   bool? ignoreFalsify,
   @internal void Function(void Function())? onCheck,
 }) {
   final property = StatefulProperty(
     behavior,
-    body,
-    settings: PropertySettings<State, System>(
+    settings: PropertySettings<State>(
       maxExamples: maxExamples,
       maxTries: maxTries,
       maxShrinkingTries: maxShrinkingTries,
-      random: random,
       seed: seed,
-      generationPolicy: generationPolicy,
-      shrinkingPolicy: shrinkingPolicy,
-      edgeCasePolicy: edgeCasePolicy,
-      maxStatefulCycles: maxStatefulCycles,
-      maxStatefulSteps: maxStatefulSteps,
-      onGenerate: onGenerate,
-      onShrink: onShrink,
-      onFalsify: onFalsify,
+      maxStatefulCycles: maxCycles,
+      maxStatefulSteps: maxSteps,
+      statefulCycleTimeout: cycleTimeout,
       ignoreFalsify: ignoreFalsify,
     ),
     setUp: setUp,

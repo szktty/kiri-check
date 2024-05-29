@@ -7,6 +7,7 @@ import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/command/action.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/state/traversal.dart';
+import 'package:test/test.dart';
 
 final class StatefulFalsifiedException<State, System> implements Exception {
   StatefulFalsifiedException(this.description, this.result);
@@ -32,16 +33,17 @@ final class StatefulFalsifiedException<State, System> implements Exception {
 }
 
 final class StateContext<State, System> {
-  StateContext(this.state, this.property, this.test);
+  StateContext(this.state, this.system, this.property, this.test);
 
-  State state;
+  final State state;
+  final System system;
   final StatefulProperty<State, System> property;
   final PropertyTest test;
 
   Behavior<State, System> get behavior => property.behavior;
 
-  void executeCommand(Command<State, System> command) {
-    state = property._executeCommand(this, command);
+  bool executeCommand(Command<State, System> command) {
+    return property._executeCommand(this, command);
   }
 }
 
@@ -63,9 +65,9 @@ final class StatefulPropertyContext<State, System> {
 
 final class StatefulProperty<State, System> extends Property<State> {
   StatefulProperty(
-    this.behavior,
-    this.body, {
+    this.behavior, {
     required super.settings,
+    Timeout? cycleTimeout,
     super.setUp,
     super.tearDown,
     this.onCheck,
@@ -77,15 +79,16 @@ final class StatefulProperty<State, System> extends Property<State> {
 
      */
     maxShrinkingCycles = 50;
+    this.cycleTimeout = cycleTimeout ?? KiriCheck.statefulCycleTimeout;
   }
 
   final Behavior<State, System> behavior;
 
-  final void Function(T) body;
   final void Function(void Function())? onCheck;
 
   late final int maxCycles;
   late final int maxShrinkingCycles;
+  late final Timeout cycleTimeout;
 
   @override
   void check(PropertyTest test) {
@@ -109,9 +112,9 @@ final class StatefulProperty<State, System> extends Property<State> {
 
   void _check(PropertyTest test) {
     print('Check behavior: ${behavior.runtimeType}');
-    setUp?.call();
+    this.setUp?.call();
     _checkSequences(test);
-    tearDown?.call();
+    this.tearDown?.call();
   }
 
   void _checkSequences(PropertyTest test) {
@@ -123,24 +126,24 @@ final class StatefulProperty<State, System> extends Property<State> {
         print('--------------------------------------------');
         print('Cycle ${cycle + 1}');
 
-        var state = behavior.createState()..random = random;
+        final state = behavior.createState();
         print('Create state: ${state.runtimeType}');
-        final stateContext = StateContext(state, this, test);
+        final system = behavior.createSystem(state);
+        final stateContext = StateContext(state, system, this, test);
         final commands = behavior.generateCommands(state);
         final traversal = Traversal(propertyContext, commands);
         final sequence = traversal.generateSequence();
-
-        state.setUp();
 
         for (var i = 0; i < sequence.steps.length; i++) {
           final step = sequence.steps[i];
           final command = step.command;
           print('Step ${i + 1}: ${command.description}');
           try {
-            stateContext.executeCommand(command);
+            // TODO: precondition
+            final result = stateContext.executeCommand(command);
           } on Exception catch (e) {
             print('Error: $e');
-            state.tearDown();
+            behavior.tearDown(state, system);
 
             // TODO: 次に一部のコマンドをカットするフェーズを挟む
 
@@ -164,36 +167,28 @@ final class StatefulProperty<State, System> extends Property<State> {
             throw StatefulFalsifiedException(test.description, result);
           }
         }
-
-        body(state);
-        state.tearDown();
+        behavior.tearDown(state, system);
       }
 
       print('--------------------------------------------');
     }
   }
 
-  T _executeCommand(
+  bool _executeCommand(
     StateContext<State, System> context,
     Command<State, System> command,
   ) {
     final state = context.state;
-    if (command.requires(state)) {
-      command.execute(state);
-      if (command.ensures(state)) {
-        final next = command.nextState(state);
-        if (next != null) {
-          return next..random = random;
-        } else {
-          return state;
-        }
+    if (command.requires(state, context.system)) {
+      command.execute(state, context.system, context.property.random);
+      if (command.ensures(state, context.system)) {
+        return true;
       } else {
         print('Postcondition is not satisfied');
         throw PropertyException('postcondition is not satisfied');
       }
     } else {
-      print('Precondition is not satisfied');
-      throw PropertyException('precondition is not satisfied');
+      return false;
     }
   }
 }
@@ -307,9 +302,10 @@ final class _StatefulPropertyShrinker<State, System> {
 
   bool _checkShrunkSequence(TraversalSequence<State, System> sequence) {
     print('Check shrunk sequence: ${sequence.steps.length} steps');
-    final state = propertyContext.behavior.createState()
-      ..random = property.random;
-    final stateContext = StateContext(state, property, propertyContext.test);
+    final state = propertyContext.behavior.createState();
+    final system = propertyContext.behavior.createSystem(state);
+    final stateContext =
+        StateContext(state, system, property, propertyContext.test);
     for (var i = 0; i < sequence.steps.length; i++) {
       final step = sequence.steps[i];
       final command = step.command;
@@ -330,9 +326,10 @@ final class _StatefulPropertyShrinker<State, System> {
     var allShrinkDone = false;
     while (_hasShrinkCycle && !allShrinkDone) {
       print('Shrink cycle ${_shrinkCycle + 1}');
-      final state = propertyContext.behavior.createState()
-        ..random = property.random;
-      final stateContext = StateContext(state, property, propertyContext.test);
+      final state = propertyContext.behavior.createState();
+      final system = propertyContext.behavior.createSystem(state);
+      final stateContext =
+          StateContext(state, system, property, propertyContext.test);
       allShrinkDone = true;
       for (var i = 0; i < sequence.steps.length; i++) {
         final step = sequence.steps[i];
@@ -358,7 +355,7 @@ final class _StatefulPropertyShrinker<State, System> {
 final class StatefulShrinkingResult<State, System> {
   StatefulShrinkingResult(this.state, this.sequence, {this.exception});
 
-  final T state;
+  final State state;
   final TraversalSequence<State, System> sequence;
   final Exception? exception;
 }

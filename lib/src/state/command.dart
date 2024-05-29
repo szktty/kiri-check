@@ -9,8 +9,8 @@ import 'package:meta/meta.dart';
 abstract class Command<State, System> {
   Command(
     this.description, {
-    bool Function(State)? precondition,
-    bool Function(State)? postcondition,
+    bool Function(State, System)? precondition,
+    bool Function(State, System)? postcondition,
   }) {
     _precondition = precondition;
     _postcondition = postcondition;
@@ -18,17 +18,17 @@ abstract class Command<State, System> {
 
   final String description;
 
-  late final bool Function(State)? _precondition;
-  late final bool Function(State)? _postcondition;
+  late final bool Function(State, System)? _precondition;
+  late final bool Function(State, System)? _postcondition;
 
   List<Command<State, System>> get subcommands => const [];
 
-  bool requires(State state) {
-    return _precondition?.call(state) ?? true;
+  bool requires(State state, System system) {
+    return _precondition?.call(state, system) ?? true;
   }
 
-  bool ensures(State state) {
-    return _postcondition?.call(state) ?? true;
+  bool ensures(State state, System system) {
+    return _postcondition?.call(state, system) ?? true;
   }
 
   void execute(State state, System system, Random random);

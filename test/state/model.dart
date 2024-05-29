@@ -28,31 +28,36 @@ enum BankAccountOperation {
   withdraw,
 }
 
-class BankAccountBehavior extends Behavior<BankAccount> {
+class BankAccountBehavior extends Behavior<BankAccount, Null> {
   @override
   BankAccount createState() {
     return BankAccount();
   }
 
-  Action0<BankAccount> nextDayAction() {
+  @override
+  Null createSystem(BankAccount state) {
+    return null;
+  }
+
+  Action0<BankAccount, Null> nextDayAction() {
     return Action0(
       'next day',
-      (s) {
+      (s, system) {
         s.nextDay();
       },
     );
   }
 
-  List<Action0<BankAccount>> freezeActions() {
+  List<Action0<BankAccount, Null>> freezeActions() {
     BankAccountResult? freezeResult;
     BankAccountResult? unfreezeResult;
     return [
       Action0(
         'freeze',
-        (s) {
+        (s, system) {
           freezeResult = s.tryFreeze();
         },
-        postcondition: (s) {
+        postcondition: (s, system) {
           return s.frozen &&
               (freezeResult == BankAccountResult.success ||
                   freezeResult == BankAccountResult.alreadyFrozen);
@@ -60,10 +65,10 @@ class BankAccountBehavior extends Behavior<BankAccount> {
       ),
       Action0(
         'unfreeze',
-        (s) {
+        (s, system) {
           unfreezeResult = s.tryUnfreeze();
         },
-        postcondition: (s) {
+        postcondition: (s, system) {
           return !s.frozen &&
               (unfreezeResult == BankAccountResult.success ||
                   unfreezeResult == BankAccountResult.notFreezable);
@@ -72,9 +77,9 @@ class BankAccountBehavior extends Behavior<BankAccount> {
     ];
   }
 
-  Action<BankAccount, int> amountAction(
+  Action<BankAccount, Null, int> amountAction(
     String description,
-    BankAccountResult Function(BankAccount, int) action, {
+    BankAccountResult Function(BankAccount, Null, int) action, {
     required bool success,
     List<BankAccountResult>? expected,
     String? reason,
@@ -103,14 +108,14 @@ class BankAccountBehavior extends Behavior<BankAccount> {
     return Action(
       description,
       integer(min: min, max: max),
-      (s, amount) {
+      (s, system, amount) {
         s
           ..freezable = freezable
           ..checksHistory = checksHistory;
         before = s.balance;
-        actual = action(s, amount);
+        actual = action(s, system as Null, amount);
       },
-      postcondition: (s) {
+      postcondition: (s, system) {
         print('postcondition: $actual, balance $before -> ${s.balance}');
         if (s.frozen) {
           return actual == BankAccountResult.frozen && s.balance == before;
@@ -121,7 +126,7 @@ class BankAccountBehavior extends Behavior<BankAccount> {
     );
   }
 
-  Action<BankAccount, int> depositAction(
+  Action<BankAccount, Null, int> depositAction(
     String description, {
     required bool success,
     List<BankAccountResult>? result,
@@ -131,7 +136,7 @@ class BankAccountBehavior extends Behavior<BankAccount> {
   }) =>
       amountAction(
         description,
-        (s, amount) => s.tryDeposit(amount),
+        (s, system, amount) => s.tryDeposit(amount),
         expected: result,
         reason: reason,
         min: min,
@@ -139,7 +144,7 @@ class BankAccountBehavior extends Behavior<BankAccount> {
         success: success,
       );
 
-  Action<BankAccount, int> withdrawAction(
+  Action<BankAccount, Null, int> withdrawAction(
     String description, {
     required bool success,
     List<BankAccountResult>? result,
@@ -149,7 +154,7 @@ class BankAccountBehavior extends Behavior<BankAccount> {
   }) =>
       amountAction(
         description,
-        (s, amount) => s.tryWithdraw(amount),
+        (s, system, amount) => s.tryWithdraw(amount),
         expected: result,
         reason: reason,
         min: min,
@@ -157,7 +162,7 @@ class BankAccountBehavior extends Behavior<BankAccount> {
         success: success,
       );
 
-  List<Command<BankAccount>> basicDepositActions(BankAccount s) => [
+  List<Command<BankAccount, Null>> basicDepositActions(BankAccount s) => [
         depositAction(
           'under min deposit per once',
           success: false,
@@ -191,7 +196,7 @@ class BankAccountBehavior extends Behavior<BankAccount> {
         ),
       ];
 
-  List<Command<BankAccount>> basicWithdrawActions(BankAccount s) => [
+  List<Command<BankAccount, Null>> basicWithdrawActions(BankAccount s) => [
         withdrawAction(
           'under min withdraw per once',
           success: false,
@@ -227,7 +232,7 @@ class BankAccountBehavior extends Behavior<BankAccount> {
       ];
 
   @override
-  List<Command<BankAccount>> generateCommands(BankAccount s) {
+  List<Command<BankAccount, Null>> generateCommands(BankAccount s) {
     return [
       nextDayAction(),
       ...freezeActions(),
@@ -237,7 +242,7 @@ class BankAccountBehavior extends Behavior<BankAccount> {
   }
 }
 
-final class BankAccount extends State {
+final class BankAccount {
   int minDepositPerOnce = 1000;
   int minWithdrawPerOnce = 1000;
 
