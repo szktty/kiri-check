@@ -12,7 +12,6 @@ void main() {
     property('base', () {
       forAllStates(
         BankAccountBehavior(),
-        (s) {},
       );
     });
      */
@@ -20,7 +19,6 @@ void main() {
     property('freeze not working', () {
       forAllStates(
         BankAccountFreezeNotWorkingBehavior(),
-        (s) {},
         seed: 12345,
       );
     });

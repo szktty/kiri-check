@@ -56,6 +56,13 @@ abstract class KiriCheck {
   static set maxStatefulSteps(int value) =>
       Settings.shared.maxStatefulSteps = value;
 
+  /// The timeout for each stateful cycle.
+  static Timeout get statefulCycleTimeout =>
+      Settings.shared.statefulCycleTimeout;
+
+  static set statefulCycleTimeout(Timeout value) =>
+      Settings.shared.statefulCycleTimeout = value;
+
   /// Sets a timeout for the test. If the test runs longer, it will be marked as failed.
   static Timeout? get timeout => Settings.shared.timeout;
 
@@ -110,6 +117,7 @@ final class Settings {
     EdgeCasePolicy? edgeCasePolicy,
     int? maxStatefulCycles,
     int? maxStatefulSteps,
+    Timeout? statefulCycleTimeout,
     this.timeout,
     Verbosity? verbosity,
   }) {
@@ -121,6 +129,8 @@ final class Settings {
     this.edgeCasePolicy = edgeCasePolicy ?? EdgeCasePolicy.mixin;
     this.maxStatefulCycles = maxStatefulCycles ?? 100;
     this.maxStatefulSteps = maxStatefulSteps ?? 50;
+    this.statefulCycleTimeout =
+        statefulCycleTimeout ?? const Timeout(Duration(seconds: 30));
     this.verbosity = verbosity ?? Verbosity.normal;
   }
 
@@ -133,6 +143,7 @@ final class Settings {
   late EdgeCasePolicy edgeCasePolicy;
   late int maxStatefulCycles;
   late int maxStatefulSteps;
+  late Timeout statefulCycleTimeout;
   Timeout? timeout;
   late Verbosity verbosity;
 

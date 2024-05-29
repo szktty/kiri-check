@@ -11,19 +11,24 @@ enum CounterEvent {
   set,
 }
 
-final class CounterBehavior extends Behavior<CounterState> {
+final class CounterBehavior extends Behavior<CounterState, Null> {
   @override
   CounterState createState() {
     return CounterState();
   }
 
   @override
-  List<Command<CounterState>> generateCommands(CounterState s) {
+  Null createSystem(CounterState s) {
+    return null;
+  }
+
+  @override
+  List<Command<CounterState, Null>> generateCommands(CounterState s) {
     return [
       Action(
         'set',
         integer(),
-        (s, value) {
+        (s, system, value) {
           s
             ..previous = s.count
             ..count = value
@@ -32,23 +37,23 @@ final class CounterBehavior extends Behavior<CounterState> {
       ),
       Action0(
         'increment',
-        (s) {
+        (s, system) {
           s.previous = s.count;
           s.count++;
           s.addEvent(CounterEvent.increment);
         },
-        postcondition: (s) {
+        postcondition: (s, system) {
           return s.count == s.previous + 1;
         },
       ),
       Action0(
         'decrement',
-        (s) {
+        (s, system) {
           s.previous = s.count;
           s.count--;
           s.addEvent(CounterEvent.decrement);
         },
-        postcondition: (s) {
+        postcondition: (s, system) {
           return s.count == s.previous - 1;
         },
       ),
@@ -56,7 +61,7 @@ final class CounterBehavior extends Behavior<CounterState> {
   }
 }
 
-final class CounterState extends State {
+final class CounterState {
   int count = 0;
   int previous = 0;
 
@@ -65,17 +70,6 @@ final class CounterState extends State {
   void addEvent(CounterEvent event) {
     events.add(event);
   }
-
-  @override
-  void setUp() {
-    events.clear();
-  }
-
-  @override
-  void tearDown() {
-    print('events: $events');
-    expect(events, isNotEmpty);
-  }
 }
 
 void main() {
@@ -83,7 +77,7 @@ void main() {
 
   group('StatefulProperty', () {
     property('basic', () {
-      forAllStates(CounterBehavior(), (_) {});
+      forAllStates(CounterBehavior());
     });
   });
 }
