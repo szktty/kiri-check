@@ -44,6 +44,6 @@ final class ConditionalTestBehavior
 
 void main() {
   property('conditional', () {
-    forAllStates(ConditionalTestBehavior());
+    runBehavior(ConditionalTestBehavior());
   });
 }

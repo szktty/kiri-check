@@ -77,7 +77,7 @@ void main() {
 
   group('StatefulProperty', () {
     property('basic', () {
-      forAllStates(CounterBehavior());
+      runBehavior(CounterBehavior());
     });
   });
 }

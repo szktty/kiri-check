@@ -54,6 +54,6 @@ final class FinalizeBehavior extends Behavior<FinalizeState, Null> {
 
 void main() {
   property('basic', () {
-    forAllStates(FinalizeBehavior());
+    runBehavior(FinalizeBehavior());
   });
 }

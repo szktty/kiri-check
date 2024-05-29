@@ -13,4 +13,4 @@ export 'src/state/command/action.dart'
 export 'src/state/command/finalize.dart' show Finalize;
 export 'src/state/command/initialize.dart' show Initialize;
 export 'src/state/state.dart' show Behavior, State;
-export 'src/state/top.dart' show forAllStates;
+export 'src/state/top.dart' show runBehavior;

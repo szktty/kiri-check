@@ -54,6 +54,6 @@ final class InitializeBehavior extends Behavior<InitializeState, Null> {
 
 void main() {
   property('basic', () {
-    forAllStates(InitializeBehavior());
+    runBehavior(InitializeBehavior());
   });
 }
