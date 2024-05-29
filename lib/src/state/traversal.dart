@@ -91,10 +91,10 @@ final class TraversalSequence<State, System> {
   }
 
   List<TraversalSequence<State, System>> shrink() {
-    print('TraversalSequence.shrink: steps ${steps.length}');
-    final n = steps.length ~/ (steps.length <= 5 ? 2 : 3);
+    final n = (steps.length / (steps.length <= 5 ? 2 : 3)).ceil();
+    print('TraversalSequence.shrink: steps ${steps.length}, $n');
     return steps
-        .splitAfterIndexed((i, _) => i > 0 && i % n == 0)
+        .splitAfterIndexed((i, _) => (i + 1) % n == 0)
         .map(TraversalSequence<State, System>.new)
         .toList();
   }
