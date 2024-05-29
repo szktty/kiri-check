@@ -6,7 +6,7 @@ import 'package:kiri_check/src/state/state.dart';
 import 'package:meta/meta.dart';
 import 'package:test/scaffolding.dart';
 
-void forAllStates<State, System>(
+void runBehavior<State, System>(
   Behavior<State, System> behavior, {
   int? maxExamples,
   int? maxTries,

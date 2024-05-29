@@ -17,7 +17,7 @@ void main() {
      */
 
     property('freeze not working', () {
-      forAllStates(
+      runBehavior(
         BankAccountFreezeNotWorkingBehavior(),
         seed: 12345,
       );

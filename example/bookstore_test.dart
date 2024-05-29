@@ -69,6 +69,6 @@ final class Bookstore {
 
 void main() {
   property('basic', () {
-    forAllStates(BookstoreBehavior(), (s) {});
+    runBehavior(BookstoreBehavior(), (s) {});
   });
 }
