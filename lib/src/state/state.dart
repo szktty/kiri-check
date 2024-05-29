@@ -5,7 +5,6 @@ import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/state/command.dart';
 import 'package:meta/meta.dart';
 
-// ignore: one_member_abstracts
 abstract class Behavior<State, System> {
   @factory
   State createState();

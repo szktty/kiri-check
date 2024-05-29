@@ -139,13 +139,13 @@ final class StatefulProperty<State, System> extends Property<State> {
           final command = step.command;
           print('Step ${i + 1}: ${command.description}');
           try {
-            // TODO: precondition
             final result = stateContext.executeCommand(command);
+            if (!result) {
+              i--;
+            }
           } on Exception catch (e) {
             print('Error: $e');
             behavior.tearDown(state, system);
-
-            // TODO: 次に一部のコマンドをカットするフェーズを挟む
 
             final shrinker = _StatefulPropertyShrinker(
               propertyContext,
@@ -316,9 +316,11 @@ final class _StatefulPropertyShrinker<State, System> {
       } on Exception catch (e) {
         print('Error: $e');
         lastException = e;
+        stateContext.behavior.tearDown(state, system);
         return false;
       }
     }
+    stateContext.behavior.tearDown(state, system);
     return true;
   }
 
