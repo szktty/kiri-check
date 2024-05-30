@@ -79,6 +79,7 @@ final class PreconditionCountBehavior
 
   @override
   Null createSystem(PreconditionCountState s) => null;
+
   int preconditionsOnSelect = 0;
   int preconditionsOnRun = 0;
 
@@ -118,6 +119,47 @@ final class PreconditionCountBehavior
 
 final class PreconditionCountState {}
 
+final class PreconditionConditionalBehavior
+    extends Behavior<PreconditionCountState, Null> {
+  @override
+  PreconditionCountState createState() => PreconditionCountState();
+
+  @override
+  Null createSystem(PreconditionCountState s) => null;
+
+  int tryPreconditions = 0;
+
+  @override
+  List<Command<PreconditionCountState, Null>> generateCommands(
+      PreconditionCountState state) {
+    var onSelect = true;
+    var i = -1;
+    return [
+      Action0(
+        'count',
+        (s, system) {
+          print('run action');
+          onSelect = false;
+        },
+        precondition: (s) {
+          tryPreconditions++;
+          if (onSelect && i < 10) {
+            i++;
+            return i.isEven;
+          } else {
+            return true;
+          }
+        },
+      )
+    ];
+  }
+
+  @override
+  void dispose(PreconditionCountState s, Null system) {
+    print('preconditions: ${tryPreconditions}');
+  }
+}
+
 void main() {
   KiriCheck.verbosity = Verbosity.verbose;
 
@@ -140,6 +182,19 @@ void main() {
         tearDown: () {
           expect(behavior.preconditionsOnSelect, 1000);
           expect(behavior.preconditionsOnRun, 1000);
+        },
+      );
+    });
+
+    property('run commands which satisfies precondition', () {
+      final behavior = PreconditionConditionalBehavior();
+      runBehavior(
+        behavior,
+        maxCycles: 10,
+        maxSteps: 10,
+        maxCommandTries: 100,
+        tearDown: () {
+          expect(behavior.tryPreconditions, 2500);
         },
       );
     });
