@@ -56,6 +56,17 @@ abstract class KiriCheck {
   static set maxStatefulSteps(int value) =>
       Settings.shared.maxStatefulSteps = value;
 
+  /// The maximum number of attempts to find a valid command for stateful properties.
+  static int get maxStatefulCommandTries =>
+      Settings.shared.maxStatefulCommandTries;
+
+  static set maxStatefulCommandTries(int value) =>
+      Settings.shared.maxStatefulCommandTries = value;
+
+  /// The maximum number of attempts to shrink a failing stateful example to its simplest form.
+  static int get maxStatefulShrinkingCycles =>
+      Settings.shared.maxStatefulShrinkingCycles;
+
   /// The timeout for each stateful cycle.
   static Timeout get statefulCycleTimeout =>
       Settings.shared.statefulCycleTimeout;
@@ -117,6 +128,8 @@ final class Settings {
     EdgeCasePolicy? edgeCasePolicy,
     int? maxStatefulCycles,
     int? maxStatefulSteps,
+    int? maxStatefulCommandTries,
+    int? maxStatefulShrinkingCycles,
     Timeout? statefulCycleTimeout,
     this.timeout,
     Verbosity? verbosity,
@@ -128,7 +141,9 @@ final class Settings {
     this.shrinkingPolicy = shrinkingPolicy ?? ShrinkingPolicy.bounded;
     this.edgeCasePolicy = edgeCasePolicy ?? EdgeCasePolicy.mixin;
     this.maxStatefulCycles = maxStatefulCycles ?? 100;
-    this.maxStatefulSteps = maxStatefulSteps ?? 50;
+    this.maxStatefulSteps = maxStatefulSteps ?? 100;
+    this.maxStatefulCommandTries = maxStatefulCommandTries ?? 100;
+    this.maxStatefulShrinkingCycles = maxStatefulShrinkingCycles ?? 100;
     this.statefulCycleTimeout =
         statefulCycleTimeout ?? const Timeout(Duration(seconds: 30));
     this.verbosity = verbosity ?? Verbosity.normal;
@@ -143,6 +158,8 @@ final class Settings {
   late EdgeCasePolicy edgeCasePolicy;
   late int maxStatefulCycles;
   late int maxStatefulSteps;
+  late int maxStatefulCommandTries;
+  late int maxStatefulShrinkingCycles;
   late Timeout statefulCycleTimeout;
   Timeout? timeout;
   late Verbosity verbosity;
