@@ -8,29 +8,27 @@ import 'package:test/scaffolding.dart';
 
 void runBehavior<State, System>(
   Behavior<State, System> behavior, {
-  int? maxExamples,
-  int? maxTries,
   int? maxShrinkingTries,
   int? seed,
   int? maxCycles,
   int? maxSteps,
   int? maxCommandTries,
+  int? maxShrinkingCycles,
   Timeout? cycleTimeout,
   void Function()? setUp,
   void Function()? tearDown,
   bool? ignoreFalsify,
+  // TODO: 不要
   @internal void Function(void Function())? onCheck,
 }) {
   final property = StatefulProperty(
     behavior,
     settings: PropertySettings<State>(
-      maxExamples: maxExamples,
-      maxTries: maxTries,
-      maxShrinkingTries: maxShrinkingTries,
       seed: seed,
       maxStatefulCycles: maxCycles,
       maxStatefulSteps: maxSteps,
       maxStatefulCommandTries: maxCommandTries,
+      maxStatefulShrinkingCycles: maxShrinkingCycles,
       statefulCycleTimeout: cycleTimeout,
       ignoreFalsify: ignoreFalsify,
     ),
