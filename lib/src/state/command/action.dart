@@ -7,6 +7,7 @@ import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/state.dart';
+import 'package:meta/meta.dart';
 
 enum ActionShrinkingState {
   notStarted,
@@ -14,7 +15,47 @@ enum ActionShrinkingState {
   finished,
 }
 
-final class Action<State, System, T> extends Command<State, System> {
+abstract class ActionBase<State, System, T> extends Command<State, System> {
+  ActionBase(
+    super.description, {
+    bool Function(State)? precondition,
+    bool Function(State, System)? postcondition,
+  }) {
+    _precondition = precondition;
+    _postcondition = postcondition;
+  }
+
+  late final bool Function(State)? _precondition;
+  late final bool Function(State, System)? _postcondition;
+
+  @override
+  bool requires(State state) {
+    return _precondition?.call(state) ?? true;
+  }
+
+  @override
+  bool ensures(State state, System system) {
+    return _postcondition?.call(state, system) ?? true;
+  }
+
+  @override
+  @internal
+  bool useCache = false;
+
+  @override
+  @internal
+  bool nextShrink() => false;
+
+  @override
+  @internal
+  void failShrunk() {}
+
+  @override
+  @internal
+  dynamic get minValue => null;
+}
+
+final class Action<State, System, T> extends ActionBase<State, System, T> {
   Action(
     super.description,
     Arbitrary<T> arbitrary,
