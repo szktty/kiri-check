@@ -44,7 +44,7 @@ final class FinalizeBehavior extends Behavior<FinalizeState, Null> {
   }
 
   @override
-  void tearDown(FinalizeState s, Null system) {
+  void dispose(FinalizeState s, Null system) {
     expect(s.history[s.history.length - 2], Marker.a);
     expect(s.history.last, Marker.b);
     expect(s.history.where((e) => e == Marker.a).length, 1);

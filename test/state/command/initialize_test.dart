@@ -44,7 +44,7 @@ final class InitializeBehavior extends Behavior<InitializeState, Null> {
   }
 
   @override
-  void tearDown(InitializeState s, Null system) {
+  void dispose(InitializeState s, Null system) {
     expect(s.history.first, Marker.a);
     expect(s.history[1], Marker.b);
     expect(s.history.where((e) => e == Marker.a).length, 1);
