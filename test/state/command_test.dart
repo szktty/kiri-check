@@ -23,7 +23,7 @@ final class ConditionalTestBehavior
       Action0<ConditionalTestState, Null>(
         'no op',
         (s, system) {},
-        precondition: (s, system) {
+        precondition: (s) {
           s.precondition = true;
           return true;
         },

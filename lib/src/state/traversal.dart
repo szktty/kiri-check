@@ -16,9 +16,8 @@ import 'package:kiri_check/src/state/state.dart';
 final class Traversal<State, System> {
   Traversal(
     this.context,
-    this.commands, {
-    this.maxSteps = 30,
-  }) {
+    this.commands,
+  ) {
     for (final command in commands) {
       if (command is Initialize) {
         initializeCommands.add(command);
@@ -35,22 +34,35 @@ final class Traversal<State, System> {
   final List<Command<State, System>> initializeCommands = [];
   final List<Command<State, System>> finalizeCommands = [];
   final List<Command<State, System>> actionCommands = [];
-  final int maxSteps;
 
-  TraversalSequence<State, System> generateSequence() {
-    final sequence = TraversalSequence<State, System>();
-    for (final command in initializeCommands) {
-      sequence.addStep(command);
-    }
-    final count = context.property.random.nextIntInclusive(
-      maxSteps - initializeCommands.length - finalizeCommands.length,
-    );
-    for (var i = 0; i < count; i++) {
+  List<Command<State, System>> _selectCommands(State state) {
+    final selected = <Command<State, System>>[];
+    final initializers = initializeCommands.where((c) => c.requires(state));
+    final finalizers = finalizeCommands.where((c) => c.requires(state));
+
+    for (var tries = 0;
+        tries < context.property.maxCommandTries &&
+            initializers.length + finalizers.length + selected.length <
+                context.property.maxSteps;
+        tries++) {
       final n = context.property.random.nextInt(actionCommands.length);
       final command = actionCommands[n];
-      sequence.addStep(command);
+      if (command.requires(state)) {
+        selected.add(command);
+      }
     }
-    for (final command in finalizeCommands) {
+
+    return [
+      ...initializers,
+      ...selected,
+      ...finalizers,
+    ];
+  }
+
+  TraversalSequence<State, System> generateSequence(State state) {
+    final commands = _selectCommands(state);
+    final sequence = TraversalSequence<State, System>();
+    for (final command in commands) {
       sequence.addStep(command);
     }
     return sequence;

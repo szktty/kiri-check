@@ -16,6 +16,16 @@ final class Initialize<State, System> extends Command<State, System> {
   List<Command<State, System>> get subcommands => [command];
 
   @override
+  bool requires(State state) {
+    return command.requires(state);
+  }
+
+  @override
+  bool ensures(State state, System system) {
+    return command.ensures(state, system);
+  }
+
+  @override
   void execute(State state, System system, Random random) {
     command.execute(state, system, random);
   }
