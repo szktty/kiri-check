@@ -17,6 +17,8 @@ final class PropertySettings<T> {
     this.edgeCasePolicy,
     this.maxStatefulCycles,
     this.maxStatefulSteps,
+    this.maxStatefulCommandTries,
+    this.maxStatefulShrinkingCycles,
     this.statefulCycleTimeout,
     this.onGenerate,
     this.onShrink,
@@ -37,6 +39,8 @@ final class PropertySettings<T> {
   final EdgeCasePolicy? edgeCasePolicy;
   final int? maxStatefulCycles;
   final int? maxStatefulSteps;
+  final int? maxStatefulCommandTries;
+  final int? maxStatefulShrinkingCycles;
   final Timeout? statefulCycleTimeout;
   final void Function(T)? onGenerate;
   final void Function(T)? onShrink;

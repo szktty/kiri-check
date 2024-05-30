@@ -73,12 +73,10 @@ final class StatefulProperty<State, System> extends Property<State> {
     this.onCheck,
   }) {
     maxCycles = settings.maxStatefulCycles ?? KiriCheck.maxStatefulCycles;
-    /*
-    maxShrinkingCycles =
-        settings.maxShrinkingCycles ?? KiriCheck.maxShrinkingCycles;
-
-     */
-    maxShrinkingCycles = 50;
+    maxShrinkingCycles = settings.maxStatefulShrinkingCycles ??
+        KiriCheck.maxStatefulShrinkingCycles;
+    maxCommandTries =
+        settings.maxStatefulCommandTries ?? KiriCheck.maxStatefulCommandTries;
     this.cycleTimeout = cycleTimeout ?? KiriCheck.statefulCycleTimeout;
   }
 
@@ -88,6 +86,7 @@ final class StatefulProperty<State, System> extends Property<State> {
 
   late final int maxCycles;
   late final int maxShrinkingCycles;
+  late final int maxCommandTries;
   late final Timeout cycleTimeout;
 
   @override
