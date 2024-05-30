@@ -5,8 +5,6 @@ import 'package:collection/collection.dart';
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/state/command.dart';
-import 'package:kiri_check/src/state/command/finalize.dart';
-import 'package:kiri_check/src/state/command/initialize.dart';
 import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/src/state/state.dart';
 

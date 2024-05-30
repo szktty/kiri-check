@@ -7,41 +7,78 @@ import 'package:kiri_check/src/state/state.dart';
 import 'package:meta/meta.dart';
 
 abstract class Command<State, System> {
-  Command(
-    this.description, {
-    bool Function(State)? precondition,
-    bool Function(State, System)? postcondition,
-  }) {
-    _precondition = precondition;
-    _postcondition = postcondition;
-  }
+  Command(this.description);
 
   final String description;
 
-  late final bool Function(State)? _precondition;
-  late final bool Function(State, System)? _postcondition;
-
   List<Command<State, System>> get subcommands => const [];
 
-  bool requires(State state) {
-    return _precondition?.call(state) ?? true;
-  }
+  bool requires(State state);
 
-  bool ensures(State state, System system) {
-    return _postcondition?.call(state, system) ?? true;
-  }
+  bool ensures(State state, System system);
 
   void execute(State state, System system, Random random);
 
   @internal
-  bool useCache = false;
+  bool get useCache;
+
+  set useCache(bool value);
 
   @internal
-  bool nextShrink() => false;
+  bool nextShrink();
 
   @internal
-  void failShrunk() {}
+  void failShrunk();
 
   @internal
-  dynamic get minValue => null;
+  dynamic get minValue;
+}
+
+abstract class Container<State, System> extends Command<State, System> {
+  Container(super.description, this.command);
+
+  final Command<State, System> command;
+
+  @override
+  List<Command<State, System>> get subcommands => [command];
+
+  @override
+  bool requires(State state) {
+    return command.requires(state);
+  }
+
+  @override
+  bool ensures(State state, System system) {
+    return command.ensures(state, system);
+  }
+
+  @override
+  void execute(State state, System system, Random random) {
+    command.execute(state, system, random);
+  }
+
+  @override
+  bool get useCache => command.useCache;
+
+  @override
+  set useCache(bool value) {
+    command.useCache = value;
+  }
+
+  @override
+  bool nextShrink() => command.nextShrink();
+
+  @override
+  void failShrunk() => command.failShrunk();
+
+  @override
+  dynamic get minValue => command.minValue;
+}
+
+final class Initialize<State, System> extends Container<State, System> {
+  Initialize(super.description, super.command);
+}
+
+final class Finalize<State, System> extends Container<State, System> {
+  Finalize(super.description, super.command);
 }
