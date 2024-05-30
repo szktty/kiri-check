@@ -36,7 +36,7 @@ final class ConditionalTestBehavior
   }
 
   @override
-  void tearDown(ConditionalTestState s, Null system) {
+  void dispose(ConditionalTestState s, Null system) {
     expect(s.precondition, isTrue);
     expect(s.postcondition, isTrue);
   }

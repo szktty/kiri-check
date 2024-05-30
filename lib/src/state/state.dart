@@ -14,5 +14,5 @@ abstract class Behavior<State, System> {
 
   List<Command<State, System>> generateCommands(State state);
 
-  void tearDown(State state, System system) {}
+  void dispose(State state, System system) {}
 }

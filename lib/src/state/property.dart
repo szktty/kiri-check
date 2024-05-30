@@ -144,7 +144,7 @@ final class StatefulProperty<State, System> extends Property<State> {
             }
           } on Exception catch (e) {
             print('Error: $e');
-            behavior.tearDown(state, system);
+            behavior.dispose(state, system);
 
             final shrinker = _StatefulPropertyShrinker(
               propertyContext,
@@ -166,7 +166,7 @@ final class StatefulProperty<State, System> extends Property<State> {
             throw StatefulFalsifiedException(test.description, result);
           }
         }
-        behavior.tearDown(state, system);
+        behavior.dispose(state, system);
       }
 
       print('--------------------------------------------');
@@ -315,11 +315,11 @@ final class _StatefulPropertyShrinker<State, System> {
       } on Exception catch (e) {
         print('Error: $e');
         lastException = e;
-        stateContext.behavior.tearDown(state, system);
+        stateContext.behavior.dispose(state, system);
         return false;
       }
     }
-    stateContext.behavior.tearDown(state, system);
+    stateContext.behavior.dispose(state, system);
     return true;
   }
 
