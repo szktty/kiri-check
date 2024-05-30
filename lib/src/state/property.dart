@@ -73,6 +73,7 @@ final class StatefulProperty<State, System> extends Property<State> {
     this.onCheck,
   }) {
     maxCycles = settings.maxStatefulCycles ?? KiriCheck.maxStatefulCycles;
+    maxSteps = settings.maxStatefulSteps ?? KiriCheck.maxStatefulSteps;
     maxShrinkingCycles = settings.maxStatefulShrinkingCycles ??
         KiriCheck.maxStatefulShrinkingCycles;
     maxCommandTries =
@@ -85,6 +86,7 @@ final class StatefulProperty<State, System> extends Property<State> {
   final void Function(void Function())? onCheck;
 
   late final int maxCycles;
+  late final int maxSteps;
   late final int maxShrinkingCycles;
   late final int maxCommandTries;
   late final Timeout cycleTimeout;
@@ -125,13 +127,15 @@ final class StatefulProperty<State, System> extends Property<State> {
         print('--------------------------------------------');
         print('Cycle ${cycle + 1}');
 
+        final commandState = behavior.createState();
+        final commands = behavior.generateCommands(commandState);
+        final traversal = Traversal(propertyContext, commands);
+        final sequence = traversal.generateSequence(commandState);
+
         final state = behavior.createState();
         print('Create state: ${state.runtimeType}');
         final system = behavior.createSystem(state);
         final stateContext = StateContext(state, system, this, test);
-        final commands = behavior.generateCommands(state);
-        final traversal = Traversal(propertyContext, commands);
-        final sequence = traversal.generateSequence();
 
         for (var i = 0; i < sequence.steps.length; i++) {
           final step = sequence.steps[i];
@@ -178,7 +182,7 @@ final class StatefulProperty<State, System> extends Property<State> {
     Command<State, System> command,
   ) {
     final state = context.state;
-    if (command.requires(state, context.system)) {
+    if (command.requires(state)) {
       command.execute(state, context.system, context.property.random);
       if (command.ensures(state, context.system)) {
         return true;
@@ -187,7 +191,8 @@ final class StatefulProperty<State, System> extends Property<State> {
         throw PropertyException('postcondition is not satisfied');
       }
     } else {
-      return false;
+      print('Precondition is not satisfied');
+      throw PropertyException('Precondition is not satisfied');
     }
   }
 }
