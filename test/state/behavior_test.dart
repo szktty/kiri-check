@@ -72,12 +72,76 @@ final class CounterState {
   }
 }
 
+final class PreconditionCountBehavior
+    extends Behavior<PreconditionCountState, Null> {
+  @override
+  PreconditionCountState createState() => PreconditionCountState();
+
+  @override
+  Null createSystem(PreconditionCountState s) => null;
+  int preconditionsOnSelect = 0;
+  int preconditionsOnRun = 0;
+
+  @override
+  List<Command<PreconditionCountState, Null>> generateCommands(
+      PreconditionCountState state) {
+    var onSelect = true;
+    return [
+      Action0(
+        'count',
+        (s, system) {
+          print('run action');
+          if (onSelect) {
+            preconditionsOnSelect--;
+            preconditionsOnRun++;
+            onSelect = false;
+          }
+        },
+        precondition: (s) {
+          if (onSelect) {
+            preconditionsOnSelect++;
+          } else {
+            preconditionsOnRun++;
+          }
+          return true;
+        },
+      )
+    ];
+  }
+
+  @override
+  void dispose(PreconditionCountState s, Null system) {
+    print(
+        'preconditionsOnSelect: ${preconditionsOnSelect}, preconditionsOnRun: ${preconditionsOnRun}');
+  }
+}
+
+final class PreconditionCountState {}
+
 void main() {
   KiriCheck.verbosity = Verbosity.verbose;
 
   group('StatefulProperty', () {
     property('basic', () {
-      runBehavior(CounterBehavior());
+      runBehavior(
+        CounterBehavior(),
+        maxCycles: 10,
+        maxSteps: 10,
+      );
+    });
+
+    property('precondition calls on selecting and running commands', () {
+      final behavior = PreconditionCountBehavior();
+      runBehavior(
+        behavior,
+        maxCycles: 10,
+        maxSteps: 10,
+        maxCommandTries: 100,
+        tearDown: () {
+          expect(behavior.preconditionsOnSelect, 1000);
+          expect(behavior.preconditionsOnRun, 1000);
+        },
+      );
     });
   });
 }
