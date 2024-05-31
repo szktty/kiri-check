@@ -160,6 +160,41 @@ final class PreconditionConditionalBehavior
   }
 }
 
+final class PostconditionCountBehavior
+    extends Behavior<PostconditionCountState, Null> {
+  @override
+  PostconditionCountState createState() => PostconditionCountState();
+
+  @override
+  Null createSystem(PostconditionCountState s) => null;
+
+  int postconditions = 0;
+
+  @override
+  List<Command<PostconditionCountState, Null>> generateCommands(
+      PostconditionCountState state) {
+    return [
+      Action0(
+        'count',
+        (s, system) {
+          print('run action');
+        },
+        postcondition: (s, system) {
+          postconditions++;
+          return true;
+        },
+      )
+    ];
+  }
+
+  @override
+  void dispose(PostconditionCountState s, Null system) {
+    print('postconditions: ${postconditions}');
+  }
+}
+
+final class PostconditionCountState {}
+
 void main() {
   KiriCheck.verbosity = Verbosity.verbose;
 
@@ -195,6 +230,19 @@ void main() {
         maxCommandTries: 100,
         tearDown: () {
           expect(behavior.tryPreconditions, 2500);
+        },
+      );
+    });
+
+    property('postcondition calls', () {
+      final behavior = PostconditionCountBehavior();
+      runBehavior(
+        behavior,
+        maxCycles: 10,
+        maxSteps: 10,
+        maxCommandTries: 100,
+        tearDown: () {
+          expect(behavior.postconditions, 1000);
         },
       );
     });
