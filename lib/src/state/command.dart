@@ -11,8 +11,6 @@ abstract class Command<State, System> {
 
   final String description;
 
-  List<Command<State, System>> get subcommands => const [];
-
   bool requires(State state);
 
   bool ensures(State state, System system);
@@ -38,9 +36,6 @@ abstract class Container<State, System> extends Command<State, System> {
   Container(super.description, this.command);
 
   final Command<State, System> command;
-
-  @override
-  List<Command<State, System>> get subcommands => [command];
 
   @override
   bool requires(State state) {

@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/state/command.dart';
+import 'package:kiri_check/src/state/command/sequence.dart';
 import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/src/state/state.dart';
 
@@ -35,26 +36,50 @@ final class Traversal<State, System> {
 
   List<Command<State, System>> _selectCommands(State state) {
     final selected = <Command<State, System>>[];
-    final initializers = initializeCommands.where((c) => c.requires(state));
-    final finalizers = finalizeCommands.where((c) => c.requires(state));
+    final finalizers = <Command<State, System>>[];
+    var tries = 0;
 
-    for (var tries = 0;
+    bool hasNext() =>
         tries < context.property.maxCommandTries &&
-            initializers.length + finalizers.length + selected.length <
-                context.property.maxSteps;
-        tries++) {
-      final n = context.property.random.nextInt(actionCommands.length);
-      final command = actionCommands[n];
-      if (command.requires(state)) {
-        selected.add(command);
+        finalizers.length + selected.length < context.property.maxSteps;
+
+    void addCommand(
+        List<Command<State, System>> list, Command<State, System> command) {
+      if (!hasNext()) {
+        return;
+      }
+
+      if (command is Sequence<State, System>) {
+        for (final c in command.commands) {
+          addCommand(list, c);
+        }
+      } else if (command.requires(state)) {
+        list.add(command);
+        tries++;
       }
     }
 
-    return [
-      ...initializers,
-      ...selected,
-      ...finalizers,
-    ];
+    void addCommands(List<Command<State, System>> list,
+        List<Command<State, System>> commands) {
+      for (final command in commands) {
+        if (!hasNext()) {
+          break;
+        }
+        addCommand(list, command);
+        tries++;
+      }
+    }
+
+    addCommands(selected, initializeCommands);
+    addCommands(finalizers, finalizeCommands);
+
+    while (hasNext()) {
+      final n = context.property.random.nextInt(actionCommands.length);
+      addCommand(selected, actionCommands[n]);
+      tries++;
+    }
+
+    return selected;
   }
 
   TraversalSequence<State, System> generateSequence(State state) {
