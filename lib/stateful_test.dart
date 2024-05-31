@@ -10,5 +10,6 @@ export 'src/state/command/action.dart'
         Action6,
         Action7,
         Action8;
+export 'src/state/command/sequence.dart' show Sequence;
 export 'src/state/state.dart' show Behavior;
 export 'src/state/top.dart' show runBehavior;
