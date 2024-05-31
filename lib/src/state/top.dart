@@ -17,6 +17,7 @@ void runBehavior<State, System>(
   Timeout? cycleTimeout,
   void Function()? setUp,
   void Function()? tearDown,
+  void Function(StatefulFalsifyingExample<State, System>)? onFalsify,
   bool? ignoreFalsify,
   // TODO: 不要
   @internal void Function(void Function())? onCheck,
@@ -34,6 +35,7 @@ void runBehavior<State, System>(
     ),
     setUp: setUp,
     tearDown: tearDown,
+    onFalsify: onFalsify,
     onCheck: onCheck,
   );
   PropertyTestManager.addProperty(property);

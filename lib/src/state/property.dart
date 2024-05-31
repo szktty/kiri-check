@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/exception.dart';
@@ -7,11 +8,13 @@ import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/command/action.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/state/traversal.dart';
+import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 
 final class StatefulFalsifiedException<State, System> implements Exception {
   StatefulFalsifiedException(this.description, this.result);
 
+  // TODO: 使ってない？
   final Object? description;
   final StatefulShrinkingResult<State, System> result;
 
@@ -70,6 +73,7 @@ final class StatefulProperty<State, System> extends Property<State> {
     Timeout? cycleTimeout,
     super.setUp,
     super.tearDown,
+    this.onFalsify,
     this.onCheck,
   }) {
     maxCycles = settings.maxStatefulCycles ?? KiriCheck.maxStatefulCycles;
@@ -84,6 +88,7 @@ final class StatefulProperty<State, System> extends Property<State> {
   final Behavior<State, System> behavior;
 
   final void Function(void Function())? onCheck;
+  final void Function(StatefulFalsifyingExample<State, System>)? onFalsify;
 
   late final int maxCycles;
   late final int maxSteps;
@@ -114,11 +119,40 @@ final class StatefulProperty<State, System> extends Property<State> {
   void _check(PropertyTest test) {
     print('Check behavior: ${behavior.runtimeType}');
     this.setUp?.call();
-    _checkSequences(test);
+    final result = _checkSequences(test);
     this.tearDown?.call();
+
+    if (result != null) {
+      print('Falsified example sequence:');
+      for (var i = 0; i < result.sequence.steps.length; i++) {
+        final step = result.sequence.steps[i];
+        final command = step.command;
+        print('Step ${i + 1}: ${command.description}');
+        if (command is Action) {
+          print('Shrunk value: ${command.minValue}');
+        }
+      }
+
+      if (onFalsify != null) {
+        final falsified = StatefulFalsifyingExample(
+          result.state,
+          result.system,
+          result.sequence.steps
+              .mapIndexed(
+                (i, step) => StatefulFalsifyingExampleStep(
+                    i, step.command, step.command.minValue),
+              )
+              .toList(),
+          result.exception,
+        );
+        onFalsify!(falsified);
+      }
+
+      throw StatefulFalsifiedException(null, result);
+    }
   }
 
-  void _checkSequences(PropertyTest test) {
+  StatefulShrinkingResult<State, System>? _checkSequences(PropertyTest test) {
     final propertyContext = StatefulPropertyContext(this, test);
     for (propertyContext.cycle = 0;
         propertyContext.cycle < maxCycles;
@@ -155,19 +189,7 @@ final class StatefulProperty<State, System> extends Property<State> {
               stateContext,
               TraversalSequence(sequence.steps.sublist(0, i + 1)),
             );
-            final result = shrinker.shrink();
-
-            print('Falsified example sequence:');
-            for (var i = 0; i < result.sequence.steps.length; i++) {
-              final step = result.sequence.steps[i];
-              final command = step.command;
-              print('Step ${i + 1}: ${command.description}');
-              if (command is Action) {
-                print('Shrunk value: ${command.minValue}');
-              }
-            }
-
-            throw StatefulFalsifiedException(test.description, result);
+            return shrinker.shrink();
           }
         }
         behavior.dispose(state, system);
@@ -175,6 +197,7 @@ final class StatefulProperty<State, System> extends Property<State> {
 
       print('--------------------------------------------');
     }
+    return null;
   }
 
   bool _executeCommand(
@@ -217,6 +240,7 @@ final class _StatefulPropertyShrinker<State, System> {
     _checkValues(reduced);
     return StatefulShrinkingResult(
       stateContext.state,
+      stateContext.system,
       reduced,
       exception: lastException,
     );
@@ -359,9 +383,39 @@ final class _StatefulPropertyShrinker<State, System> {
 }
 
 final class StatefulShrinkingResult<State, System> {
-  StatefulShrinkingResult(this.state, this.sequence, {this.exception});
+  StatefulShrinkingResult(
+    this.state,
+    this.system,
+    this.sequence, {
+    this.exception,
+  });
 
   final State state;
+  final System system;
   final TraversalSequence<State, System> sequence;
   final Exception? exception;
+}
+
+final class StatefulFalsifyingExample<State, System> {
+  @protected
+  StatefulFalsifyingExample(
+    this.state,
+    this.system,
+    this.steps,
+    this.exception,
+  );
+
+  final State state;
+  final System system;
+  final List<StatefulFalsifyingExampleStep<State, System>> steps;
+  final Exception? exception;
+}
+
+final class StatefulFalsifyingExampleStep<State, System> {
+  @protected
+  StatefulFalsifyingExampleStep(this.number, this.command, this.value);
+
+  final int number;
+  final Command<State, System> command;
+  final dynamic value;
 }

@@ -13,7 +13,7 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
 
   @override
   BankSystem createSystem(BankAccountModel state) {
-    return BankSystem();
+    return BankSystem()..register(state.id);
   }
 
   Action0<BankAccountModel, BankSystem> nextDayAction() {
