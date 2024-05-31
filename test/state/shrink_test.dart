@@ -12,6 +12,9 @@ void main() {
     property('base', () {
       runBehavior(
         BankAccountBehavior(),
+        onFalsify: (example) {
+          print('onFalsify example: ${example}');
+        },
       );
     });
 
