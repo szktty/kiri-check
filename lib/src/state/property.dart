@@ -73,6 +73,7 @@ final class StatefulProperty<State, System> extends Property<State> {
     Timeout? cycleTimeout,
     super.setUp,
     super.tearDown,
+    this.onDispose,
     this.onFalsify,
     this.onCheck,
   }) {
@@ -88,6 +89,7 @@ final class StatefulProperty<State, System> extends Property<State> {
   final Behavior<State, System> behavior;
 
   final void Function(void Function())? onCheck;
+  final void Function(Behavior<State, System>, State, System)? onDispose;
   final void Function(StatefulFalsifyingExample<State, System>)? onFalsify;
 
   late final int maxCycles;
@@ -182,7 +184,7 @@ final class StatefulProperty<State, System> extends Property<State> {
             }
           } on Exception catch (e) {
             print('Error: $e');
-            behavior.dispose(state, system);
+            _disposeBehavior(behavior, state, system);
 
             final shrinker = _StatefulPropertyShrinker(
               propertyContext,
@@ -192,12 +194,23 @@ final class StatefulProperty<State, System> extends Property<State> {
             return shrinker.shrink();
           }
         }
-        behavior.dispose(state, system);
+        _disposeBehavior(behavior, state, system);
       }
 
       print('--------------------------------------------');
     }
     return null;
+  }
+
+  void _disposeBehavior(
+    Behavior<State, System> behavior,
+    State state,
+    System system,
+  ) {
+    if (onDispose != null) {
+      onDispose?.call(behavior, state, system);
+    }
+    behavior.dispose(state, system);
   }
 
   bool _executeCommand(

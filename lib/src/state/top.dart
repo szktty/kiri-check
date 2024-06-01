@@ -17,6 +17,7 @@ void runBehavior<State, System>(
   Timeout? cycleTimeout,
   void Function()? setUp,
   void Function()? tearDown,
+  void Function(Behavior<State, System>, State, System)? onDispose,
   void Function(StatefulFalsifyingExample<State, System>)? onFalsify,
   bool? ignoreFalsify,
   // TODO: 不要
@@ -35,6 +36,7 @@ void runBehavior<State, System>(
     ),
     setUp: setUp,
     tearDown: tearDown,
+    onDispose: onDispose,
     onFalsify: onFalsify,
     onCheck: onCheck,
   );
