@@ -25,9 +25,10 @@ enum BankAccountOperation {
 }
 
 final class BankAccountSettings {
+  int defaultBalance = 5000000;
   int maxDepositPerDay = 1000000;
   int maxWithdrawPerDay = 500000;
-  int maxBalance = 100000000;
+  int maxBalance = 1000000;
   int minBalance = 0;
   double chargeRate = 0.01;
 
@@ -35,12 +36,16 @@ final class BankAccountSettings {
 }
 
 final class BankAccountModel {
+  BankAccountModel() {
+    balance = settings.defaultBalance;
+  }
+
   final BankAccountSettings settings = BankAccountSettings();
 
   final int id = math.Random().nextInt(1000000);
 
   bool frozen = false;
-  int balance = 1000000;
+  late int balance;
   int depositPerDay = 0;
   int withdrawPerDay = 0;
 
@@ -114,7 +119,7 @@ final class BankAccountModel {
   }
 
   BankAccountResult deposit(int amount) {
-    final result = validateDeposit(amount);
+    final result = _validateDeposit(amount);
     if (result != null) {
       return result;
     } else {
@@ -125,8 +130,7 @@ final class BankAccountModel {
     }
   }
 
-  @protected
-  BankAccountResult? validateDeposit(int amount) {
+  BankAccountResult? _validateDeposit(int amount) {
     if (frozen) {
       return BankAccountResult.frozen;
     } else if (checksDepositRange &&
@@ -142,11 +146,11 @@ final class BankAccountModel {
   }
 
   BankAccountResult withdraw(int amount) {
-    final result = validateWithdraw(amount);
+    final result = _validateWithdraw(amount);
     if (result != null) {
       return result;
     } else {
-      final charged = charge(amount);
+      final charged = _charge(amount);
       withdrawPerDay += charged;
       balance -= charged;
       addHistory(BankAccountOperation.withdraw);
@@ -154,12 +158,10 @@ final class BankAccountModel {
     }
   }
 
-  @protected
-  int charge(int amount) => (amount + amount * settings.chargeRate).toInt();
+  int _charge(int amount) => (amount + amount * settings.chargeRate).toInt();
 
-  @protected
-  BankAccountResult? validateWithdraw(int amount) {
-    final charged = charge(amount);
+  BankAccountResult? _validateWithdraw(int amount) {
+    final charged = _charge(amount);
     if (frozen) {
       return BankAccountResult.frozen;
     } else if (checksWithdrawRange && amount > settings.maxWithdrawPerDay) {
