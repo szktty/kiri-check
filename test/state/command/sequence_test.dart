@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/stateful_test.dart';
+import 'package:test/expect.dart';
 import 'package:test/test.dart';
 
 final class SequenceTestState {
@@ -27,8 +28,7 @@ final class SequenceTestBehavior extends Behavior<SequenceTestState, Null> {
     return [
       Initialize('first sequence', _sequence(1, 3)),
       _sequence(4, 6),
-      _sequence(7, 9),
-      Finalize('last sequence', _sequence(10, 12)),
+      Finalize('last sequence', _sequence(7, 9)),
     ];
   }
 
@@ -46,16 +46,18 @@ final class SequenceTestBehavior extends Behavior<SequenceTestState, Null> {
 }
 
 void main() {
-  property('sequence test', () {
+  property('with initializer and finalizer which contain sequence', () {
     runBehavior(
       SequenceTestBehavior(),
       onDispose: (behavior, state, system) {
         final equals = const DeepCollectionEquality().equals;
         final events = state.events;
         expect(events.sublist(0, 3), predicate((e) => equals(e, [1, 2, 3])));
-        expect(events.sublist(events.length - 6, events.length),
-            predicate((e) => equals(e, [10, 11, 12])));
-        // TODO: 4-9
+        expect(events.sublist(events.length - 3, events.length),
+            predicate((e) => equals(e, [7, 8, 9])));
+        for (var i = 0; i < events.length - 6; i++) {
+          expect(events[i + 3], [4, 5, 6][i % 3]);
+        }
       },
     );
   });
