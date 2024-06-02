@@ -18,9 +18,9 @@ final class Traversal<State, System> {
     this.commands,
   ) {
     for (final command in commands) {
-      if (command is Initialize) {
+      if (command is Initialize<State, System>) {
         initializeCommands.add(command);
-      } else if (command is Finalize) {
+      } else if (command is Finalize<State, System>) {
         finalizeCommands.add(command);
       } else {
         actionCommands.add(command);
@@ -49,7 +49,11 @@ final class Traversal<State, System> {
         return;
       }
 
-      if (command is Sequence<State, System>) {
+      if (command is Initialize<State, System>) {
+        addCommand(list, command.command);
+      } else if (command is Finalize<State, System>) {
+        addCommand(list, command.command);
+      } else if (command is Sequence<State, System>) {
         for (final c in command.commands) {
           addCommand(list, c);
         }
@@ -79,6 +83,7 @@ final class Traversal<State, System> {
       tries++;
     }
 
+    selected.addAll(finalizers);
     return selected;
   }
 
