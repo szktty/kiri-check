@@ -100,7 +100,7 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
           BankAccountModel s) =>
       [
         depositAction(
-          'over max deposit per once',
+          'valid deposit per once',
           max: s.settings.maxDepositPerDay,
         ),
         depositAction(
@@ -113,7 +113,7 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
           BankAccountModel s) =>
       [
         withdrawAction(
-          'over max withdraw per once',
+          'valid withdraw per once',
           max: s.settings.maxWithdrawPerDay,
         ),
         withdrawAction(
