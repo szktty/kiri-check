@@ -54,7 +54,7 @@ void main() {
         final events = state.events;
         expect(events.sublist(0, 3), predicate((e) => equals(e, [1, 2, 3])));
         expect(events.sublist(events.length - 6, events.length),
-            predicate((e) => equals(e, [4, 5, 6])));
+            predicate((e) => equals(e, [10, 11, 12])));
         // TODO: 4-9
       },
     );
