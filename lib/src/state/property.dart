@@ -8,6 +8,7 @@ import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/command/action.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/state/traversal.dart';
+import 'package:kiri_check/src/top.dart';
 import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 
@@ -100,6 +101,8 @@ final class StatefulProperty<State, System> extends Property<State> {
 
   @override
   void check(PropertyTest test) {
+    StatefulShrinkingResult<State, System>? result;
+
     if (onCheck != null) {
       var called = false;
       onCheck!(() {
@@ -107,27 +110,20 @@ final class StatefulProperty<State, System> extends Property<State> {
           throw PropertyException('onCheck is called more than once');
         } else {
           called = true;
-          _check(test);
+          result = _check(test);
         }
       });
       if (!called) {
         throw PropertyException('onCheck is not called');
       }
     } else {
-      _check(test);
+      result = _check(test);
     }
-  }
-
-  void _check(PropertyTest test) {
-    print('Check behavior: ${behavior.runtimeType}');
-    this.setUp?.call();
-    final result = _checkSequences(test);
-    this.tearDown?.call();
 
     if (result != null) {
       print('Falsified example sequence:');
-      for (var i = 0; i < result.sequence.steps.length; i++) {
-        final step = result.sequence.steps[i];
+      for (var i = 0; i < result!.sequence.steps.length; i++) {
+        final step = result!.sequence.steps[i];
         final command = step.command;
         print('Step ${i + 1}: ${command.description}');
         if (command is Action) {
@@ -136,22 +132,32 @@ final class StatefulProperty<State, System> extends Property<State> {
       }
 
       if (onFalsify != null) {
-        final falsified = StatefulFalsifyingExample(
-          result.state,
-          result.system,
-          result.sequence.steps
+        final example = StatefulFalsifyingExample(
+          result!.state,
+          result!.system,
+          result!.sequence.steps
               .mapIndexed(
                 (i, step) => StatefulFalsifyingExampleStep(
                     i, step.command, step.command.minValue),
               )
               .toList(),
-          result.exception,
+          result!.exception,
         );
-        onFalsify!(falsified);
+        onFalsify!.call(example);
       }
 
-      throw StatefulFalsifiedException(null, result);
+      if (!settings.ignoreFalsify) {
+        throw StatefulFalsifiedException<State, System>(null, result!);
+      }
     }
+  }
+
+  StatefulShrinkingResult<State, System>? _check(PropertyTest test) {
+    print('Check behavior: ${behavior.runtimeType}');
+    this.setUp?.call();
+    final result = _checkSequences(test);
+    this.tearDown?.call();
+    return result;
   }
 
   StatefulShrinkingResult<State, System>? _checkSequences(PropertyTest test) {

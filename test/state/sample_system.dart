@@ -1,9 +1,3 @@
-// - 預け入れ、引き出しを取引で管理
-// - ユーザー管理
-// - JSONで保持
-//  - マクロを使う
-
-import 'dart:convert';
 import 'sample_model.dart';
 
 final class BankSystem {
@@ -80,8 +74,7 @@ final class BankSystem {
       return result;
     } else {
       final charged = _charge(amount);
-      final account = accounts[id]!;
-      account.withdraw(charged);
+      accounts[id]!.withdraw(charged);
       return BankAccountResult.success;
     }
   }

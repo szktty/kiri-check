@@ -33,6 +33,7 @@ abstract class Command<State, System> {
 }
 
 abstract class Container<State, System> extends Command<State, System> {
+  @protected
   Container(super.description, this.command);
 
   final Command<State, System> command;

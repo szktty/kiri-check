@@ -145,17 +145,3 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
     ];
   }
 }
-
-/*
-final class BankAccountFreezeNotWorkingBehavior extends BankAccountBehavior {
-  @override
-  BankAccountModel createState() => BankAccountFreezeNotWorking();
-}
-
-final class BankAccountFreezeNotWorking extends BankAccountModel {
-  @override
-  bool validateFrozen() => false;
-}
-
-
- */
