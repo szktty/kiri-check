@@ -21,6 +21,11 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
       'next day',
       (s, system) {
         s.nextDay();
+        system.nextDay();
+      },
+      postcondition: (s, system) {
+        return s.frozen == system.frozen(s.id) &&
+            s.balance == system.getBalance(s.id);
       },
     );
   }
@@ -30,7 +35,7 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
       Action0(
         'freeze',
         (s, system) {
-          expect(s.freeze(), system.freeze(s.id));
+          expect(system.freeze(s.id), s.freeze());
         },
         postcondition: (s, system) {
           return s.frozen && system.frozen(s.id);
@@ -39,9 +44,11 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
       Action0(
         'unfreeze',
         (s, system) {
-          expect(s.unfreeze(), system.unfreeze(s.id));
+          expect(system.unfreeze(s.id), s.unfreeze());
         },
         postcondition: (s, system) {
+          print(
+              'postcondition: frozen: ${s.frozen}, ${system.frozen(s.id)}, balance: ${s.balance}, ${system.getBalance(s.id)}');
           return !s.frozen && !system.frozen(s.id);
         },
       ),
@@ -60,6 +67,8 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
       integer(min: min, max: max),
       action,
       postcondition: (s, system) {
+        print(
+            'postcondition: frozen: ${s.frozen}, ${system.frozen(s.id)}, balance: ${s.balance}, ${system.getBalance(s.id)}');
         return s.frozen == system.frozen(s.id) &&
             s.balance == system.getBalance(s.id);
       },
@@ -75,7 +84,7 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
       amountAction(
         description,
         (s, system, amount) =>
-            expect(s.deposit(amount), system.deposit(s.id, amount)),
+            expect(system.deposit(s.id, amount), s.deposit(amount)),
         reason: reason,
         min: min,
         max: max,
@@ -89,8 +98,11 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
   }) =>
       amountAction(
         description,
-        (s, system, amount) =>
-            expect(s.withdraw(amount), system.withdraw(s.id, amount)),
+        (s, system, amount) {
+          print(
+              'current withdraw per day: ${s.withdrawPerDay}, ${system.accounts[s.id]!.withdrawPerDay}');
+          expect(system.withdraw(s.id, amount), s.withdraw(amount));
+        },
         reason: reason,
         min: min,
         max: max,

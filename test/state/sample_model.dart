@@ -51,12 +51,6 @@ final class BankAccountModel {
 
   List<BankAccountOperation> history = [];
 
-  bool checksHistory = true;
-  bool checksDepositRange = true;
-  bool checksWithdrawRange = true;
-  bool checksBalanceRange = true;
-  bool checksChargeOnWithdraw = true;
-
   @protected
   int countOfOperationPerDay(BankAccountOperation operation) =>
       history.where((o) => o == operation).length;
@@ -133,12 +127,11 @@ final class BankAccountModel {
   BankAccountResult? _validateDeposit(int amount) {
     if (frozen) {
       return BankAccountResult.frozen;
-    } else if (checksDepositRange &&
-        depositPerDay + amount > settings.maxDepositPerDay) {
+    } else if (depositPerDay + amount > settings.maxDepositPerDay) {
       return BankAccountResult.overMaxDepositPerDay;
-    } else if (checksBalanceRange && balance + amount > settings.maxBalance) {
+    } else if (balance + amount > settings.maxBalance) {
       return BankAccountResult.overBalance;
-    } else if (checksHistory && history.length > settings.maxOperationsPerDay) {
+    } else if (history.length > settings.maxOperationsPerDay) {
       return BankAccountResult.overMaxOperationsPerDay;
     } else {
       return null;
@@ -164,13 +157,11 @@ final class BankAccountModel {
     final charged = _charge(amount);
     if (frozen) {
       return BankAccountResult.frozen;
-    } else if (checksWithdrawRange && amount > settings.maxWithdrawPerDay) {
+    } else if (amount + withdrawPerDay > settings.maxWithdrawPerDay) {
       return BankAccountResult.overMaxWithdrawPerDay;
-    } else if (checksBalanceRange &&
-        checksChargeOnWithdraw &&
-        balance - charged < settings.minBalance) {
+    } else if (balance - charged < settings.minBalance) {
       return BankAccountResult.underBalance;
-    } else if (checksHistory && history.length > settings.maxOperationsPerDay) {
+    } else if (history.length > settings.maxOperationsPerDay) {
       return BankAccountResult.overMaxOperationsPerDay;
     } else {
       return null;
