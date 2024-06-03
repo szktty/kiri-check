@@ -56,14 +56,70 @@ final class SubsequenceTestState {
   }
 }
 
+final class FlagTestBehavior extends Behavior<FlagTestState, Null> {
+  @override
+  FlagTestState createState() {
+    return FlagTestState();
+  }
+
+  @override
+  Null createSystem(FlagTestState state) {
+    return null;
+  }
+
+  @override
+  List<Command<FlagTestState, Null>> generateCommands(FlagTestState state) {
+    return [
+      Action0('no op', (s, system) {}),
+      Action0('set a', (s, system) {
+        s.a = true;
+      }, postcondition: (s, system) => !s.allSet),
+      Action0('set b', (s, system) {
+        s.b = true;
+      }, postcondition: (s, system) => !s.allSet),
+      Action0('set c', (s, system) {
+        s.c = true;
+      }, postcondition: (s, system) => !s.allSet),
+      Action0('clear a', (s, system) {
+        s.a = false;
+      }),
+      Action0('clear b', (s, system) {
+        s.b = false;
+      }),
+      Action0('clear c', (s, system) {
+        s.c = false;
+      }),
+    ];
+  }
+}
+
+final class FlagTestState {
+  bool a = false;
+  bool b = false;
+  bool c = false;
+
+  bool get allSet => a && b && c;
+}
+
 void main() {
   KiriCheck.verbosity = Verbosity.verbose;
 
-  property('subsequence', () {
+  property('extract subsequence', () {
     runBehavior(
       SubsequenceTestBehavior(),
       onFalsify: (example) {
         expect(example.steps.length, lessThanOrEqualTo(5));
+      },
+      ignoreFalsify: true,
+    );
+  });
+
+  property('cherrypick operations', () {
+    runBehavior(
+      FlagTestBehavior(),
+      onFalsify: (example) {
+        // TODO: シュリンクパスの途中のステップでエラーになったら、そこでパスを切るべき
+        expect(example.steps.length, 3);
       },
       ignoreFalsify: true,
     );
