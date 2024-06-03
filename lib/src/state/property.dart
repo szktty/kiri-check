@@ -362,6 +362,9 @@ final class _StatefulPropertyShrinker<State, System> {
         stateContext.executeCommand(command);
       } on Exception catch (e) {
         print('Error: $e');
+        if (i + 1 < sequence.steps.length) {
+          sequence.truncateSteps(i + 1);
+        }
         lastException = e;
         stateContext.behavior.dispose(state, system);
         return false;
