@@ -15,15 +15,25 @@ enum ActionShrinkingState {
   finished,
 }
 
-abstract class ActionBase<State, System, T> extends Command<State, System> {
-  ActionBase(
-    super.description, {
+final class Action<State, System, T> extends Command<State, System> {
+  Action(
+    super.description,
+    Arbitrary<T> arbitrary,
+    void Function(State, System, T) action, {
     bool Function(State)? precondition,
     bool Function(State, System)? postcondition,
   }) {
+    _arbitrary = arbitrary;
+    _action = action;
+
     _precondition = precondition;
     _postcondition = postcondition;
   }
+
+  late final Arbitrary<T> _arbitrary;
+
+  ArbitraryBase<T> get _arbitraryBase => _arbitrary as ArbitraryBase<T>;
+  late final void Function(State, System, T) _action;
 
   late final bool Function(State)? _precondition;
   late final bool Function(State, System)? _postcondition;
@@ -38,62 +48,26 @@ abstract class ActionBase<State, System, T> extends Command<State, System> {
     return _postcondition?.call(state, system) ?? true;
   }
 
-  @override
-  @internal
-  bool useCache = false;
-
-  @override
-  @internal
-  bool nextShrink() => false;
-
-  @override
-  @internal
-  void failShrunk() {}
-
-  @override
-  @internal
-  dynamic get minValue => null;
+  void _execute(State state, System system, dynamic value) {
+    _action(state, system, value as T);
+  }
 }
 
-final class Action<State, System, T> extends ActionBase<State, System, T> {
-  Action(
-    super.description,
-    Arbitrary<T> arbitrary,
-    void Function(State, System, T) action, {
-    super.precondition,
-    super.postcondition,
-  }) {
-    _arbitrary = arbitrary;
-    _action = action;
+final class ActionContext<State, System, T>
+    extends CommandContext<State, System> {
+  ActionContext(super.command) {
     _distance = null;
     _shrunkQueue = null;
   }
 
-  late final Arbitrary<T> _arbitrary;
+  Action<State, System, T> get action => command as Action<State, System, T>;
 
-  ArbitraryBase<T> get _arbitraryBase => _arbitrary as ArbitraryBase<T>;
-  late final void Function(State, System, T) _action;
-
-  T? _cache;
+  ArbitraryBase<T> get arbitrary => action._arbitraryBase;
 
   @override
-  void execute(State state, System system, Random random) {
-    if (_shrinkState == ActionShrinkingState.running) {
-      if (_shrunkQueue!.isNotEmpty) {
-        _lastShrunk = _shrunkQueue!.removeFirst();
-        _action(state, system, _lastShrunk as T);
-      } else {
-        _action(state, system, _lastShrunk as T);
-      }
-    } else if (useCache) {
-      _action(state, system, _cache as T);
-    } else {
-      final value = _arbitraryBase.generate(random as RandomContext);
-      _cache = value;
-      _action(state, system, value);
-    }
-  }
+  bool useCache = false;
 
+  T? _cache;
   ActionShrinkingState _shrinkState = ActionShrinkingState.notStarted;
   ShrinkingDistance? _distance;
   int _shrinkGranularity = 1;
@@ -106,13 +80,32 @@ final class Action<State, System, T> extends ActionBase<State, System, T> {
   dynamic get minValue => _minShrunk;
 
   @override
+  void execute(State state, System system, Random random) {
+    if (_shrinkState == ActionShrinkingState.running) {
+      if (_shrunkQueue!.isNotEmpty) {
+        _lastShrunk = _shrunkQueue!.removeFirst();
+        action._execute(state, system, _lastShrunk as T);
+      } else {
+        action._execute(state, system, _lastShrunk as T);
+      }
+    } else if (useCache) {
+      action._execute(state, system, _cache as T);
+    } else {
+      final value = arbitrary.generate(random as RandomContext);
+      _cache = value;
+      print("$runtimeType, ${action.runtimeType}");
+      action._execute(state, system, value);
+    }
+  }
+
+  @override
   bool nextShrink() {
     switch (_shrinkState) {
       case ActionShrinkingState.notStarted:
         _shrinkState = ActionShrinkingState.running;
-        _distance = _arbitraryBase.calculateDistance(_cache as T)
+        _distance = arbitrary.calculateDistance(_cache as T)
           ..granularity = _shrinkGranularity;
-        final shrunk = _arbitraryBase.shrink(_cache as T, _distance!);
+        final shrunk = arbitrary.shrink(_cache as T, _distance!);
         print('first shrink: $shrunk');
         _previousShrunk = shrunk;
         _shrunkQueue = Queue.of(shrunk);
@@ -124,7 +117,7 @@ final class Action<State, System, T> extends ActionBase<State, System, T> {
         } else {
           _shrinkGranularity++;
           _distance!.granularity = _shrinkGranularity;
-          final shrunk = _arbitraryBase.shrink(_cache as T, _distance!);
+          final shrunk = arbitrary.shrink(_cache as T, _distance!);
           print('next shrink: $shrunk');
           if (const DeepCollectionEquality().equals(shrunk, _previousShrunk)) {
             _shrinkState = ActionShrinkingState.finished;

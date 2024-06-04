@@ -101,9 +101,38 @@ final class FlagTestState {
   bool get allSet => a && b && c;
 }
 
+final class ShrinkingValueTestBehavior
+    extends Behavior<ShrinkingValueTestState, Null> {
+  @override
+  ShrinkingValueTestState createState() {
+    return ShrinkingValueTestState();
+  }
+
+  @override
+  Null createSystem(ShrinkingValueTestState state) {
+    return null;
+  }
+
+  @override
+  List<Command<ShrinkingValueTestState, Null>> generateCommands(
+      ShrinkingValueTestState state) {
+    return [
+      Action('increment', integer(min: 1000, max: 7000), (s, system, value) {
+        print('increment $value');
+        s.value += value;
+      }, postcondition: (s, system) => s.value < 10000),
+    ];
+  }
+}
+
+final class ShrinkingValueTestState {
+  int value = 0;
+}
+
 void main() {
   KiriCheck.verbosity = Verbosity.verbose;
 
+  /*
   property('extract subsequence', () {
     runBehavior(
       SubsequenceTestBehavior(),
@@ -118,8 +147,29 @@ void main() {
     runBehavior(
       FlagTestBehavior(),
       onFalsify: (example) {
-        // TODO: シュリンクパスの途中のステップでエラーになったら、そこでパスを切るべき
         expect(example.steps.length, 3);
+      },
+      ignoreFalsify: true,
+    );
+  });
+   */
+
+  property('shrink values', () {
+    runBehavior(
+      ShrinkingValueTestBehavior(),
+      onFalsify: (example) {
+        final sum = example.steps
+            .map((e) => e.value as int)
+            .fold<int>(0, (a, b) => a + b);
+        print('sum: $sum');
+        expect(
+          sum,
+          allOf(
+            lessThanOrEqualTo(example.state.value),
+            greaterThanOrEqualTo(10000),
+            lessThanOrEqualTo(15000),
+          ),
+        );
       },
       ignoreFalsify: true,
     );
