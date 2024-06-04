@@ -399,8 +399,10 @@ final class _StatefulPropertyShrinker<State, System> {
           print('Error: $e');
           lastException = e;
           context.failShrunk();
+          stateContext.behavior.dispose(state, system);
         }
       }
+      stateContext.behavior.dispose(state, system);
       propertyContext.shrinkCycle++;
     }
   }
