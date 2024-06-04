@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/state/command/action.dart';
 import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:meta/meta.dart';
@@ -14,22 +15,6 @@ abstract class Command<State, System> {
   bool requires(State state);
 
   bool ensures(State state, System system);
-
-  void execute(State state, System system, Random random);
-
-  @internal
-  bool get useCache;
-
-  set useCache(bool value);
-
-  @internal
-  bool nextShrink();
-
-  @internal
-  void failShrunk();
-
-  @internal
-  dynamic get minValue;
 }
 
 abstract class Container<State, System> extends Command<State, System> {
@@ -47,28 +32,6 @@ abstract class Container<State, System> extends Command<State, System> {
   bool ensures(State state, System system) {
     return command.ensures(state, system);
   }
-
-  @override
-  void execute(State state, System system, Random random) {
-    command.execute(state, system, random);
-  }
-
-  @override
-  bool get useCache => command.useCache;
-
-  @override
-  set useCache(bool value) {
-    command.useCache = value;
-  }
-
-  @override
-  bool nextShrink() => command.nextShrink();
-
-  @override
-  void failShrunk() => command.failShrunk();
-
-  @override
-  dynamic get minValue => command.minValue;
 }
 
 final class Initialize<State, System> extends Container<State, System> {
@@ -77,4 +40,31 @@ final class Initialize<State, System> extends Container<State, System> {
 
 final class Finalize<State, System> extends Container<State, System> {
   Finalize(super.description, super.command);
+}
+
+abstract class CommandContext<State, System> {
+  CommandContext(this.command);
+
+  static CommandContext<State, System> fromCommand<State, System, T>(
+      Command<State, System> command) {
+    if (command is Action<State, System, dynamic>) {
+      return ActionContext<State, System, dynamic>(command);
+    } else {
+      throw Exception('Unknown command type: $command');
+    }
+  }
+
+  final Command<State, System> command;
+
+  bool get useCache;
+
+  set useCache(bool value);
+
+  void execute(State state, System system, Random random);
+
+  bool nextShrink();
+
+  void failShrunk();
+
+  dynamic get minValue;
 }

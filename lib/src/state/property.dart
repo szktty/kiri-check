@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:date_kit/date_kit.dart';
 import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/exception.dart';
@@ -24,10 +25,9 @@ final class StatefulFalsifiedException<State, System> implements Exception {
     final buffer = StringBuffer()..writeln('Falsifying command sequence:');
     for (var i = 0; i < result.sequence.steps.length; i++) {
       final step = result.sequence.steps[i];
-      final command = step.command;
-      buffer
-        ..writeln('  Step ${i + 1}: ${command.description}')
-        ..writeln('    Value: ${command.minValue}');
+      final command = step.context.command;
+      buffer..writeln('  Step ${i + 1}: ${command.description}');
+      //..writeln('    Value: ${command.minValue}');
     }
     if (result.exception != null) {
       buffer.writeln(result.exception!.toString());
@@ -46,8 +46,8 @@ final class StateContext<State, System> {
 
   Behavior<State, System> get behavior => property.behavior;
 
-  bool executeCommand(Command<State, System> command) {
-    return property._executeCommand(this, command);
+  bool executeCommand(CommandContext<State, System> commandContext) {
+    return property._executeCommand(this, commandContext);
   }
 }
 
@@ -124,10 +124,10 @@ final class StatefulProperty<State, System> extends Property<State> {
       print('Falsified example sequence:');
       for (var i = 0; i < result!.sequence.steps.length; i++) {
         final step = result!.sequence.steps[i];
-        final command = step.command;
+        final command = step.context.command;
         print('Step ${i + 1}: ${command.description}');
-        if (command is Action) {
-          print('Shrunk value: ${command.minValue}');
+        if (step.context is ActionContext) {
+          print('Shrunk value: ${step.context.minValue}');
         }
       }
 
@@ -138,7 +138,10 @@ final class StatefulProperty<State, System> extends Property<State> {
           result!.sequence.steps
               .mapIndexed(
                 (i, step) => StatefulFalsifyingExampleStep(
-                    i, step.command, step.command.minValue),
+                  i,
+                  step.context.command,
+                  step.context.minValue,
+                ),
               )
               .toList(),
           result!.exception,
@@ -181,10 +184,9 @@ final class StatefulProperty<State, System> extends Property<State> {
 
         for (var i = 0; i < sequence.steps.length; i++) {
           final step = sequence.steps[i];
-          final command = step.command;
-          print('Step ${i + 1}: ${command.description}');
+          print('Step ${i + 1}: ${step.context.command.description}');
           try {
-            final result = stateContext.executeCommand(command);
+            final result = stateContext.executeCommand(step.context);
             if (!result) {
               i--;
             }
@@ -221,11 +223,12 @@ final class StatefulProperty<State, System> extends Property<State> {
 
   bool _executeCommand(
     StateContext<State, System> context,
-    Command<State, System> command,
+    CommandContext<State, System> commandContext,
   ) {
     final state = context.state;
+    final command = commandContext.command;
     if (command.requires(state)) {
-      command.execute(state, context.system, context.property.random);
+      commandContext.execute(state, context.system, context.property.random);
       if (command.ensures(state, context.system)) {
         return true;
       } else {
@@ -314,7 +317,7 @@ final class _StatefulPropertyShrinker<State, System> {
     // baseSequenceのコマンド列を走査し、descriptionが重複しないコマンドを取得する
     final commandTypeSet = <String>{};
     for (final step in baseSequence.steps) {
-      commandTypeSet.add(step.command.description);
+      commandTypeSet.add(step.context.command.description);
     }
 
     var minShrunkSequence = baseSequence;
@@ -326,8 +329,8 @@ final class _StatefulPropertyShrinker<State, System> {
       final shrunkSequence = TraversalSequence<State, System>();
       for (var i = 0; i < minShrunkSequence.steps.length; i++) {
         final step = minShrunkSequence.steps[i];
-        if (step.command.description != target) {
-          shrunkSequence.addStep(step.command);
+        if (step.context.command.description != target) {
+          shrunkSequence.addStep(step);
         }
       }
 
@@ -341,7 +344,7 @@ final class _StatefulPropertyShrinker<State, System> {
 
     print('Reduced shrunk sequence: ${minShrunkSequence.steps.length} steps');
     for (final step in minShrunkSequence.steps) {
-      print('Step: ${step.command.description}');
+      print('Step: ${step.context.command.description}');
     }
 
     return minShrunkSequence;
@@ -355,11 +358,10 @@ final class _StatefulPropertyShrinker<State, System> {
         StateContext(state, system, property, propertyContext.test);
     for (var i = 0; i < sequence.steps.length; i++) {
       final step = sequence.steps[i];
-      final command = step.command;
-      print('Shrink step ${i + 1}: ${command.description}');
+      print('Shrink step ${i + 1}: ${step.context.command.description}');
       try {
-        command.useCache = true;
-        stateContext.executeCommand(command);
+        step.context.useCache = true;
+        stateContext.executeCommand(step.context);
       } on Exception catch (e) {
         print('Error: $e');
         if (i + 1 < sequence.steps.length) {
@@ -385,18 +387,18 @@ final class _StatefulPropertyShrinker<State, System> {
       allShrinkDone = true;
       for (var i = 0; i < sequence.steps.length; i++) {
         final step = sequence.steps[i];
-        final command = step.command;
-        print('Shrink step ${i + 1}: ${command.description}');
+        final context = step.context;
+        print('Shrink step ${i + 1}: ${context.command.description}');
         try {
           // サイクル制限に達するか、すべてのコマンドのシュリンクが終了するまで繰り返す
-          if (command.nextShrink()) {
+          if (context.nextShrink()) {
             allShrinkDone = false;
           }
-          stateContext.executeCommand(command);
+          stateContext.executeCommand(context);
         } on Exception catch (e) {
           print('Error: $e');
           lastException = e;
-          command.failShrunk();
+          context.failShrunk();
         }
       }
       propertyContext.shrinkCycle++;

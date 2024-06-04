@@ -91,17 +91,18 @@ final class Traversal<State, System> {
     final commands = _selectCommands(state);
     final sequence = TraversalSequence<State, System>();
     for (final command in commands) {
-      sequence.addStep(command);
+      sequence.addStep(TraversalStep(command));
     }
     return sequence;
   }
 }
 
 final class TraversalStep<State, System> {
-  TraversalStep(this.number, this.command);
+  TraversalStep(Command<State, System> command) {
+    context = CommandContext.fromCommand(command);
+  }
 
-  final int number;
-  final Command<State, System> command;
+  late final CommandContext<State, System> context;
 }
 
 final class TraversalSequence<State, System> {
@@ -111,8 +112,8 @@ final class TraversalSequence<State, System> {
 
   final List<TraversalStep<State, System>> steps = [];
 
-  void addStep(Command<State, System> command) {
-    steps.add(TraversalStep(steps.length, command));
+  void addStep(TraversalStep<State, System> step) {
+    steps.add(step);
   }
 
   void truncateSteps(int index) {
