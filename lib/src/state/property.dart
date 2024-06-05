@@ -23,8 +23,9 @@ final class StatefulFalsifiedException<State, System> implements Exception {
   @override
   String toString() {
     final buffer = StringBuffer()..writeln('Falsifying command sequence:');
-    for (var i = 0; i < result.sequence.steps.length; i++) {
-      final step = result.sequence.steps[i];
+    final sequence = result.falsifyingSequence;
+    for (var i = 0; i < sequence.steps.length; i++) {
+      final step = sequence.steps[i];
       final command = step.context.command;
       buffer..writeln('  Step ${i + 1}: ${command.description}');
       //..writeln('    Value: ${command.minValue}');
@@ -122,8 +123,9 @@ final class StatefulProperty<State, System> extends Property<State> {
 
     if (result != null) {
       print('Falsified example sequence:');
-      for (var i = 0; i < result!.sequence.steps.length; i++) {
-        final step = result!.sequence.steps[i];
+      final sequence = result!.falsifyingSequence;
+      for (var i = 0; i < sequence.steps.length; i++) {
+        final step = sequence.steps[i];
         final command = step.context.command;
         print('Step ${i + 1}: ${command.description}');
         if (step.context is ActionContext) {
@@ -133,17 +135,12 @@ final class StatefulProperty<State, System> extends Property<State> {
 
       if (onFalsify != null) {
         final example = StatefulFalsifyingExample(
-          result!.state,
-          result!.system,
-          result!.sequence.steps
-              .mapIndexed(
-                (i, step) => StatefulFalsifyingExampleStep(
-                  i,
-                  step.context.command,
-                  step.context.minValue,
-                ),
-              )
-              .toList(),
+          result!.originalState,
+          result!.originalSystem,
+          StatefulExampleStep.fromSequence(result!.originalSequence),
+          result!.falsifyingState,
+          result!.falsifyingSystem,
+          StatefulExampleStep.fromSequence(result!.falsifyingSequence),
           result!.exception,
         );
         onFalsify!.call(example);
@@ -196,7 +193,8 @@ final class StatefulProperty<State, System> extends Property<State> {
 
             final shrinker = _StatefulPropertyShrinker(
               propertyContext,
-              stateContext,
+              stateContext.state,
+              stateContext.system,
               TraversalSequence(sequence.steps.sublist(0, i + 1)),
             );
             return shrinker.shrink();
@@ -245,12 +243,14 @@ final class StatefulProperty<State, System> extends Property<State> {
 final class _StatefulPropertyShrinker<State, System> {
   _StatefulPropertyShrinker(
     this.propertyContext,
-    this.stateContext,
+    this.originalState,
+    this.originalSystem,
     this.originalSequence,
   );
 
   final StatefulPropertyContext<State, System> propertyContext;
-  final StateContext<State, System> stateContext;
+  final State originalState;
+  final System originalSystem;
   final TraversalSequence<State, System> originalSequence;
   Exception? lastException;
 
@@ -259,12 +259,15 @@ final class _StatefulPropertyShrinker<State, System> {
   StatefulShrinkingResult<State, System> shrink() {
     final partial = _checkPartialSequences(originalSequence);
     final reduced = _checkReducedSequences(partial);
-    _checkValues(reduced);
+    final shrunk = _checkValues(reduced);
     return StatefulShrinkingResult(
-      stateContext.state,
-      stateContext.system,
+      originalState,
+      originalSystem,
+      originalSequence,
+      shrunk?.state ?? originalState,
+      shrunk?.system ?? originalSystem,
       reduced,
-      exception: lastException,
+      lastException,
     );
   }
 
@@ -376,8 +379,10 @@ final class _StatefulPropertyShrinker<State, System> {
     return true;
   }
 
-  void _checkValues(TraversalSequence<State, System> sequence) {
+  StateContext<State, System>? _checkValues(
+      TraversalSequence<State, System> sequence) {
     var allShrinkDone = false;
+    StateContext<State, System>? shrunkContext;
     while (_hasShrinkCycle && !allShrinkDone) {
       print('Shrink cycle ${_shrinkCycle + 1}');
       final state = propertyContext.behavior.createState();
@@ -399,47 +404,77 @@ final class _StatefulPropertyShrinker<State, System> {
           print('Error: $e');
           lastException = e;
           context.failShrunk();
-          stateContext.behavior.dispose(state, system);
+          shrunkContext = stateContext;
+          break;
         }
       }
       stateContext.behavior.dispose(state, system);
       propertyContext.shrinkCycle++;
     }
+    return shrunkContext;
   }
 }
 
 final class StatefulShrinkingResult<State, System> {
   StatefulShrinkingResult(
-    this.state,
-    this.system,
-    this.sequence, {
+    this.originalState,
+    this.originalSystem,
+    this.originalSequence,
+    this.falsifyingState,
+    this.falsifyingSystem,
+    this.falsifyingSequence,
     this.exception,
-  });
+  );
 
-  final State state;
-  final System system;
-  final TraversalSequence<State, System> sequence;
+  final State originalState;
+  final System originalSystem;
+  final TraversalSequence<State, System> originalSequence;
+  final State falsifyingState;
+  final System falsifyingSystem;
+  final TraversalSequence<State, System> falsifyingSequence;
   final Exception? exception;
 }
 
 final class StatefulFalsifyingExample<State, System> {
   @protected
   StatefulFalsifyingExample(
-    this.state,
-    this.system,
-    this.steps,
+    this.originalState,
+    this.originalSystem,
+    this.originalSteps,
+    this.falsifyingState,
+    this.falsifyingSystem,
+    this.falsifyingSteps,
     this.exception,
   );
 
-  final State state;
-  final System system;
-  final List<StatefulFalsifyingExampleStep<State, System>> steps;
+  final State originalState;
+  final System originalSystem;
+  final List<StatefulExampleStep<State, System>> originalSteps;
+  final State falsifyingState;
+  final System falsifyingSystem;
+  final List<StatefulExampleStep<State, System>> falsifyingSteps;
+
   final Exception? exception;
 }
 
-final class StatefulFalsifyingExampleStep<State, System> {
+final class StatefulExampleStep<State, System> {
   @protected
-  StatefulFalsifyingExampleStep(this.number, this.command, this.value);
+  StatefulExampleStep(this.number, this.command, this.value);
+
+  /// :nodoc:
+  @protected
+  static List<StatefulExampleStep<State, System>> fromSequence<State, System>(
+      TraversalSequence<State, System> sequence) {
+    return sequence.steps
+        .mapIndexed(
+          (i, step) => StatefulExampleStep(
+            i,
+            step.context.command,
+            step.context.minValue,
+          ),
+        )
+        .toList();
+  }
 
   final int number;
   final Command<State, System> command;
