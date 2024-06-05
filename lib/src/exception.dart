@@ -4,7 +4,7 @@ class PropertyException implements Exception {
   final String message;
 
   @override
-  String toString() => 'PropertyException: $message';
+  String toString() => message;
 }
 
 final class PropertyFailure extends PropertyException {

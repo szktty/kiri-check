@@ -4,8 +4,6 @@ import 'package:kiri_check/src/state/command/sequence.dart';
 import 'package:kiri_check/src/state/property.dart';
 
 // ランダムにコマンドを選択
-// TODO: パスの数は考慮しない。純粋にパスのみ生成する
-// ステップも一度にすべて生成する
 final class Traversal<State, System> {
   Traversal(
     this.context,
@@ -97,7 +95,7 @@ final class Traversal<State, System> {
 
 final class TraversalStep<State, System> {
   TraversalStep(Command<State, System> command) {
-    context = CommandContext.fromCommand(command);
+    context = CommandContext.fromCommand<State, System>(command);
   }
 
   late final CommandContext<State, System> context;
@@ -135,7 +133,6 @@ final class TraversalSequence<State, System> {
 
   List<TraversalSequence<State, System>> shrink() {
     final n = (steps.length / (steps.length <= 5 ? 2 : 3)).ceil();
-    print('TraversalSequence.shrink: steps ${steps.length}, $n');
     return steps
         .splitAfterIndexed((i, _) => (i + 1) % n == 0)
         .map(TraversalSequence<State, System>.new)
