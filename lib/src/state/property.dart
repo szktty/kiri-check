@@ -1,15 +1,11 @@
 import 'package:collection/collection.dart';
-import 'package:date_kit/date_kit.dart';
 import 'package:kiri_check/kiri_check.dart';
-import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/property.dart';
-import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/command/action.dart';
 import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/state/traversal.dart';
-import 'package:kiri_check/src/top.dart';
 import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 
@@ -27,7 +23,7 @@ final class StatefulFalsifiedException<State, System> implements Exception {
     for (var i = 0; i < sequence.steps.length; i++) {
       final step = sequence.steps[i];
       final command = step.context.command;
-      buffer..writeln('  Step ${i + 1}: ${command.description}');
+      buffer.writeln('  Step ${i + 1}: ${command.description}');
       //..writeln('    Value: ${command.minValue}');
     }
     if (result.exception != null) {
@@ -277,7 +273,8 @@ final class _StatefulPropertyShrinker<State, System> {
       _shrinkCycle < propertyContext.property.maxShrinkingCycles;
 
   TraversalSequence<State, System> _checkPartialSequences(
-      TraversalSequence<State, System> baseSequence) {
+    TraversalSequence<State, System> baseSequence,
+  ) {
     propertyContext.shrinkCycle = 0;
     var previousSequences = <TraversalSequence<State, System>>[];
     var minShrunkSequence = baseSequence;
@@ -294,12 +291,14 @@ final class _StatefulPropertyShrinker<State, System> {
       for (var i = 0; i < shrunkSequences.length; i++) {
         final shrunkSequence = shrunkSequences[i];
         print(
-            'Shrink cycle ${_shrinkCycle + 1}: ${shrunkSequence.steps.length} steps');
+          'Shrink cycle ${_shrinkCycle + 1}: ${shrunkSequence.steps.length} steps',
+        );
         if (!_checkShrunkSequence(shrunkSequence)) {
           // 先頭に近い部分列を最小とする
           if (i < minShrunkNum) {
             print(
-                'min shrunk sequence: $i, ${shrunkSequence.steps.length} steps');
+              'min shrunk sequence: $i, ${shrunkSequence.steps.length} steps',
+            );
             minShrunkSequence = shrunkSequence;
             minShrunkNum = i;
           }
@@ -315,7 +314,8 @@ final class _StatefulPropertyShrinker<State, System> {
 
   // 一部のコマンドを削除して検査する
   TraversalSequence<State, System> _checkReducedSequences(
-      TraversalSequence<State, System> baseSequence) {
+    TraversalSequence<State, System> baseSequence,
+  ) {
     // コマンドのdescriptionの重複なしリストを作成する
     // baseSequenceのコマンド列を走査し、descriptionが重複しないコマンドを取得する
     final commandTypeSet = <String>{};
@@ -380,7 +380,8 @@ final class _StatefulPropertyShrinker<State, System> {
   }
 
   StateContext<State, System>? _checkValues(
-      TraversalSequence<State, System> sequence) {
+    TraversalSequence<State, System> sequence,
+  ) {
     var allShrinkDone = false;
     StateContext<State, System>? shrunkContext;
     while (_hasShrinkCycle && !allShrinkDone) {
@@ -464,7 +465,8 @@ final class StatefulExampleStep<State, System> {
   /// :nodoc:
   @protected
   static List<StatefulExampleStep<State, System>> fromSequence<State, System>(
-      TraversalSequence<State, System> sequence) {
+    TraversalSequence<State, System> sequence,
+  ) {
     return sequence.steps
         .mapIndexed(
           (i, step) => StatefulExampleStep(

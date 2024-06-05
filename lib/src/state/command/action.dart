@@ -6,8 +6,6 @@ import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/state/command.dart';
-import 'package:kiri_check/src/state/state.dart';
-import 'package:meta/meta.dart';
 
 enum ActionShrinkingState {
   notStarted,
@@ -93,7 +91,7 @@ final class ActionContext<State, System, T>
     } else {
       final value = arbitrary.generate(random as RandomContext);
       _cache = value;
-      print("$runtimeType, ${action.runtimeType}");
+      print('$runtimeType, ${action.runtimeType}');
       action._execute(state, system, value);
     }
   }
@@ -194,8 +192,13 @@ final class Action4<State, System, T, E1, E2, E3, E4>
     super.postcondition,
   }) : super(
           description,
-          combine4(arbitrary1, arbitrary2, arbitrary3, arbitrary4,
-              (a, b, c, d) => (a, b, c, d)),
+          combine4(
+            arbitrary1,
+            arbitrary2,
+            arbitrary3,
+            arbitrary4,
+            (a, b, c, d) => (a, b, c, d),
+          ),
           (s, sys, args) => action(s, sys, args.$1, args.$2, args.$3, args.$4),
         );
 }
@@ -214,8 +217,14 @@ final class Action5<State, System, T, E1, E2, E3, E4, E5>
     super.postcondition,
   }) : super(
           description,
-          combine5(arbitrary1, arbitrary2, arbitrary3, arbitrary4, arbitrary5,
-              (a, b, c, d, e) => (a, b, c, d, e)),
+          combine5(
+            arbitrary1,
+            arbitrary2,
+            arbitrary3,
+            arbitrary4,
+            arbitrary5,
+            (a, b, c, d, e) => (a, b, c, d, e),
+          ),
           (s, sys, args) =>
               action(s, sys, args.$1, args.$2, args.$3, args.$4, args.$5),
         );
@@ -236,10 +245,25 @@ final class Action6<State, System, T, E1, E2, E3, E4, E5, E6>
     super.postcondition,
   }) : super(
           description,
-          combine6(arbitrary1, arbitrary2, arbitrary3, arbitrary4, arbitrary5,
-              arbitrary6, (a, b, c, d, e, f) => (a, b, c, d, e, f)),
+          combine6(
+            arbitrary1,
+            arbitrary2,
+            arbitrary3,
+            arbitrary4,
+            arbitrary5,
+            arbitrary6,
+            (a, b, c, d, e, f) => (a, b, c, d, e, f),
+          ),
           (s, sys, args) => action(
-              s, sys, args.$1, args.$2, args.$3, args.$4, args.$5, args.$6),
+            s,
+            sys,
+            args.$1,
+            args.$2,
+            args.$3,
+            args.$4,
+            args.$5,
+            args.$6,
+          ),
         );
 }
 
@@ -260,14 +284,15 @@ final class Action7<State, System, T, E1, E2, E3, E4, E5, E6, E7>
   }) : super(
           description,
           combine7(
-              arbitrary1,
-              arbitrary2,
-              arbitrary3,
-              arbitrary4,
-              arbitrary5,
-              arbitrary6,
-              arbitrary7,
-              (a, b, c, d, e, f, g) => (a, b, c, d, e, f, g)),
+            arbitrary1,
+            arbitrary2,
+            arbitrary3,
+            arbitrary4,
+            arbitrary5,
+            arbitrary6,
+            arbitrary7,
+            (a, b, c, d, e, f, g) => (a, b, c, d, e, f, g),
+          ),
           (s, sys, args) => action(
             s,
             sys,
@@ -300,16 +325,27 @@ final class Action8<State, System, T, E1, E2, E3, E4, E5, E6, E7, E8>
   }) : super(
           description,
           combine8(
-              arbitrary1,
-              arbitrary2,
-              arbitrary3,
-              arbitrary4,
-              arbitrary5,
-              arbitrary6,
-              arbitrary7,
-              arbitrary8,
-              (a, b, c, d, e, f, g, h) => (a, b, c, d, e, f, g, h)),
-          (s, sys, args) => action(s, sys, args.$1, args.$2, args.$3, args.$4,
-              args.$5, args.$6, args.$7, args.$8),
+            arbitrary1,
+            arbitrary2,
+            arbitrary3,
+            arbitrary4,
+            arbitrary5,
+            arbitrary6,
+            arbitrary7,
+            arbitrary8,
+            (a, b, c, d, e, f, g, h) => (a, b, c, d, e, f, g, h),
+          ),
+          (s, sys, args) => action(
+            s,
+            sys,
+            args.$1,
+            args.$2,
+            args.$3,
+            args.$4,
+            args.$5,
+            args.$6,
+            args.$7,
+            args.$8,
+          ),
         );
 }

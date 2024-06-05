@@ -1,5 +1,4 @@
 import 'package:kiri_check/kiri_check.dart';
-import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/stateful_test.dart';
 import 'package:test/test.dart';
 
@@ -18,7 +17,8 @@ final class ConditionalTestBehavior
 
   @override
   List<Command<ConditionalTestState, Null>> generateCommands(
-      ConditionalTestState s) {
+    ConditionalTestState s,
+  ) {
     return [
       Action0<ConditionalTestState, Null>(
         'no op',

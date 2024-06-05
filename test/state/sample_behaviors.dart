@@ -48,7 +48,8 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
         },
         postcondition: (s, system) {
           print(
-              'postcondition: frozen: ${s.frozen}, ${system.frozen(s.id)}, balance: ${s.balance}, ${system.getBalance(s.id)}');
+            'postcondition: frozen: ${s.frozen}, ${system.frozen(s.id)}, balance: ${s.balance}, ${system.getBalance(s.id)}',
+          );
           return !s.frozen && !system.frozen(s.id);
         },
       ),
@@ -68,7 +69,8 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
       action,
       postcondition: (s, system) {
         print(
-            'postcondition: frozen: ${s.frozen}, ${system.frozen(s.id)}, balance: ${s.balance}, ${system.getBalance(s.id)}');
+          'postcondition: frozen: ${s.frozen}, ${system.frozen(s.id)}, balance: ${s.balance}, ${system.getBalance(s.id)}',
+        );
         return s.frozen == system.frozen(s.id) &&
             s.balance == system.getBalance(s.id);
       },
@@ -100,7 +102,8 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
         description,
         (s, system, amount) {
           print(
-              'current withdraw per day: ${s.withdrawPerDay}, ${system.accounts[s.id]!.withdrawPerDay}');
+            'current withdraw per day: ${s.withdrawPerDay}, ${system.accounts[s.id]!.withdrawPerDay}',
+          );
           expect(system.withdraw(s.id, amount), s.withdraw(amount));
         },
         reason: reason,
@@ -109,7 +112,8 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
       );
 
   List<Command<BankAccountModel, BankSystem>> basicDepositActions(
-          BankAccountModel s) =>
+    BankAccountModel s,
+  ) =>
       [
         depositAction(
           'valid deposit per once',
@@ -122,7 +126,8 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
       ];
 
   List<Command<BankAccountModel, BankSystem>> basicWithdrawActions(
-          BankAccountModel s) =>
+    BankAccountModel s,
+  ) =>
       [
         withdrawAction(
           'valid withdraw per once',
@@ -136,7 +141,8 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
 
   @override
   List<Command<BankAccountModel, BankSystem>> generateCommands(
-      BankAccountModel s) {
+    BankAccountModel s,
+  ) {
     return [
       nextDayAction(),
       ...freezeActions(),

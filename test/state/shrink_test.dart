@@ -3,9 +3,6 @@ import 'package:kiri_check/stateful_test.dart';
 import 'package:test/expect.dart';
 import 'package:test/test.dart';
 
-import 'sample_behaviors.dart';
-import 'sample_model.dart';
-
 final class SubsequenceTestBehavior
     extends Behavior<SubsequenceTestState, Null> {
   @override
@@ -20,13 +17,18 @@ final class SubsequenceTestBehavior
 
   @override
   List<Command<SubsequenceTestState, Null>> generateCommands(
-      SubsequenceTestState state) {
+    SubsequenceTestState state,
+  ) {
     var n = 0;
     Command<SubsequenceTestState, Null> increment([int value = 1]) {
       n++;
-      return Action0('increment $value ($n)', (s, system) {
-        s.increment(value);
-      }, postcondition: (s, system) => s.value < 100);
+      return Action0(
+        'increment $value ($n)',
+        (s, system) {
+          s.increment(value);
+        },
+        postcondition: (s, system) => s.value < 100,
+      );
     }
 
     return [
@@ -71,15 +73,27 @@ final class FlagTestBehavior extends Behavior<FlagTestState, Null> {
   List<Command<FlagTestState, Null>> generateCommands(FlagTestState state) {
     return [
       Action0('no op', (s, system) {}),
-      Action0('set a', (s, system) {
-        s.a = true;
-      }, postcondition: (s, system) => !s.allSet),
-      Action0('set b', (s, system) {
-        s.b = true;
-      }, postcondition: (s, system) => !s.allSet),
-      Action0('set c', (s, system) {
-        s.c = true;
-      }, postcondition: (s, system) => !s.allSet),
+      Action0(
+        'set a',
+        (s, system) {
+          s.a = true;
+        },
+        postcondition: (s, system) => !s.allSet,
+      ),
+      Action0(
+        'set b',
+        (s, system) {
+          s.b = true;
+        },
+        postcondition: (s, system) => !s.allSet,
+      ),
+      Action0(
+        'set c',
+        (s, system) {
+          s.c = true;
+        },
+        postcondition: (s, system) => !s.allSet,
+      ),
       Action0('clear a', (s, system) {
         s.a = false;
       }),
@@ -115,12 +129,18 @@ final class ShrinkingValueTestBehavior
 
   @override
   List<Command<ShrinkingValueTestState, Null>> generateCommands(
-      ShrinkingValueTestState state) {
+    ShrinkingValueTestState state,
+  ) {
     return [
-      Action('increment', integer(min: 1000, max: 7000), (s, system, value) {
-        print('increment $value');
-        s.value += value;
-      }, postcondition: (s, system) => s.value < 10000),
+      Action(
+        'increment',
+        integer(min: 1000, max: 7000),
+        (s, system, value) {
+          print('increment $value');
+          s.value += value;
+        },
+        postcondition: (s, system) => s.value < 10000,
+      ),
     ];
   }
 }

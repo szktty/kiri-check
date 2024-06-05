@@ -53,8 +53,10 @@ void main() {
         final equals = const DeepCollectionEquality().equals;
         final events = state.events;
         expect(events.sublist(0, 3), predicate((e) => equals(e, [1, 2, 3])));
-        expect(events.sublist(events.length - 3, events.length),
-            predicate((e) => equals(e, [7, 8, 9])));
+        expect(
+          events.sublist(events.length - 3, events.length),
+          predicate((e) => equals(e, [7, 8, 9])),
+        );
         for (var i = 0; i < events.length - 6; i++) {
           expect(events[i + 3], [4, 5, 6][i % 3]);
         }

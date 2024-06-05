@@ -3,7 +3,8 @@ import 'package:kiri_check/src/random.dart';
 
 abstract class FrequencyArbitraries {
   static Arbitrary<dynamic> frequency(
-          List<(int, Arbitrary<dynamic>)> arbitraries,) =>
+    List<(int, Arbitrary<dynamic>)> arbitraries,
+  ) =>
       FrequencyArbitrary(arbitraries);
 }
 

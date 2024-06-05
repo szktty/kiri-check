@@ -1,7 +1,4 @@
 import 'package:kiri_check/kiri_check.dart';
-import 'package:kiri_check/src/state/command.dart';
-import 'package:kiri_check/src/state/state.dart';
-import 'package:kiri_check/src/top.dart';
 import 'package:kiri_check/stateful_test.dart';
 import 'package:test/test.dart';
 
@@ -85,7 +82,8 @@ final class PreconditionCountBehavior
 
   @override
   List<Command<PreconditionCountState, Null>> generateCommands(
-      PreconditionCountState state) {
+    PreconditionCountState state,
+  ) {
     var onSelect = true;
     return [
       Action0(
@@ -106,14 +104,15 @@ final class PreconditionCountBehavior
           }
           return true;
         },
-      )
+      ),
     ];
   }
 
   @override
   void dispose(PreconditionCountState s, Null system) {
     print(
-        'preconditionsOnSelect: ${preconditionsOnSelect}, preconditionsOnRun: ${preconditionsOnRun}');
+      'preconditionsOnSelect: $preconditionsOnSelect, preconditionsOnRun: $preconditionsOnRun',
+    );
   }
 }
 
@@ -131,7 +130,8 @@ final class PreconditionConditionalBehavior
 
   @override
   List<Command<PreconditionCountState, Null>> generateCommands(
-      PreconditionCountState state) {
+    PreconditionCountState state,
+  ) {
     var onSelect = true;
     var i = -1;
     return [
@@ -150,13 +150,13 @@ final class PreconditionConditionalBehavior
             return true;
           }
         },
-      )
+      ),
     ];
   }
 
   @override
   void dispose(PreconditionCountState s, Null system) {
-    print('preconditions: ${tryPreconditions}');
+    print('preconditions: $tryPreconditions');
   }
 }
 
@@ -172,7 +172,8 @@ final class PostconditionCountBehavior
 
   @override
   List<Command<PostconditionCountState, Null>> generateCommands(
-      PostconditionCountState state) {
+    PostconditionCountState state,
+  ) {
     return [
       Action0(
         'count',
@@ -183,13 +184,13 @@ final class PostconditionCountBehavior
           postconditions++;
           return true;
         },
-      )
+      ),
     ];
   }
 
   @override
   void dispose(PostconditionCountState s, Null system) {
-    print('postconditions: ${postconditions}');
+    print('postconditions: $postconditions');
   }
 }
 
