@@ -2,7 +2,6 @@ import 'package:kiri_check/src/property.dart';
 import 'package:kiri_check/src/property_settings.dart';
 import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/src/state/state.dart';
-import 'package:meta/meta.dart';
 import 'package:test/scaffolding.dart';
 
 void runBehavior<State, System>(
