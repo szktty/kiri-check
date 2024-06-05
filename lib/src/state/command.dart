@@ -1,10 +1,6 @@
 import 'dart:math';
 
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/state/command/action.dart';
-import 'package:kiri_check/src/state/property.dart';
-import 'package:kiri_check/src/state/state.dart';
 import 'package:meta/meta.dart';
 
 abstract class Command<State, System> {
@@ -46,7 +42,8 @@ abstract class CommandContext<State, System> {
   CommandContext(this.command);
 
   static CommandContext<State, System> fromCommand<State, System, T>(
-      Command<State, System> command) {
+    Command<State, System> command,
+  ) {
     if (command is Action<State, System, dynamic>) {
       return ActionContext<State, System, dynamic>(command);
     } else {

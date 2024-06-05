@@ -1,8 +1,6 @@
-import 'package:kiri_check/kiri_check.dart';
-import 'package:kiri_check/stateful_test.dart';
-import 'package:meta/meta.dart';
-import 'package:test/test.dart';
 import 'dart:math' as math;
+
+import 'package:meta/meta.dart';
 
 enum BankAccountResult {
   success,

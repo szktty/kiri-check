@@ -1,5 +1,4 @@
 import 'package:kiri_check/kiri_check.dart';
-import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/stateful_test.dart';
 import 'package:test/test.dart';
 
@@ -25,15 +24,17 @@ final class InitializeBehavior extends Behavior<InitializeState, Null> {
   List<Command<InitializeState, Null>> generateCommands(InitializeState s) {
     return [
       Initialize(
-          'first a',
-          Action0<InitializeState, Null>('a', (s, system) {
-            s.history.add(Marker.a);
-          })),
+        'first a',
+        Action0<InitializeState, Null>('a', (s, system) {
+          s.history.add(Marker.a);
+        }),
+      ),
       Initialize(
-          'first b',
-          Action0<InitializeState, Null>('b', (s, system) {
-            s.history.add(Marker.b);
-          })),
+        'first b',
+        Action0<InitializeState, Null>('b', (s, system) {
+          s.history.add(Marker.b);
+        }),
+      ),
       Action0<InitializeState, Null>('c', (s, system) {
         s.history.add(Marker.c);
       }),

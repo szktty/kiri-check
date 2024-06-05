@@ -194,11 +194,15 @@ void main() {
   group('generation', () {
     property('first value', () {
       int? first;
-      forAll(basic(), (value) {
-        first ??= value;
-      }, tearDown: () {
-        expect(first, 100);
-      },);
+      forAll(
+        basic(),
+        (value) {
+          first ??= value;
+        },
+        tearDown: () {
+          expect(first, 100);
+        },
+      );
     });
 
     property('arbitrary-based', () {
@@ -213,22 +217,30 @@ void main() {
 
     property("arbitrary-based ('auto' policy)", () {
       int? first;
-      forAll(basic(), (value) {
-        if (first != null) {
-          expect(20 <= value && value <= 29, isTrue);
-        }
-        first ??= value;
-      }, generationPolicy: GenerationPolicy.auto,);
+      forAll(
+        basic(),
+        (value) {
+          if (first != null) {
+            expect(20 <= value && value <= 29, isTrue);
+          }
+          first ??= value;
+        },
+        generationPolicy: GenerationPolicy.auto,
+      );
     });
 
     property('random-based', () {
       int? first;
-      forAll(basic(), (value) {
-        if (first != null) {
-          expect(30 <= value && value <= 39, isTrue);
-        }
-        first ??= value;
-      }, generationPolicy: GenerationPolicy.random,);
+      forAll(
+        basic(),
+        (value) {
+          if (first != null) {
+            expect(30 <= value && value <= 39, isTrue);
+          }
+          first ??= value;
+        },
+        generationPolicy: GenerationPolicy.random,
+      );
     });
 
     property('exhaustive', () {
@@ -238,9 +250,12 @@ void main() {
         values.add,
         tearDown: () {
           expect(
-              const DeepCollectionEquality().equals(
-                  values, [100, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],),
-              isTrue,);
+            const DeepCollectionEquality().equals(
+              values,
+              [100, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+            ),
+            isTrue,
+          );
         },
         generationPolicy: GenerationPolicy.exhaustive,
       );
@@ -248,31 +263,46 @@ void main() {
 
     property('edge cases first', () {
       final values = <int>[];
-      forAll(edgeCase(), values.add, tearDown: () {
-        for (final case_ in _EdgeCaseArbitrary._edgeCases) {
-          expect(values.contains(case_), isTrue);
-        }
-      }, edgeCasePolicy: EdgeCasePolicy.first,);
+      forAll(
+        edgeCase(),
+        values.add,
+        tearDown: () {
+          for (final case_ in _EdgeCaseArbitrary._edgeCases) {
+            expect(values.contains(case_), isTrue);
+          }
+        },
+        edgeCasePolicy: EdgeCasePolicy.first,
+      );
     });
 
     property('edge cases mixin', () {
       final values = <int>[];
-      forAll(edgeCase(), values.add, tearDown: () {
-        expect(
-          _EdgeCaseArbitrary._edgeCases.any(values.contains),
-          isTrue,
-          reason: 'edge cases are not included',
-        );
-      }, edgeCasePolicy: EdgeCasePolicy.mixin,);
+      forAll(
+        edgeCase(),
+        values.add,
+        tearDown: () {
+          expect(
+            _EdgeCaseArbitrary._edgeCases.any(values.contains),
+            isTrue,
+            reason: 'edge cases are not included',
+          );
+        },
+        edgeCasePolicy: EdgeCasePolicy.mixin,
+      );
     });
 
     property('edge cases none', () {
       final values = <int>[];
-      forAll(edgeCase(), values.add, tearDown: () {
-        for (final case_ in _EdgeCaseArbitrary._edgeCases) {
-          expect(values.contains(case_), isFalse);
-        }
-      }, edgeCasePolicy: EdgeCasePolicy.none,);
+      forAll(
+        edgeCase(),
+        values.add,
+        tearDown: () {
+          for (final case_ in _EdgeCaseArbitrary._edgeCases) {
+            expect(values.contains(case_), isFalse);
+          }
+        },
+        edgeCasePolicy: EdgeCasePolicy.none,
+      );
     });
 
     property('onGenerate callback', () {

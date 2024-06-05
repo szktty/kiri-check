@@ -168,7 +168,8 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
 
   @override
   R generateRandom(RandomContext random) => _transform(
-      _set.arbitraries.map((g) => g.generateRandom(random)).toList(),);
+        _set.arbitraries.map((g) => g.generateRandom(random)).toList(),
+      );
 
   @override
   ShrinkingDistance calculateDistance(R value) {

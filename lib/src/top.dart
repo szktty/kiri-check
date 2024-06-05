@@ -2,8 +2,6 @@ import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/property.dart';
 import 'package:kiri_check/src/property_settings.dart';
 import 'package:kiri_check/src/random.dart';
-import 'package:kiri_check/src/state/property.dart';
-import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/src/statistics.dart';
 import 'package:meta/meta.dart';
 import 'package:test/test.dart';

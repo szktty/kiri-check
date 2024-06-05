@@ -1,5 +1,4 @@
 import 'package:kiri_check/kiri_check.dart';
-import 'package:kiri_check/src/state/state.dart';
 import 'package:kiri_check/stateful_test.dart';
 import 'package:test/test.dart';
 
@@ -25,15 +24,17 @@ final class FinalizeBehavior extends Behavior<FinalizeState, Null> {
   List<Command<FinalizeState, Null>> generateCommands(FinalizeState s) {
     return [
       Finalize(
-          'final a',
-          Action0<FinalizeState, Null>('a', (s, system) {
-            s.history.add(Marker.a);
-          })),
+        'final a',
+        Action0<FinalizeState, Null>('a', (s, system) {
+          s.history.add(Marker.a);
+        }),
+      ),
       Finalize(
-          'final b',
-          Action0<FinalizeState, Null>('b', (s, system) {
-            s.history.add(Marker.b);
-          })),
+        'final b',
+        Action0<FinalizeState, Null>('b', (s, system) {
+          s.history.add(Marker.b);
+        }),
+      ),
       Action0<FinalizeState, Null>('c', (s, system) {
         s.history.add(Marker.c);
       }),

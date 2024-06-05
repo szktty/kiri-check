@@ -62,11 +62,13 @@ final class StatisticsResult {
         .reversed
         .toList();
     return baseEntries
-        .map((e) => StatisticsMetricsEntry(
-              values: e.$2,
-              count: e.$1,
-              ratio: e.$1 / baseEntries.length,
-            ),)
+        .map(
+          (e) => StatisticsMetricsEntry(
+            values: e.$2,
+            count: e.$1,
+            ratio: e.$1 / baseEntries.length,
+          ),
+        )
         .toList();
   }
 }

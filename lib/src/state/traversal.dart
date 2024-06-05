@@ -1,13 +1,7 @@
-import 'dart:collection';
-import 'dart:math';
-
 import 'package:collection/collection.dart';
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/command/sequence.dart';
 import 'package:kiri_check/src/state/property.dart';
-import 'package:kiri_check/src/state/state.dart';
 
 // ランダムにコマンドを選択
 // TODO: パスの数は考慮しない。純粋にパスのみ生成する
@@ -44,7 +38,9 @@ final class Traversal<State, System> {
         finalizers.length + selected.length < context.property.maxSteps;
 
     void addCommand(
-        List<Command<State, System>> list, Command<State, System> command) {
+      List<Command<State, System>> list,
+      Command<State, System> command,
+    ) {
       if (!hasNext()) {
         return;
       }
@@ -63,8 +59,10 @@ final class Traversal<State, System> {
       }
     }
 
-    void addCommands(List<Command<State, System>> list,
-        List<Command<State, System>> commands) {
+    void addCommands(
+      List<Command<State, System>> list,
+      List<Command<State, System>> commands,
+    ) {
       for (final command in commands) {
         if (!hasNext()) {
           break;

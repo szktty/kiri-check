@@ -1,8 +1,12 @@
-.PHONY: fix test doc dhttpd unicode
+.PHONY: fix format test doc dhttpd unicode
 
 fix:
 	dart fix --apply lib
 	dart fix --apply test
+	dart format lib test
+
+format:
+	dart format lib test
 
 test:
 	dart test
