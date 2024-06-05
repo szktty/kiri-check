@@ -73,7 +73,6 @@ final class StatefulProperty<State, System> extends Property<State> {
     super.tearDown,
     this.onDispose,
     this.onFalsify,
-    this.onCheck,
   }) {
     maxCycles = settings.maxStatefulCycles ?? KiriCheck.maxStatefulCycles;
     maxSteps = settings.maxStatefulSteps ?? KiriCheck.maxStatefulSteps;
@@ -86,7 +85,6 @@ final class StatefulProperty<State, System> extends Property<State> {
 
   final Behavior<State, System> behavior;
 
-  final void Function(void Function())? onCheck;
   final void Function(Behavior<State, System>, State, System)? onDispose;
   final void Function(StatefulFalsifyingExample<State, System>)? onFalsify;
 
@@ -98,24 +96,7 @@ final class StatefulProperty<State, System> extends Property<State> {
 
   @override
   void check(PropertyTest test) {
-    StatefulShrinkingResult<State, System>? result;
-
-    if (onCheck != null) {
-      var called = false;
-      onCheck!(() {
-        if (called) {
-          throw PropertyException('onCheck is called more than once');
-        } else {
-          called = true;
-          result = _check(test);
-        }
-      });
-      if (!called) {
-        throw PropertyException('onCheck is not called');
-      }
-    } else {
-      result = _check(test);
-    }
+    final result = _check(test);
 
     if (result != null) {
       print('Falsified example sequence:');

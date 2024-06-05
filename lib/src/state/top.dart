@@ -19,8 +19,6 @@ void runBehavior<State, System>(
   void Function(Behavior<State, System>, State, System)? onDispose,
   void Function(StatefulFalsifyingExample<State, System>)? onFalsify,
   bool? ignoreFalsify,
-  // TODO: 不要
-  @internal void Function(void Function())? onCheck,
 }) {
   final property = StatefulProperty(
     behavior,
@@ -37,7 +35,6 @@ void runBehavior<State, System>(
     tearDown: tearDown,
     onDispose: onDispose,
     onFalsify: onFalsify,
-    onCheck: onCheck,
   );
   PropertyTestManager.addProperty(property);
 }
