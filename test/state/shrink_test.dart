@@ -158,14 +158,14 @@ void main() {
     runBehavior(
       ShrinkingValueTestBehavior(),
       onFalsify: (example) {
-        final sum = example.steps
+        final sum = example.falsifyingSteps
             .map((e) => e.value as int)
             .fold<int>(0, (a, b) => a + b);
         print('sum: $sum');
         expect(
           sum,
           allOf(
-            lessThanOrEqualTo(example.state.value),
+            lessThanOrEqualTo(example.originalState.value),
             greaterThanOrEqualTo(10000),
             lessThanOrEqualTo(15000),
           ),
