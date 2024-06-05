@@ -91,7 +91,6 @@ final class ActionContext<State, System, T>
     } else {
       final value = arbitrary.generate(random as RandomContext);
       _cache = value;
-      print('$runtimeType, ${action.runtimeType}');
       action._execute(state, system, value);
     }
   }
@@ -104,7 +103,6 @@ final class ActionContext<State, System, T>
         _distance = arbitrary.calculateDistance(_cache as T)
           ..granularity = _shrinkGranularity;
         final shrunk = arbitrary.shrink(_cache as T, _distance!);
-        print('first shrink: $shrunk');
         _previousShrunk = shrunk;
         _shrunkQueue = Queue.of(shrunk);
         _minShrunk = _cache;
@@ -116,7 +114,6 @@ final class ActionContext<State, System, T>
           _shrinkGranularity++;
           _distance!.granularity = _shrinkGranularity;
           final shrunk = arbitrary.shrink(_cache as T, _distance!);
-          print('next shrink: $shrunk');
           if (const DeepCollectionEquality().equals(shrunk, _previousShrunk)) {
             _shrinkState = ActionShrinkingState.finished;
             return false;
