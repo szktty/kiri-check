@@ -13,5 +13,5 @@ export 'src/state/command/action.dart'
 export 'src/state/command/sequence.dart' show Sequence;
 export 'src/state/property.dart'
     show StatefulExampleStep, StatefulFalsifyingExample;
-export 'src/state/state.dart' show Behavior;
+export 'src/state/behavior.dart' show Behavior;
 export 'src/state/top.dart' show runBehavior;
