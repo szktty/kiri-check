@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
-import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/src/exception.dart';
+import 'package:kiri_check/src/home.dart';
 import 'package:kiri_check/src/property.dart';
 import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/command/action.dart';
@@ -10,27 +10,9 @@ import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 
 final class StatefulFalsifiedException<State, System> implements Exception {
-  StatefulFalsifiedException(this.description, this.result);
+  StatefulFalsifiedException(this.result);
 
-  // TODO: 使ってない？
-  final Object? description;
   final StatefulShrinkingResult<State, System> result;
-
-  @override
-  String toString() {
-    final buffer = StringBuffer()..writeln('Falsifying command sequence:');
-    final sequence = result.falsifyingSequence;
-    for (var i = 0; i < sequence.steps.length; i++) {
-      final step = sequence.steps[i];
-      final command = step.context.command;
-      buffer.writeln('  Step ${i + 1}: ${command.description}');
-      //..writeln('    Value: ${command.minValue}');
-    }
-    if (result.exception != null) {
-      buffer.writeln(result.exception!.toString());
-    }
-    return buffer.toString();
-  }
 }
 
 final class StateContext<State, System> {
@@ -99,32 +81,33 @@ final class StatefulProperty<State, System> extends Property<State> {
     final result = _check(test);
 
     if (result != null) {
-      print('Falsified example sequence:');
-      final sequence = result!.falsifyingSequence;
+      print('');
+      print('Falsifying example sequence:');
+      final sequence = result.falsifyingSequence;
       for (var i = 0; i < sequence.steps.length; i++) {
         final step = sequence.steps[i];
         final command = step.context.command;
         print('Step ${i + 1}: ${command.description}');
         if (step.context is ActionContext) {
-          print('Shrunk value: ${step.context.minValue}');
+          print('  Shrunk value: ${step.context.minValue}');
         }
       }
 
       if (onFalsify != null) {
         final example = StatefulFalsifyingExample(
-          result!.originalState,
-          result!.originalSystem,
-          StatefulExampleStep.fromSequence(result!.originalSequence),
-          result!.falsifyingState,
-          result!.falsifyingSystem,
-          StatefulExampleStep.fromSequence(result!.falsifyingSequence),
-          result!.exception,
+          result.originalState,
+          result.originalSystem,
+          StatefulExampleStep.fromSequence(result.originalSequence),
+          result.falsifyingState,
+          result.falsifyingSystem,
+          StatefulExampleStep.fromSequence(result.falsifyingSequence),
+          result.exception,
         );
         onFalsify!.call(example);
       }
 
       if (!settings.ignoreFalsify) {
-        throw StatefulFalsifiedException<State, System>(null, result!);
+        throw StatefulFalsifiedException<State, System>(result);
       }
     }
   }
@@ -165,7 +148,7 @@ final class StatefulProperty<State, System> extends Property<State> {
               i--;
             }
           } on Exception catch (e) {
-            print('Error: $e');
+            print('  Error: $e');
             _disposeBehavior(behavior, state, system);
 
             final shrinker = _StatefulPropertyShrinker(
@@ -207,12 +190,10 @@ final class StatefulProperty<State, System> extends Property<State> {
       if (command.ensures(state, context.system)) {
         return true;
       } else {
-        print('Postcondition is not satisfied');
         throw PropertyException('postcondition is not satisfied');
       }
     } else {
-      print('Precondition is not satisfied');
-      throw PropertyException('Precondition is not satisfied');
+      throw PropertyException('precondition is not satisfied');
     }
   }
 }
@@ -262,8 +243,6 @@ final class _StatefulPropertyShrinker<State, System> {
     var minShrunkNum = baseSequence.steps.length;
     while (_hasShrinkCycle) {
       final shrunkSequences = minShrunkSequence.shrink();
-      print('Shrunk sequences: ${shrunkSequences.length}');
-      assert(shrunkSequences.length <= 3);
       if (TraversalSequence.equals(previousSequences, shrunkSequences)) {
         break;
       }
@@ -272,14 +251,12 @@ final class _StatefulPropertyShrinker<State, System> {
       for (var i = 0; i < shrunkSequences.length; i++) {
         final shrunkSequence = shrunkSequences[i];
         print(
-          'Shrink cycle ${_shrinkCycle + 1}: ${shrunkSequence.steps.length} steps',
+          'Shrink cycle ${_shrinkCycle + 1}: '
+          '${shrunkSequence.steps.length} steps',
         );
-        if (!_checkShrunkSequence(shrunkSequence)) {
+        if (!_checkShrunkSequence(shrunkSequence, stepType: 'partial')) {
           // 先頭に近い部分列を最小とする
           if (i < minShrunkNum) {
-            print(
-              'min shrunk sequence: $i, ${shrunkSequence.steps.length} steps',
-            );
             minShrunkSequence = shrunkSequence;
             minShrunkNum = i;
           }
@@ -319,35 +296,31 @@ final class _StatefulPropertyShrinker<State, System> {
       }
 
       if (shrunkSequence.steps.isNotEmpty &&
-          !_checkShrunkSequence(shrunkSequence)) {
+          !_checkShrunkSequence(shrunkSequence, stepType: 'reduced')) {
         if (shrunkSequence.steps.length < minShrunkSequence.steps.length) {
           minShrunkSequence = shrunkSequence;
         }
       }
     }
 
-    print('Reduced shrunk sequence: ${minShrunkSequence.steps.length} steps');
-    for (final step in minShrunkSequence.steps) {
-      print('Step: ${step.context.command.description}');
-    }
-
     return minShrunkSequence;
   }
 
-  bool _checkShrunkSequence(TraversalSequence<State, System> sequence) {
-    print('Check shrunk sequence: ${sequence.steps.length} steps');
+  bool _checkShrunkSequence(TraversalSequence<State, System> sequence,
+      {required String stepType}) {
     final state = propertyContext.behavior.createState();
     final system = propertyContext.behavior.createSystem(state);
     final stateContext =
         StateContext(state, system, property, propertyContext.test);
     for (var i = 0; i < sequence.steps.length; i++) {
       final step = sequence.steps[i];
-      print('Shrink step ${i + 1}: ${step.context.command.description}');
+      print(
+          'Shrink $stepType step ${i + 1}: ${step.context.command.description}');
       try {
         step.context.useCache = true;
         stateContext.executeCommand(step.context);
       } on Exception catch (e) {
-        print('Error: $e');
+        print('  Error: $e');
         if (i + 1 < sequence.steps.length) {
           sequence.truncateSteps(i + 1);
         }
@@ -375,7 +348,7 @@ final class _StatefulPropertyShrinker<State, System> {
       for (var i = 0; i < sequence.steps.length; i++) {
         final step = sequence.steps[i];
         final context = step.context;
-        print('Shrink step ${i + 1}: ${context.command.description}');
+        print('Shrink value step ${i + 1}: ${context.command.description}');
         try {
           // サイクル制限に達するか、すべてのコマンドのシュリンクが終了するまで繰り返す
           if (context.nextShrink()) {
@@ -383,7 +356,7 @@ final class _StatefulPropertyShrinker<State, System> {
           }
           stateContext.executeCommand(context);
         } on Exception catch (e) {
-          print('Error: $e');
+          print('  Error: $e');
           lastException = e;
           context.failShrunk();
           shrunkContext = stateContext;

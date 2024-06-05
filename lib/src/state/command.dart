@@ -41,7 +41,7 @@ final class Finalize<State, System> extends Container<State, System> {
 abstract class CommandContext<State, System> {
   CommandContext(this.command);
 
-  static CommandContext<State, System> fromCommand<State, System, T>(
+  static CommandContext<State, System> fromCommand<State, System>(
     Command<State, System> command,
   ) {
     if (command is Action<State, System, dynamic>) {

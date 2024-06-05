@@ -136,7 +136,6 @@ final class ShrinkingValueTestBehavior
         'increment',
         integer(min: 1000, max: 7000),
         (s, system, value) {
-          print('increment $value');
           s.value += value;
         },
         postcondition: (s, system) => s.value < 10000,
