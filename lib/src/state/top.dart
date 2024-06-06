@@ -1,7 +1,7 @@
 import 'package:kiri_check/src/property.dart';
 import 'package:kiri_check/src/property_settings.dart';
-import 'package:kiri_check/src/state/property.dart';
 import 'package:kiri_check/src/state/behavior.dart';
+import 'package:kiri_check/src/state/property.dart';
 import 'package:test/scaffolding.dart';
 
 /// Runs a stateful test.

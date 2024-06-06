@@ -1,4 +1,8 @@
-export 'src/state/command.dart' show Command, Container, Finalize, Initialize;
+/// Writing stateful tests.
+library stateful_test;
+
+export 'src/state/behavior.dart' show Behavior;
+export 'src/state/command.dart' show Command, Finalize, Initialize;
 export 'src/state/command/action.dart'
     show
         Action,
@@ -13,5 +17,4 @@ export 'src/state/command/action.dart'
 export 'src/state/command/sequence.dart' show Sequence;
 export 'src/state/property.dart'
     show StatefulExampleStep, StatefulFalsifyingExample;
-export 'src/state/behavior.dart' show Behavior;
 export 'src/state/top.dart' show runBehavior;

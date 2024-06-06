@@ -5,6 +5,7 @@ import 'package:kiri_check/src/property.dart';
 import 'package:kiri_check/src/state/behavior.dart';
 import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/command/action.dart';
+import 'package:kiri_check/src/state/top.dart';
 import 'package:kiri_check/src/state/traversal.dart';
 import 'package:meta/meta.dart';
 import 'package:test/test.dart';
@@ -391,7 +392,13 @@ final class StatefulShrinkingResult<State, System> {
   final Exception? exception;
 }
 
+/// A falsifying example of a stateful property.
+///
+/// See also:
+/// - [runBehavior], runs a stateful test according to the behavior.
+/// - [StatefulExampleStep], a step in a stateful example.
 final class StatefulFalsifyingExample<State, System> {
+  /// @nodoc
   @protected
   StatefulFalsifyingExample(
     this.originalState,
@@ -403,22 +410,40 @@ final class StatefulFalsifyingExample<State, System> {
     this.exception,
   );
 
+  /// The state in which the initial failure occurred.
   final State originalState;
+
+  /// The system in which the initial failure occurred.
   final System originalSystem;
+
+  /// The steps that led to the initial failure.
   final List<StatefulExampleStep<State, System>> originalSteps;
+
+  /// The state in which the failure was found after shrinking.
   final State falsifyingState;
+
+  /// The system in which the failure was found after shrinking.
   final System falsifyingSystem;
+
+  /// The steps that led to the failure after shrinking.
   final List<StatefulExampleStep<State, System>> falsifyingSteps;
 
+  /// The exception that occurred during the initial failure or shrinking.
   final Exception? exception;
 }
 
+/// A step in a stateful example.
+///
+/// See also:
+/// - [StatefulFalsifyingExample], a falsifying example of a stateful property.
 final class StatefulExampleStep<State, System> {
+  /// @nodoc
   @protected
   StatefulExampleStep(this.number, this.command, this.value);
 
-  /// :nodoc:
+  /// @nodoc
   @protected
+  @internal
   static List<StatefulExampleStep<State, System>> fromSequence<State, System>(
     TraversalSequence<State, System> sequence,
   ) {
@@ -433,7 +458,12 @@ final class StatefulExampleStep<State, System> {
         .toList();
   }
 
+  /// The number of the step.
   final int number;
+
+  /// The command that was run in this step.
   final Command<State, System> command;
+
+  /// The value that was used in this step.
   final dynamic value;
 }

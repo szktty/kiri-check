@@ -1,4 +1,4 @@
-.PHONY: fix format test doc dhttpd unicode
+.PHONY: fix format test doc dhttpd pubpoint unicode
 
 fix:
 	dart fix --apply lib
@@ -16,6 +16,9 @@ doc:
 
 dhttpd:
 	dart pub global run dhttpd --path doc/api
+
+pubpoint:
+	pana .
 
 unicode:
 	cd unicode_data && python3 generate.py
