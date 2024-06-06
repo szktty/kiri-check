@@ -1,13 +1,14 @@
 # Quickstart
 
 - シンプルなカウンター
+- 抽象モデルと実システムを用意する
+- ここでは、実システムはJSONに変換可能なオブジェクトで値を保持する
 
-- まずは基本
+- 抽象モデルの定義
 - increase, decrease, reset
+- preconditionは0以上の値とする
+- preconditionはモデルのみ
+- postcondition で実システムと比較する
 
-- 次に、0未満にならないようにしてみる
-- increase, decrease でpostcondition
-- エラーになる
-- increase, decrease を修正する
  
 ## Where to next?

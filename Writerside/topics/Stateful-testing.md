@@ -1,6 +1,9 @@
 # Stateful testing
 
-- ステートフルテストでは、抽象モデルと実システムの状態変化を照合する
+## What should be tested
+
+- 何をテストするのか
+- kiri-checkのステートフルテストでは、抽象モデルと実システムの状態変化を照合する
 - 抽象モデルとは、実システムのあるべき振る舞いを表現したもの
 - ランダムなコマンドにより抽象モデルと実システムの状態を変化させ、実システムの状態がモデルと比較して妥当であるかを検証する
 - そのため、抽象モデルの実装は正確かつシンプルにすべき
@@ -22,8 +25,7 @@
   - 事前条件が偽の場合、失敗扱いになる
   - シュリンクを開始する
 - シュリンクフェーズ
-  - エラーが発生した場合、コマンド列を縮小する
-  - 縮小されたコマンド列が最小のエラーを示す
+  - 詳細はシュリンクの項を参照
 
 - 以下はQuickstartを参照してもらう
 - 例として、シンプルなカウンターを考える
@@ -37,58 +39,9 @@
 - エラーがあると、シュリンクによってコマンド列が切り詰められ、最小のエラーを見つける
  
 
-## Write stateful properties
 
-- import stateful_test
-- forAllStates
+## Shrinking
 
-```java
-void forAllStates<T extends State>(
-  Behavior<T> behavior,
-  void body(T),
-  {
-    int? maxExamples,
-    int? maxTries,
-    int? maxShrinkingTries,
-    RandomContext? random,
-    int? seed,
-    GenerationPolicy? generationPolicy,
-    ShrinkingPolicy? shrinkingPolicy,
-    EdgeCasePolicy? edgeCasePolicy,
-    int? maxStatefulCycles,
-    int? maxStatefulSteps,
-    void setUp()?,
-    void tearDown()?,
-    void onGenerate(T)?,
-    void onShrink(T)?,
-    void onFalsify(T)?,
-    bool? ignoreFalsify,
-    @internal void onCheck(void ())?
-  }
-)
-```
-
-- Behaviorを指定する
-- BehaviorとState
-- generateCommands
-- 使用可能なコマンドはコマンドリファレンスを参照
-
-- Behaviorの定義
-- Behavior<T extends State>
-createState() → T
-generateCommands(T state) → List<Command<T>>
-
-- nextState
-- nextStateを定義してimmutableな状態を扱うと、状態をクリーンに保てる。意図しないコマンドの副作用を防げる
-
-- Stateの定義
-- setUp() → void
-  tearDown() → void
-
-- コマンド
-- コールバック
-- 事前条件、事後条件、アクション
-- アサーションは事後条件で表すべき
-
-- シュリンク
-- パスと値
+- エラーが発生した場合、コマンド列を縮小する
+- 部分列、削除、値の縮小
+- 縮小されたコマンド列が最小のエラーを示す
