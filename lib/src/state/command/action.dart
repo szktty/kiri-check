@@ -13,7 +13,16 @@ enum ActionShrinkingState {
   finished,
 }
 
+/// A command that performs an action with generated values.
 final class Action<State, System, T> extends Command<State, System> {
+  /// Creates a new action command.
+  ///
+  /// Parameters:
+  /// - `description`: The description of the action.
+  /// - `arbitrary`: The arbitrary used to generate values.
+  /// - `action`: A function to execute the action.
+  /// - `precondition`: A function to describe the precondition of the action.
+  /// - `postcondition`: A function to describe the postcondition of the action.
   Action(
     super.description,
     Arbitrary<T> arbitrary,
@@ -36,11 +45,13 @@ final class Action<State, System, T> extends Command<State, System> {
   late final bool Function(State)? _precondition;
   late final bool Function(State, System)? _postcondition;
 
+  /// @nodoc
   @override
   bool requires(State state) {
     return _precondition?.call(state) ?? true;
   }
 
+  /// @nodoc
   @override
   bool ensures(State state, System system) {
     return _postcondition?.call(state, system) ?? true;
@@ -134,7 +145,15 @@ final class ActionContext<State, System, T>
   }
 }
 
+/// A command [Action] with no arbitrary.
 final class Action0<State, System> extends Action<State, System, void> {
+  /// Creates a new action command.
+  ///
+  /// Parameters:
+  /// - `description`: The description of the action.
+  /// - `action`: A function to execute the action.
+  /// - `precondition`: A function to describe the precondition of the action.
+  /// - `postcondition`: A function to describe the postcondition of the action.
   Action0(
     String description,
     void Function(State, System) action, {
@@ -143,8 +162,18 @@ final class Action0<State, System> extends Action<State, System, void> {
   }) : super(description, null_(), (s, sys, _) => action(s, sys));
 }
 
+/// A command [Action] with 2 arbitraries.
 final class Action2<State, System, T, E1, E2>
     extends Action<State, System, (E1, E2)> {
+  /// Creates a new action command.
+  ///
+  /// Parameters:
+  /// - `description`: The description of the action.
+  /// - `arbitrary1`: The arbitrary used to generate the first value.
+  /// - `arbitrary2`: The arbitrary used to generate the second value.
+  /// - `action`: A function to execute the action.
+  /// - `precondition`: A function to describe the precondition of the action.
+  /// - `postcondition`: A function to describe the postcondition of the action.
   Action2(
     String description,
     Arbitrary<E1> arbitrary1,
@@ -159,8 +188,19 @@ final class Action2<State, System, T, E1, E2>
         );
 }
 
+/// A command [Action] with 3 arbitraries.
 final class Action3<State, System, T, E1, E2, E3>
     extends Action<State, System, (E1, E2, E3)> {
+  /// Creates a new action command.
+  ///
+  /// Parameters:
+  /// - `description`: The description of the action.
+  /// - `arbitrary1`: The arbitrary used to generate the first value.
+  /// - `arbitrary2`: The arbitrary used to generate the second value.
+  /// - `arbitrary3`: The arbitrary used to generate the third value.
+  /// - `action`: A function to execute the action.
+  /// - `precondition`: A function to describe the precondition of the action.
+  /// - `postcondition`: A function to describe the postcondition of the action.
   Action3(
     String description,
     Arbitrary<E1> arbitrary1,
@@ -176,8 +216,19 @@ final class Action3<State, System, T, E1, E2, E3>
         );
 }
 
+/// A command [Action] with 4 arbitraries.
 final class Action4<State, System, T, E1, E2, E3, E4>
     extends Action<State, System, (E1, E2, E3, E4)> {
+  /// Creates a new action command.
+  ///
+  /// Parameters:
+  /// - `description`: The description of the action.
+  /// - `arbitrary1`: The arbitrary used to generate the first value.
+  /// - `arbitrary2`: The arbitrary used to generate the second value.
+  /// - `arbitrary3`: The arbitrary used to generate the third value.
+  /// - `action`: A function to execute the action.
+  /// - `precondition`: A function to describe the precondition of the action.
+  /// - `postcondition`: A function to describe the postcondition of the action.
   Action4(
     String description,
     Arbitrary<E1> arbitrary1,
@@ -200,8 +251,21 @@ final class Action4<State, System, T, E1, E2, E3, E4>
         );
 }
 
+/// A command [Action] with 5 arbitraries.
 final class Action5<State, System, T, E1, E2, E3, E4, E5>
     extends Action<State, System, (E1, E2, E3, E4, E5)> {
+  /// Creates a new action command.
+  ///
+  /// Parameters:
+  /// - `description`: The description of the action.
+  /// - `arbitrary1`: The arbitrary used to generate the first value.
+  /// - `arbitrary2`: The arbitrary used to generate the second value.
+  /// - `arbitrary3`: The arbitrary used to generate the third value.
+  /// - `arbitrary4`: The arbitrary used to generate the fourth value.
+  /// - `arbitrary5`: The arbitrary used to generate the fifth value.
+  /// - `action`: A function to execute the action.
+  /// - `precondition`: A function to describe the precondition of the action.
+  /// - `postcondition`: A function to describe the postcondition of the action.
   Action5(
     String description,
     Arbitrary<E1> arbitrary1,
@@ -227,8 +291,22 @@ final class Action5<State, System, T, E1, E2, E3, E4, E5>
         );
 }
 
+/// A command [Action] with 6 arbitraries.
 final class Action6<State, System, T, E1, E2, E3, E4, E5, E6>
     extends Action<State, System, (E1, E2, E3, E4, E5, E6)> {
+  /// Creates a new action command.
+  ///
+  /// Parameters:
+  /// - `description`: The description of the action.
+  /// - `arbitrary1`: The arbitrary used to generate the first value.
+  /// - `arbitrary2`: The arbitrary used to generate the second value.
+  /// - `arbitrary3`: The arbitrary used to generate the third value.
+  /// - `arbitrary4`: The arbitrary used to generate the fourth value.
+  /// - `arbitrary5`: The arbitrary used to generate the fifth value.
+  /// - `arbitrary6`: The arbitrary used to generate the sixth value.
+  /// - `action`: A function to execute the action.
+  /// - `precondition`: A function to describe the precondition of the action.
+  /// - `postcondition`: A function to describe the postcondition of the action.
   Action6(
     String description,
     Arbitrary<E1> arbitrary1,
@@ -264,8 +342,23 @@ final class Action6<State, System, T, E1, E2, E3, E4, E5, E6>
         );
 }
 
+/// A command [Action] with 7 arbitraries.
 final class Action7<State, System, T, E1, E2, E3, E4, E5, E6, E7>
     extends Action<State, System, (E1, E2, E3, E4, E5, E6, E7)> {
+  /// Creates a new action command.
+  ///
+  /// Parameters:
+  /// - `description`: The description of the action.
+  /// - `arbitrary1`: The arbitrary used to generate the first value.
+  /// - `arbitrary2`: The arbitrary used to generate the second value.
+  /// - `arbitrary3`: The arbitrary used to generate the third value.
+  /// - `arbitrary4`: The arbitrary used to generate the fourth value.
+  /// - `arbitrary5`: The arbitrary used to generate the fifth value.
+  /// - `arbitrary6`: The arbitrary used to generate the sixth value.
+  /// - `arbitrary7`: The arbitrary used to generate the seventh value.
+  /// - `action`: A function to execute the action.
+  /// - `precondition`: A function to describe the precondition of the action.
+  /// - `postcondition`: A function to describe the postcondition of the action.
   Action7(
     String description,
     Arbitrary<E1> arbitrary1,
@@ -304,8 +397,24 @@ final class Action7<State, System, T, E1, E2, E3, E4, E5, E6, E7>
         );
 }
 
+/// A command [Action] with 8 arbitraries.
 final class Action8<State, System, T, E1, E2, E3, E4, E5, E6, E7, E8>
     extends Action<State, System, (E1, E2, E3, E4, E5, E6, E7, E8)> {
+  /// Creates a new action command.
+  ///
+  /// Parameters:
+  /// - `description`: The description of the action.
+  /// - `arbitrary1`: The arbitrary used to generate the first value.
+  /// - `arbitrary2`: The arbitrary used to generate the second value.
+  /// - `arbitrary3`: The arbitrary used to generate the third value.
+  /// - `arbitrary4`: The arbitrary used to generate the fourth value.
+  /// - `arbitrary5`: The arbitrary used to generate the fifth value.
+  /// - `arbitrary6`: The arbitrary used to generate the sixth value.
+  /// - `arbitrary7`: The arbitrary used to generate the seventh value.
+  /// - `arbitrary8`: The arbitrary used to generate the eighth value.
+  /// - `action`: A function to execute the action.
+  /// - `precondition`: A function to describe the precondition of the action.
+  /// - `postcondition`: A function to describe the postcondition of the action.
   Action8(
     String description,
     Arbitrary<E1> arbitrary1,

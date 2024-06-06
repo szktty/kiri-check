@@ -1,6 +1,11 @@
 import 'package:kiri_check/src/state/command.dart';
+import 'package:kiri_check/src/state/top.dart';
 import 'package:meta/meta.dart';
 
+/// Describes behavior of a stateful test.
+///
+/// See also:
+/// - [runBehavior], runs a stateful test according to the behavior.
 abstract class Behavior<State, System> {
   /// Creates a new state.
   @factory
