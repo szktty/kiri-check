@@ -1,8 +1,8 @@
 import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/stateful_test.dart';
-import 'package:test/test.dart';
 
-// 簡潔な実装で正確な仕様を表現する
+// Abstract model representing accurate specifications
+// with concise implementation.
 final class CounterModel {
   int count = 0;
 
@@ -19,10 +19,9 @@ final class CounterModel {
   }
 }
 
-// 実運用される実装を使って仕様を表現する
-// モデルの挙動と比較される
+// Real system compared with the behavior of the model.
 final class CounterSystem {
-  // JSONオブジェクトで実運用すると仮定する
+  // Assume that it is operated in JSON object.
   Map<String, int> data = {'count': 0};
 
   int get count => data['count']!;
@@ -91,6 +90,7 @@ void main() {
   KiriCheck.verbosity = Verbosity.verbose;
 
   property('counter', () {
+    // Run a stateful test.
     runBehavior(CounterBehavior());
   });
 }
