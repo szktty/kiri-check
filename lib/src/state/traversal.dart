@@ -3,7 +3,6 @@ import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/command/sequence.dart';
 import 'package:kiri_check/src/state/property.dart';
 
-// ランダムにコマンドを選択
 final class Traversal<State, System> {
   Traversal(
     this.context,

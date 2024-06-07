@@ -264,7 +264,6 @@ final class _StatefulPropertyShrinker<State, System> {
         );
         behavior.setUp();
         if (!_checkShrunkSequence(shrunkSequence, stepType: 'partial')) {
-          // 先頭に近い部分列を最小とする
           if (i < minShrunkNum) {
             minShrunkSequence = shrunkSequence;
             minShrunkNum = i;
@@ -280,12 +279,9 @@ final class _StatefulPropertyShrinker<State, System> {
     return minShrunkSequence;
   }
 
-  // 一部のコマンドを削除して検査する
   TraversalSequence<State, System> _checkReducedSequences(
     TraversalSequence<State, System> baseSequence,
   ) {
-    // コマンドのdescriptionの重複なしリストを作成する
-    // baseSequenceのコマンド列を走査し、descriptionが重複しないコマンドを取得する
     final commandTypeSet = <String>{};
     for (final step in baseSequence.steps) {
       commandTypeSet.add(step.context.command.description);
@@ -364,7 +360,6 @@ final class _StatefulPropertyShrinker<State, System> {
         printVerbose(
             'Shrink value step ${i + 1}: ${context.command.description}');
         try {
-          // サイクル制限に達するか、すべてのコマンドのシュリンクが終了するまで繰り返す
           if (context.nextShrink()) {
             allShrinkDone = false;
           }
