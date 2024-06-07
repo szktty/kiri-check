@@ -20,4 +20,16 @@ abstract class Behavior<State, System> {
 
   /// Disposes of the given state and system.
   void dispose(State state, System system) {}
+
+  /// Called before the test is run.
+  void setUp() {}
+
+  /// Called once before all tests are run.
+  void setUpAll() {}
+
+  /// Called after the test is run.
+  void tearDown() {}
+
+  /// Called once after all tests are run.
+  void tearDownAll() {}
 }
