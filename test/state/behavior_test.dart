@@ -196,6 +196,56 @@ final class PostconditionCountBehavior
 
 final class PostconditionCountState {}
 
+final class TestCallbacksBehavior extends Behavior<TestCallbacksState, Null> {
+  int setUpCount = 0;
+  int setUpAllCount = 0;
+  int tearDownCount = 0;
+  int tearDownAllCount = 0;
+  int disposeCount = 0;
+
+  @override
+  TestCallbacksState createState() => TestCallbacksState();
+
+  @override
+  Null createSystem(TestCallbacksState s) => null;
+
+  @override
+  List<Command<TestCallbacksState, Null>> generateCommands(
+    TestCallbacksState state,
+  ) {
+    return [
+      Action0('no op', (s, system) {}),
+    ];
+  }
+
+  @override
+  void dispose(TestCallbacksState s, Null system) {
+    disposeCount++;
+  }
+
+  @override
+  void setUp() {
+    setUpCount++;
+  }
+
+  @override
+  void setUpAll() {
+    setUpAllCount++;
+  }
+
+  @override
+  void tearDown() {
+    tearDownCount++;
+  }
+
+  @override
+  void tearDownAll() {
+    tearDownAllCount++;
+  }
+}
+
+final class TestCallbacksState {}
+
 void main() {
   KiriCheck.verbosity = Verbosity.verbose;
 
@@ -214,10 +264,9 @@ void main() {
         behavior,
         maxCycles: 10,
         maxSteps: 10,
-        maxCommandTries: 100,
         tearDown: () {
-          expect(behavior.preconditionsOnSelect, 1000);
-          expect(behavior.preconditionsOnRun, 1000);
+          expect(behavior.preconditionsOnSelect, 100);
+          expect(behavior.preconditionsOnRun, 100);
         },
       );
     });
@@ -228,9 +277,8 @@ void main() {
         behavior,
         maxCycles: 10,
         maxSteps: 10,
-        maxCommandTries: 100,
         tearDown: () {
-          expect(behavior.tryPreconditions, 2500);
+          expect(behavior.tryPreconditions, 250);
         },
       );
     });
@@ -241,9 +289,24 @@ void main() {
         behavior,
         maxCycles: 10,
         maxSteps: 10,
-        maxCommandTries: 100,
         tearDown: () {
-          expect(behavior.postconditions, 1000);
+          expect(behavior.postconditions, 100);
+        },
+      );
+    });
+
+    property('test callbacks', () {
+      final behavior = TestCallbacksBehavior();
+      runBehavior(
+        behavior,
+        maxCycles: 10,
+        maxSteps: 10,
+        tearDown: () {
+          expect(behavior.setUpCount, 10);
+          expect(behavior.setUpAllCount, 1);
+          expect(behavior.disposeCount, 10);
+          expect(behavior.tearDownCount, 10);
+          expect(behavior.tearDownAllCount, 1);
         },
       );
     });

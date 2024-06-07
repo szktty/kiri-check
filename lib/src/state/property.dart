@@ -116,7 +116,9 @@ final class StatefulProperty<State, System> extends Property<State> {
   StatefulShrinkingResult<State, System>? _check(PropertyTest test) {
     printVerbose('Check behavior: ${behavior.runtimeType}');
     this.setUp?.call();
+    behavior.setUpAll();
     final result = _checkSequences(test);
+    behavior.tearDownAll();
     this.tearDown?.call();
     return result;
   }
@@ -126,46 +128,45 @@ final class StatefulProperty<State, System> extends Property<State> {
     for (propertyContext.cycle = 0;
         propertyContext.cycle < maxCycles;
         propertyContext.cycle++) {
-      for (var cycle = 0; cycle < maxCycles; cycle++) {
-        printVerbose('--------------------------------------------');
-        printVerbose('Cycle ${cycle + 1}');
-
-        final commandState = behavior.createState();
-        final commands = behavior.generateCommands(commandState);
-        final traversal = Traversal(propertyContext, commands);
-        final sequence = traversal.generateSequence(commandState);
-
-        final state = behavior.createState();
-        printVerbose('Create state: ${state.runtimeType}');
-        final system = behavior.createSystem(state);
-        final stateContext = StateContext(state, system, this, test);
-
-        for (var i = 0; i < sequence.steps.length; i++) {
-          final step = sequence.steps[i];
-          printVerbose('Step ${i + 1}: ${step.context.command.description}');
-          try {
-            final result = stateContext.executeCommand(step.context);
-            if (!result) {
-              i--;
-            }
-          } on Exception catch (e) {
-            printVerbose('  Error: $e');
-            _disposeBehavior(behavior, state, system);
-
-            final shrinker = _StatefulPropertyShrinker(
-              propertyContext,
-              stateContext.state,
-              stateContext.system,
-              TraversalSequence(sequence.steps.sublist(0, i + 1)),
-            );
-            return shrinker.shrink();
-          }
-        }
-        _disposeBehavior(behavior, state, system);
-      }
-
       printVerbose('--------------------------------------------');
+      printVerbose('Cycle ${propertyContext.cycle + 1}');
+
+      behavior.setUp();
+      final commandState = behavior.createState();
+      final commands = behavior.generateCommands(commandState);
+      final traversal = Traversal(propertyContext, commands);
+      final sequence = traversal.generateSequence(commandState);
+
+      final state = behavior.createState();
+      printVerbose('Create state: ${state.runtimeType}');
+      final system = behavior.createSystem(state);
+      final stateContext = StateContext(state, system, this, test);
+
+      for (var i = 0; i < sequence.steps.length; i++) {
+        final step = sequence.steps[i];
+        printVerbose('Step ${i + 1}: ${step.context.command.description}');
+        try {
+          final result = stateContext.executeCommand(step.context);
+          if (!result) {
+            i--;
+          }
+        } on Exception catch (e) {
+          printVerbose('  Error: $e');
+          _disposeBehavior(behavior, state, system);
+
+          final shrinker = _StatefulPropertyShrinker(
+            propertyContext,
+            stateContext.state,
+            stateContext.system,
+            TraversalSequence(sequence.steps.sublist(0, i + 1)),
+          );
+          printVerbose('--------------------------------------------');
+          return shrinker.shrink();
+        }
+      }
+      _disposeBehavior(behavior, state, system);
     }
+    printVerbose('--------------------------------------------');
     return null;
   }
 
@@ -177,7 +178,9 @@ final class StatefulProperty<State, System> extends Property<State> {
     if (onDispose != null) {
       onDispose?.call(behavior, state, system);
     }
-    behavior.dispose(state, system);
+    behavior
+      ..dispose(state, system)
+      ..tearDown();
   }
 
   bool _executeCommand(
@@ -214,6 +217,8 @@ final class _StatefulPropertyShrinker<State, System> {
   Exception? lastException;
 
   StatefulProperty<State, System> get property => propertyContext.property;
+
+  Behavior<State, System> get behavior => propertyContext.behavior;
 
   StatefulShrinkingResult<State, System> shrink() {
     final partial = _checkPartialSequences(originalSequence);
@@ -255,6 +260,7 @@ final class _StatefulPropertyShrinker<State, System> {
           'Shrink cycle ${_shrinkCycle + 1}: '
           '${shrunkSequence.steps.length} steps',
         );
+        behavior.setUp();
         if (!_checkShrunkSequence(shrunkSequence, stepType: 'partial')) {
           // 先頭に近い部分列を最小とする
           if (i < minShrunkNum) {
@@ -262,6 +268,7 @@ final class _StatefulPropertyShrinker<State, System> {
             minShrunkNum = i;
           }
         }
+        behavior.tearDown();
         propertyContext.shrinkCycle++;
         if (!_hasShrinkCycle) {
           break;
@@ -309,8 +316,9 @@ final class _StatefulPropertyShrinker<State, System> {
 
   bool _checkShrunkSequence(TraversalSequence<State, System> sequence,
       {required String stepType}) {
-    final state = propertyContext.behavior.createState();
-    final system = propertyContext.behavior.createSystem(state);
+    behavior.setUp();
+    final state = behavior.createState();
+    final system = behavior.createSystem(state);
     final stateContext =
         StateContext(state, system, property, propertyContext.test);
     for (var i = 0; i < sequence.steps.length; i++) {
@@ -326,11 +334,12 @@ final class _StatefulPropertyShrinker<State, System> {
           sequence.truncateSteps(i + 1);
         }
         lastException = e;
-        stateContext.behavior.dispose(state, system);
+
+        property._disposeBehavior(behavior, state, system);
         return false;
       }
     }
-    stateContext.behavior.dispose(state, system);
+    property._disposeBehavior(behavior, state, system);
     return true;
   }
 
@@ -341,6 +350,7 @@ final class _StatefulPropertyShrinker<State, System> {
     StateContext<State, System>? shrunkContext;
     while (_hasShrinkCycle && !allShrinkDone) {
       printVerbose('Shrink cycle ${_shrinkCycle + 1}');
+      behavior.setUp();
       final state = propertyContext.behavior.createState();
       final system = propertyContext.behavior.createSystem(state);
       final stateContext =
@@ -365,7 +375,7 @@ final class _StatefulPropertyShrinker<State, System> {
           break;
         }
       }
-      stateContext.behavior.dispose(state, system);
+      property._disposeBehavior(behavior, state, system);
       propertyContext.shrinkCycle++;
     }
     return shrunkContext;
