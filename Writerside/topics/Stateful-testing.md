@@ -8,14 +8,73 @@
 - ランダムなコマンドにより抽象モデルと実システムの状態を変化させ、実システムの状態がモデルと比較して妥当であるかを検証する
 - そのため、抽象モデルの実装は正確かつシンプルにすべき
 
+<note>
+- 注釈
+- これらをモデルベースと呼ばれることがあるが、kiri-checkでは名称に特にこだわらない
+- 便宜的にモデルと呼んでいるだけで、テストの実体はFSMに対する検証である。抽象モデルも実システムも、必ずしも完全なモデルを表す必要はない
+- また、ステートフルテストはモデル検査とは異なる。仕様の妥当性を検査するものではなく、実装に対するテストである
+</note>
+
 - 以下保留
 - kiri-checkにおけるステートフルテストは、有限状態機械(FSM)に対する検証である
 - 他のライブラリでは、ステートフルテストはモデルベースやルールベースとも呼ばれることがある
 - kiri-checkのステートフルテストはモデル検査とは異なる。モデルのロジックの妥当性を検証するものではなく、状態変化処理が正しく実装されているかどうかを検証する。モデルの妥当性を検証したいのであれば、形式仕様記述言語などの他の方法を推奨する
 
+## Model and commands
+
 - 状態はコマンドの実行によって自身の内容を変更する。遷移するとも言う
 - ステートフルテストは、ランダムに選択されたコマンド実行前後の状態に対して検証を行う
 - 図: ステートフルテストのフローチャート
+
+<code-block lang="mermaid">
+    stateDiagram-v2
+      direction TB
+      [*] --> SelectingCommands
+      SelectingCommands --> ExecuteCommands
+      ExecuteCommands --> Shrinking: Failed
+      ExecuteCommands --> [*]
+      Shrinking --> [*]
+
+      state SelectingCommands {
+         direction TB
+         Random --> PRECOND1
+         PRECOND1 --> Adopt: Satisfied
+         PRECOND1 --> Random: NotSatisfied
+      }
+
+      state ExecuteCommands {
+         direction TB
+        EachExec --> ExecuteCommand
+        ExecuteCommand --> EachExec: Next
+
+        state ExecuteCommand {
+         direction TB
+          PRECOND2 --> Execute
+          PRECOND2 --> Shrinking: Failed
+          Execute --> POSTCOND2
+          POSTCOND2 --> Shrinking: Failed
+        }
+      }
+
+      state Shrinking {
+         direction TB
+        EachShrink --> ShrinkCommand
+        ShrinkCommand --> EachShrink: Next
+        state ShrinkCommand {
+          PRECOND3 --> Execute
+          Execute --> POSTCOND3
+        }
+      }
+
+      PRECOND1: Precondition
+      PRECOND2: Precondition
+      PRECOND3: Precondition
+      POSTCOND1: Postcondition
+      POSTCOND2: Postcondition
+      POSTCOND3: Postcondition
+</code-block>
+
+## Execution model
 
 - 3段階のフェーズ
 - コマンド選択フェーズ
@@ -24,20 +83,8 @@
 - コマンド実行フェーズ
   - 事前条件が偽の場合、失敗扱いになる
   - シュリンクを開始する
-- シュリンクフェーズ
-  - 詳細はシュリンクの項を参照
 
-- 以下はQuickstartを参照してもらう
-- 例として、シンプルなカウンターを考える
-- ライブラリの使い方の例示なので、今回は実システムは用意しない。コマンドの実行前後のモデルの状態を比較するだけとする
-- 実システムはNullとする
-- 実際のテストコードはQuickstartを参照
-- カウンターは0から始まり、インクリメント、デクリメント、リセットの3つのコマンドを受け付ける
-- テストを実行すると、これらのコマンドがランダムに選択され、一定の回数が実行される。
-- フローチャート
-- 様々なコマンドがテストされることで、特定のコマンドの組み合わせや実行順序に関係するバグを発見できる
-- エラーがあると、シュリンクによってコマンド列が切り詰められ、最小のエラーを見つける
- 
+
 
 
 ## Shrinking
