@@ -79,7 +79,7 @@ final class CounterBehavior extends Behavior<CounterModel, CounterSystem> {
       Action('set', integer(), (s, system, value) {
         s.count = value;
         system.count = value;
-      }, postcondition: (s, system) {
+      }, ensure: (s, system) {
         return s.count == system.count;
       }),
     ];

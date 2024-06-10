@@ -6,6 +6,7 @@ import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/state/command.dart';
+import 'package:meta/meta.dart';
 
 enum ActionShrinkingState {
   notStarted,
@@ -14,62 +15,78 @@ enum ActionShrinkingState {
 }
 
 /// A command that performs an action with generated values.
-final class Action<State, System, T> extends Command<State, System> {
+final class Action<State, System, T, R> extends Command<State, System, R> {
   /// Creates a new action command.
   ///
   /// Parameters:
   /// - `description`: The description of the action.
   /// - `arbitrary`: The arbitrary used to generate values.
-  /// - `action`: A function to execute the action.
-  /// - `precondition`: A function to describe the precondition of the action.
-  /// - `postcondition`: A function to describe the postcondition of the action.
+  /// - `run`: A function to perform the action.
+  /// - `require`: A function to test the precondition of the action.
+  /// - `ensure`: A function to test the postcondition of the action.
   Action(
     super.description,
-    Arbitrary<T> arbitrary,
-    void Function(State, System, T) action, {
-    bool Function(State)? precondition,
-    bool Function(State, System)? postcondition,
+    Arbitrary<T> arbitrary, {
+    required void Function(State, T) update,
+    required R Function(System, T) run,
+    bool Function(State)? require,
+    bool Function(State, R)? ensure,
   }) {
     _arbitrary = arbitrary;
-    _action = action;
+    _update = update;
+    _run = run;
 
-    _precondition = precondition;
-    _postcondition = postcondition;
+    _require = require;
+    _ensure = ensure;
   }
 
   late final Arbitrary<T> _arbitrary;
 
   ArbitraryBase<T> get _arbitraryBase => _arbitrary as ArbitraryBase<T>;
-  late final void Function(State, System, T) _action;
+  late final R Function(System, T) _run;
+  late final void Function(State, T) _update;
 
-  late final bool Function(State)? _precondition;
-  late final bool Function(State, System)? _postcondition;
+  late final bool Function(State)? _require;
+  late final bool Function(State, R)? _ensure;
 
-  /// @nodoc
+  T? _current;
+
+  @override
+  void update(State state) {
+    _update(state, _current as T);
+  }
+
+  @override
+  R run(System system) {
+    return _run(system, _current as T);
+  }
+
   @override
   bool requires(State state) {
-    return _precondition?.call(state) ?? true;
+    return _require?.call(state) ?? true;
+  }
+
+  @override
+  bool ensures(State state, R result) {
+    return _ensure?.call(state, result) ?? true;
   }
 
   /// @nodoc
   @override
-  bool ensures(State state, System system) {
-    return _postcondition?.call(state, system) ?? true;
-  }
-
-  void _execute(State state, System system, dynamic value) {
-    _action(state, system, value as T);
+  ActionContext<State, System, T, R> createContext() {
+    return ActionContext(this);
   }
 }
 
-final class ActionContext<State, System, T>
-    extends CommandContext<State, System> {
+final class ActionContext<State, System, T, R>
+    extends CommandContext<State, System, R> {
   ActionContext(super.command) {
     _distance = null;
     _shrunkQueue = null;
   }
 
-  Action<State, System, T> get action => command as Action<State, System, T>;
+  Action<State, System, T, R> get action =>
+      command as Action<State, System, T, R>;
 
   ArbitraryBase<T> get arbitrary => action._arbitraryBase;
 
@@ -84,26 +101,36 @@ final class ActionContext<State, System, T>
   Queue<T>? _shrunkQueue;
   T? _minShrunk;
   T? _lastShrunk;
+  T? _current;
 
   @override
   dynamic get minValue => _minShrunk;
 
-  @override
-  void execute(State state, System system, Random random) {
+  T generateValue(Random random) {
     if (_shrinkState == ActionShrinkingState.running) {
       if (_shrunkQueue!.isNotEmpty) {
         _lastShrunk = _shrunkQueue!.removeFirst();
-        action._execute(state, system, _lastShrunk as T);
-      } else {
-        action._execute(state, system, _lastShrunk as T);
       }
+      return _lastShrunk!;
     } else if (useCache) {
-      action._execute(state, system, _cache as T);
+      return _cache!;
     } else {
-      final value = arbitrary.generate(random as RandomContext);
-      _cache = value;
-      action._execute(state, system, value);
+      return _cache = arbitrary.generate(random as RandomContext);
     }
+  }
+
+  @override
+  void update(State state) {
+    _current ??= generateValue(command.random);
+    action
+      .._current = _current
+      ..update(state);
+  }
+
+  @override
+  R run(System system) {
+    _current = null;
+    return action.run(system);
   }
 
   @override
@@ -146,312 +173,36 @@ final class ActionContext<State, System, T>
 }
 
 /// A command [Action] with no arbitrary.
-final class Action0<State, System> extends Action<State, System, void> {
-  /// Creates a new action command.
-  ///
-  /// Parameters:
-  /// - `description`: The description of the action.
-  /// - `action`: A function to execute the action.
-  /// - `precondition`: A function to describe the precondition of the action.
-  /// - `postcondition`: A function to describe the postcondition of the action.
+final class Action0<State, System, R> extends Action<State, System, void, R> {
   Action0(
-    String description,
-    void Function(State, System) action, {
-    super.precondition,
-    super.postcondition,
-  }) : super(description, null_(), (s, sys, _) => action(s, sys));
+    String description, {
+    required void Function(State) update,
+    required R Function(System) run,
+    super.require,
+    super.ensure,
+  }) : super(
+          description,
+          null_(),
+          update: (s, _) => update(s),
+          run: (sys, _) => run(sys),
+        );
 }
 
 /// A command [Action] with 2 arbitraries.
-final class Action2<State, System, T, E1, E2>
-    extends Action<State, System, (E1, E2)> {
-  /// Creates a new action command.
-  ///
-  /// Parameters:
-  /// - `description`: The description of the action.
-  /// - `arbitrary1`: The arbitrary used to generate the first value.
-  /// - `arbitrary2`: The arbitrary used to generate the second value.
-  /// - `action`: A function to execute the action.
-  /// - `precondition`: A function to describe the precondition of the action.
-  /// - `postcondition`: A function to describe the postcondition of the action.
+final class Action2<State, System, E1, E2, R>
+    extends Action<State, System, (E1, E2), R> {
   Action2(
     String description,
     Arbitrary<E1> arbitrary1,
-    Arbitrary<E2> arbitrary2,
-    void Function(State, System, E1, E2) action, {
-    super.precondition,
-    super.postcondition,
+    Arbitrary<E2> arbitrary2, {
+    required void Function(State, E1, E2) update,
+    required R Function(System, E1, E2) run,
+    super.require,
+    super.ensure,
   }) : super(
           description,
           combine2(arbitrary1, arbitrary2, (a, b) => (a, b)),
-          (s, sys, args) => action(s, sys, args.$1, args.$2),
-        );
-}
-
-/// A command [Action] with 3 arbitraries.
-final class Action3<State, System, T, E1, E2, E3>
-    extends Action<State, System, (E1, E2, E3)> {
-  /// Creates a new action command.
-  ///
-  /// Parameters:
-  /// - `description`: The description of the action.
-  /// - `arbitrary1`: The arbitrary used to generate the first value.
-  /// - `arbitrary2`: The arbitrary used to generate the second value.
-  /// - `arbitrary3`: The arbitrary used to generate the third value.
-  /// - `action`: A function to execute the action.
-  /// - `precondition`: A function to describe the precondition of the action.
-  /// - `postcondition`: A function to describe the postcondition of the action.
-  Action3(
-    String description,
-    Arbitrary<E1> arbitrary1,
-    Arbitrary<E2> arbitrary2,
-    Arbitrary<E3> arbitrary3,
-    void Function(State, System, E1, E2, E3) action, {
-    super.precondition,
-    super.postcondition,
-  }) : super(
-          description,
-          combine3(arbitrary1, arbitrary2, arbitrary3, (a, b, c) => (a, b, c)),
-          (s, sys, args) => action(s, sys, args.$1, args.$2, args.$3),
-        );
-}
-
-/// A command [Action] with 4 arbitraries.
-final class Action4<State, System, T, E1, E2, E3, E4>
-    extends Action<State, System, (E1, E2, E3, E4)> {
-  /// Creates a new action command.
-  ///
-  /// Parameters:
-  /// - `description`: The description of the action.
-  /// - `arbitrary1`: The arbitrary used to generate the first value.
-  /// - `arbitrary2`: The arbitrary used to generate the second value.
-  /// - `arbitrary3`: The arbitrary used to generate the third value.
-  /// - `action`: A function to execute the action.
-  /// - `precondition`: A function to describe the precondition of the action.
-  /// - `postcondition`: A function to describe the postcondition of the action.
-  Action4(
-    String description,
-    Arbitrary<E1> arbitrary1,
-    Arbitrary<E2> arbitrary2,
-    Arbitrary<E3> arbitrary3,
-    Arbitrary<E4> arbitrary4,
-    void Function(State, System, E1, E2, E3, E4) action, {
-    super.precondition,
-    super.postcondition,
-  }) : super(
-          description,
-          combine4(
-            arbitrary1,
-            arbitrary2,
-            arbitrary3,
-            arbitrary4,
-            (a, b, c, d) => (a, b, c, d),
-          ),
-          (s, sys, args) => action(s, sys, args.$1, args.$2, args.$3, args.$4),
-        );
-}
-
-/// A command [Action] with 5 arbitraries.
-final class Action5<State, System, T, E1, E2, E3, E4, E5>
-    extends Action<State, System, (E1, E2, E3, E4, E5)> {
-  /// Creates a new action command.
-  ///
-  /// Parameters:
-  /// - `description`: The description of the action.
-  /// - `arbitrary1`: The arbitrary used to generate the first value.
-  /// - `arbitrary2`: The arbitrary used to generate the second value.
-  /// - `arbitrary3`: The arbitrary used to generate the third value.
-  /// - `arbitrary4`: The arbitrary used to generate the fourth value.
-  /// - `arbitrary5`: The arbitrary used to generate the fifth value.
-  /// - `action`: A function to execute the action.
-  /// - `precondition`: A function to describe the precondition of the action.
-  /// - `postcondition`: A function to describe the postcondition of the action.
-  Action5(
-    String description,
-    Arbitrary<E1> arbitrary1,
-    Arbitrary<E2> arbitrary2,
-    Arbitrary<E3> arbitrary3,
-    Arbitrary<E4> arbitrary4,
-    Arbitrary<E5> arbitrary5,
-    void Function(State, System, E1, E2, E3, E4, E5) action, {
-    super.precondition,
-    super.postcondition,
-  }) : super(
-          description,
-          combine5(
-            arbitrary1,
-            arbitrary2,
-            arbitrary3,
-            arbitrary4,
-            arbitrary5,
-            (a, b, c, d, e) => (a, b, c, d, e),
-          ),
-          (s, sys, args) =>
-              action(s, sys, args.$1, args.$2, args.$3, args.$4, args.$5),
-        );
-}
-
-/// A command [Action] with 6 arbitraries.
-final class Action6<State, System, T, E1, E2, E3, E4, E5, E6>
-    extends Action<State, System, (E1, E2, E3, E4, E5, E6)> {
-  /// Creates a new action command.
-  ///
-  /// Parameters:
-  /// - `description`: The description of the action.
-  /// - `arbitrary1`: The arbitrary used to generate the first value.
-  /// - `arbitrary2`: The arbitrary used to generate the second value.
-  /// - `arbitrary3`: The arbitrary used to generate the third value.
-  /// - `arbitrary4`: The arbitrary used to generate the fourth value.
-  /// - `arbitrary5`: The arbitrary used to generate the fifth value.
-  /// - `arbitrary6`: The arbitrary used to generate the sixth value.
-  /// - `action`: A function to execute the action.
-  /// - `precondition`: A function to describe the precondition of the action.
-  /// - `postcondition`: A function to describe the postcondition of the action.
-  Action6(
-    String description,
-    Arbitrary<E1> arbitrary1,
-    Arbitrary<E2> arbitrary2,
-    Arbitrary<E3> arbitrary3,
-    Arbitrary<E4> arbitrary4,
-    Arbitrary<E5> arbitrary5,
-    Arbitrary<E6> arbitrary6,
-    void Function(State, System, E1, E2, E3, E4, E5, E6) action, {
-    super.precondition,
-    super.postcondition,
-  }) : super(
-          description,
-          combine6(
-            arbitrary1,
-            arbitrary2,
-            arbitrary3,
-            arbitrary4,
-            arbitrary5,
-            arbitrary6,
-            (a, b, c, d, e, f) => (a, b, c, d, e, f),
-          ),
-          (s, sys, args) => action(
-            s,
-            sys,
-            args.$1,
-            args.$2,
-            args.$3,
-            args.$4,
-            args.$5,
-            args.$6,
-          ),
-        );
-}
-
-/// A command [Action] with 7 arbitraries.
-final class Action7<State, System, T, E1, E2, E3, E4, E5, E6, E7>
-    extends Action<State, System, (E1, E2, E3, E4, E5, E6, E7)> {
-  /// Creates a new action command.
-  ///
-  /// Parameters:
-  /// - `description`: The description of the action.
-  /// - `arbitrary1`: The arbitrary used to generate the first value.
-  /// - `arbitrary2`: The arbitrary used to generate the second value.
-  /// - `arbitrary3`: The arbitrary used to generate the third value.
-  /// - `arbitrary4`: The arbitrary used to generate the fourth value.
-  /// - `arbitrary5`: The arbitrary used to generate the fifth value.
-  /// - `arbitrary6`: The arbitrary used to generate the sixth value.
-  /// - `arbitrary7`: The arbitrary used to generate the seventh value.
-  /// - `action`: A function to execute the action.
-  /// - `precondition`: A function to describe the precondition of the action.
-  /// - `postcondition`: A function to describe the postcondition of the action.
-  Action7(
-    String description,
-    Arbitrary<E1> arbitrary1,
-    Arbitrary<E2> arbitrary2,
-    Arbitrary<E3> arbitrary3,
-    Arbitrary<E4> arbitrary4,
-    Arbitrary<E5> arbitrary5,
-    Arbitrary<E6> arbitrary6,
-    Arbitrary<E7> arbitrary7,
-    void Function(State, System, E1, E2, E3, E4, E5, E6, E7) action, {
-    super.precondition,
-    super.postcondition,
-  }) : super(
-          description,
-          combine7(
-            arbitrary1,
-            arbitrary2,
-            arbitrary3,
-            arbitrary4,
-            arbitrary5,
-            arbitrary6,
-            arbitrary7,
-            (a, b, c, d, e, f, g) => (a, b, c, d, e, f, g),
-          ),
-          (s, sys, args) => action(
-            s,
-            sys,
-            args.$1,
-            args.$2,
-            args.$3,
-            args.$4,
-            args.$5,
-            args.$6,
-            args.$7,
-          ),
-        );
-}
-
-/// A command [Action] with 8 arbitraries.
-final class Action8<State, System, T, E1, E2, E3, E4, E5, E6, E7, E8>
-    extends Action<State, System, (E1, E2, E3, E4, E5, E6, E7, E8)> {
-  /// Creates a new action command.
-  ///
-  /// Parameters:
-  /// - `description`: The description of the action.
-  /// - `arbitrary1`: The arbitrary used to generate the first value.
-  /// - `arbitrary2`: The arbitrary used to generate the second value.
-  /// - `arbitrary3`: The arbitrary used to generate the third value.
-  /// - `arbitrary4`: The arbitrary used to generate the fourth value.
-  /// - `arbitrary5`: The arbitrary used to generate the fifth value.
-  /// - `arbitrary6`: The arbitrary used to generate the sixth value.
-  /// - `arbitrary7`: The arbitrary used to generate the seventh value.
-  /// - `arbitrary8`: The arbitrary used to generate the eighth value.
-  /// - `action`: A function to execute the action.
-  /// - `precondition`: A function to describe the precondition of the action.
-  /// - `postcondition`: A function to describe the postcondition of the action.
-  Action8(
-    String description,
-    Arbitrary<E1> arbitrary1,
-    Arbitrary<E2> arbitrary2,
-    Arbitrary<E3> arbitrary3,
-    Arbitrary<E4> arbitrary4,
-    Arbitrary<E5> arbitrary5,
-    Arbitrary<E6> arbitrary6,
-    Arbitrary<E7> arbitrary7,
-    Arbitrary<E8> arbitrary8,
-    void Function(State, System, E1, E2, E3, E4, E5, E6, E7, E8) action, {
-    super.precondition,
-    super.postcondition,
-  }) : super(
-          description,
-          combine8(
-            arbitrary1,
-            arbitrary2,
-            arbitrary3,
-            arbitrary4,
-            arbitrary5,
-            arbitrary6,
-            arbitrary7,
-            arbitrary8,
-            (a, b, c, d, e, f, g, h) => (a, b, c, d, e, f, g, h),
-          ),
-          (s, sys, args) => action(
-            s,
-            sys,
-            args.$1,
-            args.$2,
-            args.$3,
-            args.$4,
-            args.$5,
-            args.$6,
-            args.$7,
-            args.$8,
-          ),
+          update: (s, args) => update(s, args.$1, args.$2),
+          run: (sys, args) => run(sys, args.$1, args.$2),
         );
 }

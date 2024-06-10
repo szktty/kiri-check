@@ -10,31 +10,31 @@ import 'package:kiri_check/src/state/traversal.dart';
 import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 
-final class StatefulFalsifiedException<State, System> implements Exception {
+final class StatefulFalsifiedException<State, System, R> implements Exception {
   StatefulFalsifiedException(this.result);
 
-  final StatefulShrinkingResult<State, System> result;
+  final StatefulShrinkingResult<State, System, R> result;
 }
 
-final class StateContext<State, System> {
+final class StateContext<State, System, R> {
   StateContext(this.state, this.system, this.property, this.test);
 
   final State state;
   final System system;
-  final StatefulProperty<State, System> property;
+  final StatefulProperty<State, System, R> property;
   final PropertyTest test;
 
-  Behavior<State, System> get behavior => property.behavior;
+  Behavior<State, System, R> get behavior => property.behavior;
 
-  bool executeCommand(CommandContext<State, System> commandContext) {
-    return property._executeCommand(this, commandContext);
+  bool runCommand(CommandContext<State, System, R> commandContext) {
+    return property._runCommand(this, commandContext);
   }
 }
 
-final class StatefulPropertyContext<State, System> {
+final class StatefulPropertyContext<State, System, R> {
   StatefulPropertyContext(this.property, this.test);
 
-  final StatefulProperty<State, System> property;
+  final StatefulProperty<State, System, R> property;
   final PropertyTest test;
   int cycle = 0;
   int step = 0;
@@ -44,10 +44,10 @@ final class StatefulPropertyContext<State, System> {
 
   bool get hasNextShrinkCycle => shrinkCycle < property.maxShrinkingCycles;
 
-  Behavior<State, System> get behavior => property.behavior;
+  Behavior<State, System, R> get behavior => property.behavior;
 }
 
-final class StatefulProperty<State, System> extends Property<State> {
+final class StatefulProperty<State, System, R> extends Property<State> {
   StatefulProperty(
     this.behavior, {
     required super.settings,
@@ -66,10 +66,10 @@ final class StatefulProperty<State, System> extends Property<State> {
     this.cycleTimeout = cycleTimeout ?? KiriCheck.statefulCycleTimeout;
   }
 
-  final Behavior<State, System> behavior;
+  final Behavior<State, System, R> behavior;
 
-  final void Function(Behavior<State, System>, State, System)? onDispose;
-  final void Function(StatefulFalsifyingExample<State, System>)? onFalsify;
+  final void Function(Behavior<State, System, R>, State, System)? onDispose;
+  final void Function(StatefulFalsifyingExample<State, System, R>)? onFalsify;
 
   late final int maxCycles;
   late final int maxSteps;
@@ -108,12 +108,12 @@ final class StatefulProperty<State, System> extends Property<State> {
       }
 
       if (!settings.ignoreFalsify) {
-        throw StatefulFalsifiedException<State, System>(result);
+        throw StatefulFalsifiedException<State, System, R>(result);
       }
     }
   }
 
-  StatefulShrinkingResult<State, System>? _check(PropertyTest test) {
+  StatefulShrinkingResult<State, System, R>? _check(PropertyTest test) {
     printVerbose('Check behavior: ${behavior.runtimeType}');
     this.setUp?.call();
     behavior.setUpAll();
@@ -123,7 +123,8 @@ final class StatefulProperty<State, System> extends Property<State> {
     return result;
   }
 
-  StatefulShrinkingResult<State, System>? _checkSequences(PropertyTest test) {
+  StatefulShrinkingResult<State, System, R>? _checkSequences(
+      PropertyTest test) {
     final propertyContext = StatefulPropertyContext(this, test);
     for (propertyContext.cycle = 0;
         propertyContext.cycle < maxCycles;
@@ -148,7 +149,7 @@ final class StatefulProperty<State, System> extends Property<State> {
         final step = sequence.steps[i];
         printVerbose('Step ${i + 1}: ${step.context.command.description}');
         try {
-          final result = stateContext.executeCommand(step.context);
+          final result = stateContext.runCommand(step.context);
           if (!result) {
             i--;
           }
@@ -173,7 +174,7 @@ final class StatefulProperty<State, System> extends Property<State> {
   }
 
   void _disposeBehavior(
-    Behavior<State, System> behavior,
+    Behavior<State, System, R> behavior,
     State state,
     System system,
   ) {
@@ -185,15 +186,15 @@ final class StatefulProperty<State, System> extends Property<State> {
       ..tearDown();
   }
 
-  bool _executeCommand(
-    StateContext<State, System> context,
-    CommandContext<State, System> commandContext,
+  bool _runCommand(
+    StateContext<State, System, R> context,
+    CommandContext<State, System, R> commandContext,
   ) {
     final state = context.state;
-    final command = commandContext.command;
+    final command = commandContext.command..initialize(random);
     if (command.requires(state)) {
-      commandContext.execute(state, context.system, context.property.random);
-      if (command.ensures(state, context.system)) {
+      final result = commandContext.run(context.system);
+      if (command.ensures(state, result)) {
         return true;
       } else {
         throw PropertyException('postcondition is not satisfied');
@@ -204,7 +205,7 @@ final class StatefulProperty<State, System> extends Property<State> {
   }
 }
 
-final class _StatefulPropertyShrinker<State, System> {
+final class _StatefulPropertyShrinker<State, System, R> {
   _StatefulPropertyShrinker(
     this.propertyContext,
     this.originalState,
@@ -212,17 +213,17 @@ final class _StatefulPropertyShrinker<State, System> {
     this.originalSequence,
   );
 
-  final StatefulPropertyContext<State, System> propertyContext;
+  final StatefulPropertyContext<State, System, R> propertyContext;
   final State originalState;
   final System originalSystem;
-  final TraversalSequence<State, System> originalSequence;
+  final TraversalSequence<State, System, R> originalSequence;
   Exception? lastException;
 
-  StatefulProperty<State, System> get property => propertyContext.property;
+  StatefulProperty<State, System, R> get property => propertyContext.property;
 
-  Behavior<State, System> get behavior => propertyContext.behavior;
+  Behavior<State, System, R> get behavior => propertyContext.behavior;
 
-  StatefulShrinkingResult<State, System> shrink() {
+  StatefulShrinkingResult<State, System, R> shrink() {
     final partial = _checkPartialSequences(originalSequence);
     final reduced = _checkReducedSequences(partial);
     final shrunk = _checkValues(reduced);
@@ -242,11 +243,11 @@ final class _StatefulPropertyShrinker<State, System> {
   bool get _hasShrinkCycle =>
       _shrinkCycle < propertyContext.property.maxShrinkingCycles;
 
-  TraversalSequence<State, System> _checkPartialSequences(
-    TraversalSequence<State, System> baseSequence,
+  TraversalSequence<State, System, R> _checkPartialSequences(
+    TraversalSequence<State, System, R> baseSequence,
   ) {
     propertyContext.shrinkCycle = 0;
-    var previousSequences = <TraversalSequence<State, System>>[];
+    var previousSequences = <TraversalSequence<State, System, R>>[];
     var minShrunkSequence = baseSequence;
     var minShrunkNum = baseSequence.steps.length;
     while (_hasShrinkCycle) {
@@ -279,8 +280,8 @@ final class _StatefulPropertyShrinker<State, System> {
     return minShrunkSequence;
   }
 
-  TraversalSequence<State, System> _checkReducedSequences(
-    TraversalSequence<State, System> baseSequence,
+  TraversalSequence<State, System, R> _checkReducedSequences(
+    TraversalSequence<State, System, R> baseSequence,
   ) {
     final commandTypeSet = <String>{};
     for (final step in baseSequence.steps) {
@@ -293,7 +294,7 @@ final class _StatefulPropertyShrinker<State, System> {
         break;
       }
 
-      final shrunkSequence = TraversalSequence<State, System>();
+      final shrunkSequence = TraversalSequence<State, System, R>();
       for (var i = 0; i < minShrunkSequence.steps.length; i++) {
         final step = minShrunkSequence.steps[i];
         if (step.context.command.description != target) {
@@ -312,7 +313,7 @@ final class _StatefulPropertyShrinker<State, System> {
     return minShrunkSequence;
   }
 
-  bool _checkShrunkSequence(TraversalSequence<State, System> sequence,
+  bool _checkShrunkSequence(TraversalSequence<State, System, R> sequence,
       {required String stepType}) {
     behavior.setUp();
     final state = behavior.createState();
@@ -325,7 +326,7 @@ final class _StatefulPropertyShrinker<State, System> {
           '${step.context.command.description}');
       try {
         step.context.useCache = true;
-        stateContext.executeCommand(step.context);
+        stateContext.runCommand(step.context);
       } on Exception catch (e) {
         printVerbose('  Error: $e');
         if (i + 1 < sequence.steps.length) {
@@ -341,11 +342,11 @@ final class _StatefulPropertyShrinker<State, System> {
     return true;
   }
 
-  StateContext<State, System>? _checkValues(
-    TraversalSequence<State, System> sequence,
+  StateContext<State, System, R>? _checkValues(
+    TraversalSequence<State, System, R> sequence,
   ) {
     var allShrinkDone = false;
-    StateContext<State, System>? shrunkContext;
+    StateContext<State, System, R>? shrunkContext;
     while (_hasShrinkCycle && !allShrinkDone) {
       printVerbose('Shrink cycle ${_shrinkCycle + 1}');
       behavior.setUp();
@@ -363,7 +364,7 @@ final class _StatefulPropertyShrinker<State, System> {
           if (context.nextShrink()) {
             allShrinkDone = false;
           }
-          stateContext.executeCommand(context);
+          stateContext.runCommand(context);
         } on Exception catch (e) {
           printVerbose('  Error: $e');
           lastException = e;
@@ -379,7 +380,7 @@ final class _StatefulPropertyShrinker<State, System> {
   }
 }
 
-final class StatefulShrinkingResult<State, System> {
+final class StatefulShrinkingResult<State, System, R> {
   StatefulShrinkingResult(
     this.originalState,
     this.originalSystem,
@@ -392,10 +393,10 @@ final class StatefulShrinkingResult<State, System> {
 
   final State originalState;
   final System originalSystem;
-  final TraversalSequence<State, System> originalSequence;
+  final TraversalSequence<State, System, R> originalSequence;
   final State falsifyingState;
   final System falsifyingSystem;
-  final TraversalSequence<State, System> falsifyingSequence;
+  final TraversalSequence<State, System, R> falsifyingSequence;
   final Exception? exception;
 }
 
@@ -404,7 +405,7 @@ final class StatefulShrinkingResult<State, System> {
 /// See also:
 /// - [runBehavior], runs a stateful test according to the behavior.
 /// - [StatefulExampleStep], a step in a stateful example.
-final class StatefulFalsifyingExample<State, System> {
+final class StatefulFalsifyingExample<State, System, R> {
   /// @nodoc
   @protected
   StatefulFalsifyingExample(
@@ -424,7 +425,7 @@ final class StatefulFalsifyingExample<State, System> {
   final System originalSystem;
 
   /// The steps that led to the initial failure.
-  final List<StatefulExampleStep<State, System>> originalSteps;
+  final List<StatefulExampleStep<State, System, R>> originalSteps;
 
   /// The state in which the failure was found after shrinking.
   final State falsifyingState;
@@ -433,7 +434,7 @@ final class StatefulFalsifyingExample<State, System> {
   final System falsifyingSystem;
 
   /// The steps that led to the failure after shrinking.
-  final List<StatefulExampleStep<State, System>> falsifyingSteps;
+  final List<StatefulExampleStep<State, System, R>> falsifyingSteps;
 
   /// The exception that occurred during the initial failure or shrinking.
   final Exception? exception;
@@ -443,7 +444,7 @@ final class StatefulFalsifyingExample<State, System> {
 ///
 /// See also:
 /// - [StatefulFalsifyingExample], a falsifying example of a stateful property.
-final class StatefulExampleStep<State, System> {
+final class StatefulExampleStep<State, System, R> {
   /// @nodoc
   @protected
   StatefulExampleStep(this.number, this.command, this.value);
@@ -451,8 +452,9 @@ final class StatefulExampleStep<State, System> {
   /// @nodoc
   @protected
   @internal
-  static List<StatefulExampleStep<State, System>> fromSequence<State, System>(
-    TraversalSequence<State, System> sequence,
+  static List<StatefulExampleStep<State, System, R>>
+      fromSequence<State, System, R>(
+    TraversalSequence<State, System, R> sequence,
   ) {
     return sequence.steps
         .mapIndexed(
@@ -469,7 +471,7 @@ final class StatefulExampleStep<State, System> {
   final int number;
 
   /// The command that was run in this step.
-  final Command<State, System> command;
+  final Command<State, System, R> command;
 
   /// The value that was used in this step.
   final dynamic value;

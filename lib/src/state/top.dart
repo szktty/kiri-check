@@ -27,8 +27,8 @@ import 'package:test/scaffolding.dart';
 ///     a counterexample that falsifies the property is found. This allows the test to
 ///     continue executing and attempting to verify the property with other examples,
 ///     useful for logging or analysis purposes.
-void runBehavior<State, System>(
-  Behavior<State, System> behavior, {
+void runBehavior<State, System, R>(
+  Behavior<State, System, R> behavior, {
   int? seed,
   int? maxCycles,
   int? maxSteps,
@@ -38,8 +38,8 @@ void runBehavior<State, System>(
   Timeout? cycleTimeout,
   void Function()? setUp,
   void Function()? tearDown,
-  void Function(Behavior<State, System>, State, System)? onDispose,
-  void Function(StatefulFalsifyingExample<State, System>)? onFalsify,
+  void Function(Behavior<State, System, R>, State, System)? onDispose,
+  void Function(StatefulFalsifyingExample<State, System, R>)? onFalsify,
   bool? ignoreFalsify,
 }) {
   final property = StatefulProperty(
