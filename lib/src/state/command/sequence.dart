@@ -1,7 +1,7 @@
 import 'package:kiri_check/src/state/command.dart';
 
 /// A command that runs other commands in sequence.
-final class Sequence<State, System> extends Command<State, System> {
+final class Sequence<State, System, R> extends Command<State, System, R> {
   /// Creates a new sequence command.
   ///
   /// Parameters:
@@ -10,19 +10,30 @@ final class Sequence<State, System> extends Command<State, System> {
   Sequence(super.description, this.commands);
 
   /// @nodoc
-  final List<Command<State, System>> commands;
+  final List<Command<State, System, R>> commands;
 
-  /// @nodoc
   @override
-  bool requires(State state) {
-    // do nothing
-    return true;
+  CommandContext<State, System, R> createContext() {
+    throw UnsupportedError('Sequence does not support createContext');
   }
 
-  /// @nodoc
   @override
-  bool ensures(State state, System system) {
-    // do nothing
-    return true;
+  R run(System system) {
+    throw UnsupportedError('Sequence does not support run');
+  }
+
+  @override
+  void update(State state) {
+    throw UnsupportedError('Sequence does not support update');
+  }
+
+  @override
+  bool ensures(State state, R result) {
+    throw UnsupportedError('Sequence does not support ensures');
+  }
+
+  @override
+  bool requires(State state) {
+    throw UnsupportedError('Sequence does not support requires');
   }
 }

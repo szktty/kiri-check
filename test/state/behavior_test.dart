@@ -8,7 +8,7 @@ enum CounterEvent {
   set,
 }
 
-final class CounterBehavior extends Behavior<CounterState, Null> {
+final class CounterBehavior extends Behavior<CounterState, Null, dynamic> {
   @override
   CounterState createState() {
     return CounterState();
@@ -20,7 +20,7 @@ final class CounterBehavior extends Behavior<CounterState, Null> {
   }
 
   @override
-  List<Command<CounterState, Null>> generateCommands(CounterState s) {
+  List<Command<CounterState, Null, R>> generateCommands(CounterState s) {
     return [
       Action(
         'set',

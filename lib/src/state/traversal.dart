@@ -3,15 +3,15 @@ import 'package:kiri_check/src/state/command.dart';
 import 'package:kiri_check/src/state/command/sequence.dart';
 import 'package:kiri_check/src/state/property.dart';
 
-final class Traversal<State, System> {
+final class Traversal<State, System, R> {
   Traversal(
     this.context,
     this.commands,
   ) {
     for (final command in commands) {
-      if (command is Initialize<State, System>) {
+      if (command is Initialize<State, System, R>) {
         initializeCommands.add(command);
-      } else if (command is Finalize<State, System>) {
+      } else if (command is Finalize<State, System, R>) {
         finalizeCommands.add(command);
       } else {
         actionCommands.add(command);
@@ -19,15 +19,15 @@ final class Traversal<State, System> {
     }
   }
 
-  final StatefulPropertyContext<State, System> context;
-  final List<Command<State, System>> commands;
-  final List<Command<State, System>> initializeCommands = [];
-  final List<Command<State, System>> finalizeCommands = [];
-  final List<Command<State, System>> actionCommands = [];
+  final StatefulPropertyContext<State, System, R> context;
+  final List<Command<State, System, R>> commands;
+  final List<Command<State, System, R>> initializeCommands = [];
+  final List<Command<State, System, R>> finalizeCommands = [];
+  final List<Command<State, System, R>> actionCommands = [];
 
-  List<Command<State, System>> _selectCommands(State state) {
-    final selected = <Command<State, System>>[];
-    final finalizers = <Command<State, System>>[];
+  List<Command<State, System, R>> _selectCommands(State state) {
+    final selected = <Command<State, System, R>>[];
+    final finalizers = <Command<State, System, R>>[];
     var tries = 0;
 
     bool hasNext() =>
@@ -35,30 +35,32 @@ final class Traversal<State, System> {
         finalizers.length + selected.length < context.property.maxSteps;
 
     void addCommand(
-      List<Command<State, System>> list,
-      Command<State, System> command,
+      List<Command<State, System, R>> list,
+      Command<State, System, R> command,
     ) {
       if (!hasNext()) {
         return;
       }
 
-      if (command is Initialize<State, System>) {
+      if (command is Initialize<State, System, R>) {
         addCommand(list, command.command);
-      } else if (command is Finalize<State, System>) {
+      } else if (command is Finalize<State, System, R>) {
         addCommand(list, command.command);
-      } else if (command is Sequence<State, System>) {
+      } else if (command is Sequence<State, System, R>) {
         for (final c in command.commands) {
           addCommand(list, c);
         }
       } else if (command.requires(state)) {
+        // TODO: update state
+        // postcondnitionはチェックしない
         list.add(command);
         tries++;
       }
     }
 
     void addCommands(
-      List<Command<State, System>> list,
-      List<Command<State, System>> commands,
+      List<Command<State, System, R>> list,
+      List<Command<State, System, R>> commands,
     ) {
       for (final command in commands) {
         if (!hasNext()) {
@@ -82,9 +84,9 @@ final class Traversal<State, System> {
     return selected;
   }
 
-  TraversalSequence<State, System> generateSequence(State state) {
+  TraversalSequence<State, System, R> generateSequence(State state) {
     final commands = _selectCommands(state);
-    final sequence = TraversalSequence<State, System>();
+    final sequence = TraversalSequence<State, System, R>();
     for (final command in commands) {
       sequence.addStep(TraversalStep(command));
     }
@@ -92,22 +94,22 @@ final class Traversal<State, System> {
   }
 }
 
-final class TraversalStep<State, System> {
-  TraversalStep(Command<State, System> command) {
-    context = CommandContext.fromCommand<State, System>(command);
+final class TraversalStep<State, System, R> {
+  TraversalStep(Command<State, System, R> command) {
+    context = command.createContext();
   }
 
-  late final CommandContext<State, System> context;
+  late final CommandContext<State, System, R> context;
 }
 
-final class TraversalSequence<State, System> {
-  TraversalSequence([List<TraversalStep<State, System>> steps = const []]) {
+final class TraversalSequence<State, System, R> {
+  TraversalSequence([List<TraversalStep<State, System, R>> steps = const []]) {
     this.steps.addAll(steps);
   }
 
-  final List<TraversalStep<State, System>> steps = [];
+  final List<TraversalStep<State, System, R>> steps = [];
 
-  void addStep(TraversalStep<State, System> step) {
+  void addStep(TraversalStep<State, System, R> step) {
     steps.add(step);
   }
 
@@ -115,9 +117,9 @@ final class TraversalSequence<State, System> {
     steps.removeRange(index, steps.length);
   }
 
-  static bool equals<State, System>(
-    List<TraversalSequence<State, System>> a,
-    List<TraversalSequence<State, System>> b,
+  static bool equals<State, System, R>(
+    List<TraversalSequence<State, System, R>> a,
+    List<TraversalSequence<State, System, R>> b,
   ) {
     if (a.length != b.length) {
       return false;
@@ -130,11 +132,11 @@ final class TraversalSequence<State, System> {
     return true;
   }
 
-  List<TraversalSequence<State, System>> shrink() {
+  List<TraversalSequence<State, System, R>> shrink() {
     final n = (steps.length / (steps.length <= 5 ? 2 : 3)).ceil();
     return steps
         .splitAfterIndexed((i, _) => (i + 1) % n == 0)
-        .map(TraversalSequence<State, System>.new)
+        .map(TraversalSequence<State, System, R>.new)
         .toList();
   }
 }

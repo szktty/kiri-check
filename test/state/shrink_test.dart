@@ -138,7 +138,7 @@ final class ShrinkingValueTestBehavior
         (s, system, value) {
           s.value += value;
         },
-        postcondition: (s, system) => s.value < 10000,
+        ensure: (s, system) => s.value < 10000,
       ),
     ];
   }
