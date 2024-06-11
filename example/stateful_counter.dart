@@ -58,30 +58,40 @@ final class CounterBehavior extends Behavior<CounterModel, CounterSystem> {
   @override
   List<Command<CounterModel, CounterSystem>> generateCommands(CounterModel s) {
     return [
-      Action0('reset', (s, system) {
-        s.reset();
-        system.reset();
-      }, postcondition: (s, system) {
-        return s.count == system.count;
-      }),
-      Action0('increment', (s, system) {
-        s.increment();
-        system.increment();
-      }, postcondition: (s, system) {
-        return s.count == system.count;
-      }),
-      Action0('decrement', (s, system) {
-        s.decrement();
-        system.decrement();
-      }, postcondition: (s, system) {
-        return s.count == system.count;
-      }),
-      Action('set', integer(), (s, system, value) {
-        s.count = value;
-        system.count = value;
-      }, ensure: (s, system) {
-        return s.count == system.count;
-      }),
+      Action0(
+        'reset',
+        nextState: (s) => s.reset(),
+        run: (system) {
+          system.reset();
+          return system.count;
+        },
+        postcondition: (s, count) => s.count == count,
+      ),
+      Action0(
+        'increment',
+        nextState: (s) => s.increment(),
+        run: (system) {
+          system.increment();
+          return system.count;
+        },
+        postcondition: (s, count) => s.count == count,
+      ),
+      Action0(
+        'decrement',
+        nextState: (s) => s.decrement(),
+        run: (system) {
+          system.decrement();
+          return system.count;
+        },
+        postcondition: (s, count) => s.count == count,
+      ),
+      Action(
+        'set',
+        integer(),
+        nextState: (s, count) => s.count = count,
+        run: (system, count) => system.count = count,
+        postcondition: (s, count) => s.count == count,
+      ),
     ];
   }
 }

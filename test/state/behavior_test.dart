@@ -8,7 +8,7 @@ enum CounterEvent {
   set,
 }
 
-final class CounterBehavior extends Behavior<CounterState, Null, dynamic> {
+final class CounterBehavior extends Behavior<CounterState, Null> {
   @override
   CounterState createState() {
     return CounterState();
@@ -20,37 +20,40 @@ final class CounterBehavior extends Behavior<CounterState, Null, dynamic> {
   }
 
   @override
-  List<Command<CounterState, Null, R>> generateCommands(CounterState s) {
+  List<Command<CounterState, Null>> generateCommands(CounterState s) {
     return [
       Action(
         'set',
         integer(),
-        (s, system, value) {
+        nextState: (s, value) {
           s
             ..previous = s.count
             ..count = value
             ..addEvent(CounterEvent.set);
         },
+        run: (system, value) {},
       ),
       Action0(
         'increment',
-        (s, system) {
+        nextState: (s) {
           s.previous = s.count;
           s.count++;
           s.addEvent(CounterEvent.increment);
         },
-        postcondition: (s, system) {
+        run: (system) {},
+        postcondition: (s, _) {
           return s.count == s.previous + 1;
         },
       ),
       Action0(
         'decrement',
-        (s, system) {
+        nextState: (s) {
           s.previous = s.count;
           s.count--;
           s.addEvent(CounterEvent.decrement);
         },
-        postcondition: (s, system) {
+        run: (system) {},
+        postcondition: (s, _) {
           return s.count == s.previous - 1;
         },
       ),
@@ -88,14 +91,15 @@ final class PreconditionCountBehavior
     return [
       Action0(
         'count',
-        (s, system) {
-          print('run action');
+        nextState: (s) {
+          print('nextState');
           if (onSelect) {
             preconditionsOnSelect--;
             preconditionsOnRun++;
             onSelect = false;
           }
         },
+        run: (system) {},
         precondition: (s) {
           if (onSelect) {
             preconditionsOnSelect++;
@@ -137,10 +141,11 @@ final class PreconditionConditionalBehavior
     return [
       Action0(
         'count',
-        (s, system) {
+        nextState: (s) {
           print('run action');
           onSelect = false;
         },
+        run: (system) {},
         precondition: (s) {
           tryPreconditions++;
           if (onSelect && i < 10) {
@@ -177,9 +182,10 @@ final class PostconditionCountBehavior
     return [
       Action0(
         'count',
-        (s, system) {
+        nextState: (s) {
           print('run action');
         },
+        run: (system) {},
         postcondition: (s, system) {
           postconditions++;
           return true;
@@ -214,7 +220,7 @@ final class TestCallbacksBehavior extends Behavior<TestCallbacksState, Null> {
     TestCallbacksState state,
   ) {
     return [
-      Action0('no op', (s, system) {}),
+      Action0('no op', nextState: (s) {}, run: (system) {}),
     ];
   }
 
