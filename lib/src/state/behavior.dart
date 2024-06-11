@@ -1,4 +1,4 @@
-import 'package:kiri_check/src/state/command.dart';
+import 'package:kiri_check/src/state/command/command.dart';
 import 'package:kiri_check/src/state/top.dart';
 import 'package:meta/meta.dart';
 

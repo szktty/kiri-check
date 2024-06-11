@@ -1,7 +1,6 @@
-import 'dart:math';
-
 import 'package:collection/collection.dart';
-import 'package:kiri_check/src/state/command.dart';
+import 'package:kiri_check/src/state/command/command.dart';
+import 'package:kiri_check/src/state/command/context.dart';
 import 'package:kiri_check/src/state/command/sequence.dart';
 import 'package:kiri_check/src/state/property.dart';
 
@@ -27,9 +26,9 @@ final class Traversal<State, System> {
   final List<Command<State, System>> finalizeCommands = [];
   final List<Command<State, System>> actionCommands = [];
 
-  List<Command<State, System>> _selectCommands(State state) {
-    final selected = <Command<State, System>>[];
-    final finalizers = <Command<State, System>>[];
+  List<CommandContext<State, System>> _selectCommands(State state) {
+    final selected = <CommandContext<State, System>>[];
+    final finalizers = <CommandContext<State, System>>[];
     var tries = 0;
 
     bool hasNext() =>
@@ -37,7 +36,7 @@ final class Traversal<State, System> {
         finalizers.length + selected.length < context.property.maxSteps;
 
     void addCommand(
-      List<Command<State, System>> list,
+      List<CommandContext<State, System>> contexts,
       Command<State, System> command,
     ) {
       if (!hasNext()) {
@@ -45,34 +44,34 @@ final class Traversal<State, System> {
       }
 
       if (command is Initialize<State, System>) {
-        addCommand(list, command.command);
+        addCommand(contexts, command.command);
       } else if (command is Finalize<State, System>) {
-        addCommand(list, command.command);
+        addCommand(contexts, command.command);
       } else if (command is Sequence<State, System>) {
         for (final c in command.commands) {
-          addCommand(list, c);
+          addCommand(contexts, c);
         }
       } else {
-        final commandContext = command.createContext(context.property.random);
+        final commandContext =
+            CommandContext(command, random: context.property.random)
+              ..nextValue();
         if (commandContext.requires(state)) {
-          commandContext
-            ..setUp()
-            ..nextState(state);
-          list.add(command);
+          commandContext.nextState(state);
+          contexts.add(commandContext);
           tries++;
         }
       }
     }
 
     void addCommands(
-      List<Command<State, System>> list,
+      List<CommandContext<State, System>> contexts,
       List<Command<State, System>> commands,
     ) {
       for (final command in commands) {
         if (!hasNext()) {
           break;
         }
-        addCommand(list, command);
+        addCommand(contexts, command);
         tries++;
       }
     }
@@ -91,22 +90,21 @@ final class Traversal<State, System> {
   }
 
   TraversalSequence<State, System> generateSequence(State state) {
-    final commands = _selectCommands(state);
+    final contexts = _selectCommands(state);
     final sequence = TraversalSequence<State, System>();
-    for (final command in commands) {
-      sequence.addStep(TraversalStep(command, context.property.random));
+    for (final context in contexts) {
+      sequence.addStep(TraversalStep(context));
     }
     return sequence;
   }
 }
 
 final class TraversalStep<State, System> {
-  TraversalStep(this.command, Random random) {
-    commandContext = command.createContext(random);
-  }
+  TraversalStep(this.commandContext);
 
-  final Command<State, System> command;
-  late final CommandContext<State, System> commandContext;
+  final CommandContext<State, System> commandContext;
+
+  Command<State, System> get command => commandContext.command;
 }
 
 final class TraversalSequence<State, System> {

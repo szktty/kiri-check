@@ -2,7 +2,7 @@
 library stateful_test;
 
 export 'src/state/behavior.dart' show Behavior;
-export 'src/state/command.dart' show Command, Finalize, Initialize;
+export 'src/state/command/command.dart' show Command, Finalize, Initialize;
 export 'src/state/command/action.dart'
     show
         Action,

@@ -2,59 +2,43 @@ import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/stateful_test.dart';
 import 'package:test/test.dart';
 
-enum CounterEvent {
-  increment,
-  decrement,
-  set,
-}
-
-final class CounterBehavior extends Behavior<CounterState, Null> {
+final class CounterBehavior extends Behavior<CounterState, CounterSystem> {
   @override
   CounterState createState() {
     return CounterState();
   }
 
   @override
-  Null createSystem(CounterState s) {
-    return null;
+  CounterSystem createSystem(CounterState s) {
+    return CounterSystem(s.count);
   }
 
   @override
-  List<Command<CounterState, Null>> generateCommands(CounterState s) {
+  List<Command<CounterState, CounterSystem>> generateCommands(CounterState s) {
     return [
       Action(
         'set',
         integer(),
-        nextState: (s, value) {
-          s
-            ..previous = s.count
-            ..count = value
-            ..addEvent(CounterEvent.set);
-        },
-        run: (system, value) {},
+        nextState: (s, value) => s.count = value,
+        run: (system, value) => system.count = value,
+        postcondition: (s, result) => s.count == result,
       ),
       Action0(
         'increment',
-        nextState: (s) {
-          s.previous = s.count;
-          s.count++;
-          s.addEvent(CounterEvent.increment);
-        },
-        run: (system) {},
-        postcondition: (s, _) {
-          return s.count == s.previous + 1;
-        },
+        nextState: (s) => s.count++,
+        run: (system) => --system.count,
+        postcondition: (s, result) => s.count == result,
       ),
       Action0(
         'decrement',
-        nextState: (s) {
-          s.previous = s.count;
-          s.count--;
-          s.addEvent(CounterEvent.decrement);
+        nextState: (s) => s.count--,
+        run: (system) {
+          system.count--;
+          return system.count;
         },
-        run: (system) {},
-        postcondition: (s, _) {
-          return s.count == s.previous - 1;
+        postcondition: (s, result) {
+          print('postcondition: ${s.count} $result');
+          return s.count == result;
         },
       ),
     ];
@@ -63,13 +47,12 @@ final class CounterBehavior extends Behavior<CounterState, Null> {
 
 final class CounterState {
   int count = 0;
-  int previous = 0;
+}
 
-  final events = <CounterEvent>[];
+final class CounterSystem {
+  CounterSystem(this.count);
 
-  void addEvent(CounterEvent event) {
-    events.add(event);
-  }
+  int count;
 }
 
 final class PreconditionCountBehavior

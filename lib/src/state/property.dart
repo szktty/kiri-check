@@ -3,8 +3,8 @@ import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/home.dart';
 import 'package:kiri_check/src/property.dart';
 import 'package:kiri_check/src/state/behavior.dart';
-import 'package:kiri_check/src/state/command.dart';
-import 'package:kiri_check/src/state/command/action.dart';
+import 'package:kiri_check/src/state/command/command.dart';
+import 'package:kiri_check/src/state/command/context.dart';
 import 'package:kiri_check/src/state/top.dart';
 import 'package:kiri_check/src/state/traversal.dart';
 import 'package:meta/meta.dart';
@@ -22,7 +22,7 @@ final class StatefulFalsifiedException<State, System> implements Exception {
     for (var i = 0; i < sequence.steps.length; i++) {
       final step = sequence.steps[i];
       buffer.writeln('Step ${i + 1}: ${step.command.description}');
-      if (step.command is! Action0 && step.commandContext is ActionContext) {
+      if (step.commandContext.arbitrary != null) {
         buffer.writeln('  Shrunk value: ${step.commandContext.minValue}');
       }
     }
@@ -154,6 +154,7 @@ final class StatefulProperty<State, System> extends Property<State> {
         final step = sequence.steps[i];
         printVerbose('Step ${i + 1}: ${step.command.description}');
         try {
+          step.commandContext.nextValue();
           final result = stateContext.runCommand(step.commandContext);
           if (!result) {
             i--;
@@ -197,7 +198,6 @@ final class StatefulProperty<State, System> extends Property<State> {
   ) {
     final state = context.state;
     if (commandContext.requires(state)) {
-      commandContext.setUp();
       final result = commandContext.run(context.system);
       if (commandContext.ensures(state, result)) {
         commandContext.nextState(state);
@@ -332,6 +332,7 @@ final class _StatefulPropertyShrinker<State, System> {
           '${step.command.description}');
       try {
         step.commandContext.useCache = true;
+        step.commandContext.nextValue();
         stateContext.runCommand(step.commandContext);
       } on Exception catch (e) {
         printVerbose('  Error: $e');
@@ -365,14 +366,15 @@ final class _StatefulPropertyShrinker<State, System> {
         final step = sequence.steps[i];
         printVerbose('Shrink value step ${i + 1}: ${step.command.description}');
         try {
-          if (step.commandContext.nextShrink()) {
+          if (step.commandContext.tryShrink()) {
             allShrinkDone = false;
           }
+          // TODO: tryShrink と nextValue を分けるべき？
           stateContext.runCommand(step.commandContext);
         } on Exception catch (e) {
           printVerbose('  Error: $e');
           lastException = e;
-          step.commandContext.failShrunk();
+          step.commandContext.failShrink();
           shrunkContext = stateContext;
           break;
         }
