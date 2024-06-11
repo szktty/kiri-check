@@ -67,7 +67,7 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
       description,
       integer(min: min, max: max),
       action,
-      ensure: (s, system) {
+      postcondition: (s, system) {
         print(
           'postcondition: frozen: ${s.frozen}, ${system.frozen(s.id)}, balance: ${s.balance}, ${system.getBalance(s.id)}',
         );

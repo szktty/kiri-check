@@ -4,7 +4,7 @@ import 'package:kiri_check/src/state/command/action.dart';
 import 'package:meta/meta.dart';
 
 /// A operation that can be performed on a state and system.
-abstract class Command<State, System, R> {
+abstract class Command<State, System> {
   /// @nodoc
   @protected
   Command(this.description) {
@@ -23,33 +23,33 @@ abstract class Command<State, System, R> {
     _random = random;
   }
 
-  R run(System system);
+  dynamic run(System system);
 
-  void update(State state);
+  void nextState(State state);
 
   bool requires(State state);
 
-  bool ensures(State state, R result);
+  bool ensures(State state, dynamic result);
 
   /// @nodoc
   @internal
-  CommandContext<State, System, R> createContext();
+  CommandContext<State, System> createContext(Random random);
 }
 
 /// A command that encapsulates and controls another command.
-abstract class Container<State, System, R> extends Command<State, System, R> {
+abstract class Container<State, System> extends Command<State, System> {
   @protected
   Container(super.description, this.command);
 
-  final Command<State, System, R> command;
+  final Command<State, System> command;
 
   @override
-  void update(State state) {
-    command.update(state);
+  void nextState(State state) {
+    command.nextState(state);
   }
 
   @override
-  R run(System system) {
+  dynamic run(System system) {
     return command.run(system);
   }
 
@@ -59,47 +59,49 @@ abstract class Container<State, System, R> extends Command<State, System, R> {
   }
 
   @override
-  bool ensures(State state, R result) {
+  bool ensures(State state, dynamic result) {
     return command.ensures(state, result);
   }
 
   @override
-  CommandContext<State, System, R> createContext() {
-    return command.createContext();
+  CommandContext<State, System> createContext(Random random) {
+    return command.createContext(random);
   }
 }
 
 /// A command that initializes the state and system with another command.
-final class Initialize<State, System, R> extends Container<State, System, R> {
+final class Initialize<State, System> extends Container<State, System> {
   /// Creates a new initialize command.
   Initialize(super.description, super.command);
 }
 
 /// A command that finalizes the state and system with another command.
-final class Finalize<State, System, R> extends Container<State, System, R> {
+final class Finalize<State, System> extends Container<State, System> {
   /// Creates a new finalize command.
   Finalize(super.description, super.command);
 }
 
-abstract class CommandContext<State, System, R> {
-  CommandContext(this.command);
+abstract class CommandContext<State, System> {
+  CommandContext(this.command, this.random) {
+    command.initialize(random);
+  }
 
-  final Command<State, System, R> command;
-
-  Random? random;
+  final Command<State, System> command;
+  final Random random;
 
   bool get useCache;
 
   set useCache(bool value);
 
-  // ignore: use_setters_to_change_properties
-  void initialize(Random random) {
-    this.random = random;
-  }
+  void setUp();
 
-  R run(System system);
+  dynamic run(System system);
 
-  void update(State state);
+  void nextState(State state);
+
+  bool requires(State state);
+
+  bool ensures(State state, dynamic result);
 
   bool nextShrink();
 

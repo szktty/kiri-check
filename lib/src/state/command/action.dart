@@ -6,7 +6,6 @@ import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/state/command.dart';
-import 'package:meta/meta.dart';
 
 enum ActionShrinkingState {
   notStarted,
@@ -15,45 +14,46 @@ enum ActionShrinkingState {
 }
 
 /// A command that performs an action with generated values.
-final class Action<State, System, T, R> extends Command<State, System, R> {
+final class Action<State, System, T, R> extends Command<State, System> {
   /// Creates a new action command.
   ///
   /// Parameters:
   /// - `description`: The description of the action.
   /// - `arbitrary`: The arbitrary used to generate values.
   /// - `run`: A function to perform the action.
-  /// - `require`: A function to test the precondition of the action.
-  /// - `ensure`: A function to test the postcondition of the action.
+  /// - `precondition`: A function to test the precondition of the action.
+  /// - `postcondition`: A function to test the postcondition of the action.
   Action(
     super.description,
     Arbitrary<T> arbitrary, {
-    required void Function(State, T) update,
+    required void Function(State, T) nextState,
     required R Function(System, T) run,
-    bool Function(State)? require,
-    bool Function(State, R)? ensure,
+    bool Function(State)? precondition,
+    bool Function(State, R)? postcondition,
   }) {
     _arbitrary = arbitrary;
-    _update = update;
+    _nextState = nextState;
     _run = run;
-
-    _require = require;
-    _ensure = ensure;
+    _precondition = precondition;
+    _postcondition = postcondition;
   }
 
   late final Arbitrary<T> _arbitrary;
 
   ArbitraryBase<T> get _arbitraryBase => _arbitrary as ArbitraryBase<T>;
   late final R Function(System, T) _run;
-  late final void Function(State, T) _update;
+  late final void Function(State, T) _nextState;
 
-  late final bool Function(State)? _require;
-  late final bool Function(State, R)? _ensure;
+  late final bool Function(State)? _precondition;
+  late final bool Function(State, R)? _postcondition;
 
   T? _current;
 
   @override
-  void update(State state) {
-    _update(state, _current as T);
+  void nextState(State state) {
+    print(
+        'nextState $runtimeType: current=$_current (${_current.runtimeType}), ${T}');
+    _nextState(state, _current as T);
   }
 
   @override
@@ -63,24 +63,24 @@ final class Action<State, System, T, R> extends Command<State, System, R> {
 
   @override
   bool requires(State state) {
-    return _require?.call(state) ?? true;
+    return _precondition?.call(state) ?? true;
   }
 
   @override
-  bool ensures(State state, R result) {
-    return _ensure?.call(state, result) ?? true;
+  bool ensures(State state, dynamic result) {
+    return _postcondition?.call(state, result as R) ?? true;
   }
 
   /// @nodoc
   @override
-  ActionContext<State, System, T, R> createContext() {
-    return ActionContext(this);
+  CommandContext<State, System> createContext(Random random) {
+    return ActionContext<State, System, T, R>(this, random);
   }
 }
 
 final class ActionContext<State, System, T, R>
-    extends CommandContext<State, System, R> {
-  ActionContext(super.command) {
+    extends CommandContext<State, System> {
+  ActionContext(super.command, super.random) {
     _distance = null;
     _shrunkQueue = null;
   }
@@ -93,7 +93,6 @@ final class ActionContext<State, System, T, R>
   @override
   bool useCache = false;
 
-  T? _cache;
   ActionShrinkingState _shrinkState = ActionShrinkingState.notStarted;
   ShrinkingDistance? _distance;
   int _shrinkGranularity = 1;
@@ -111,26 +110,39 @@ final class ActionContext<State, System, T, R>
       if (_shrunkQueue!.isNotEmpty) {
         _lastShrunk = _shrunkQueue!.removeFirst();
       }
-      return _lastShrunk!;
+      return _lastShrunk as T;
     } else if (useCache) {
-      return _cache!;
+      return _current as T;
     } else {
-      return _cache = arbitrary.generate(random as RandomContext);
+      return _current = arbitrary.generate(random as RandomContext);
     }
   }
 
   @override
-  void update(State state) {
-    _current ??= generateValue(command.random);
-    action
-      .._current = _current
-      ..update(state);
+  void setUp() {
+    print('action command setup');
+    _current = generateValue(command.random);
+    action._current = _current;
+  }
+
+  @override
+  void nextState(State state) {
+    action.nextState(state);
   }
 
   @override
   R run(System system) {
-    _current = null;
     return action.run(system);
+  }
+
+  @override
+  bool requires(State state) {
+    return action.requires(state);
+  }
+
+  @override
+  bool ensures(State state, dynamic result) {
+    return action.ensures(state, result);
   }
 
   @override
@@ -138,12 +150,12 @@ final class ActionContext<State, System, T, R>
     switch (_shrinkState) {
       case ActionShrinkingState.notStarted:
         _shrinkState = ActionShrinkingState.running;
-        _distance = arbitrary.calculateDistance(_cache as T)
+        _distance = arbitrary.calculateDistance(_current as T)
           ..granularity = _shrinkGranularity;
-        final shrunk = arbitrary.shrink(_cache as T, _distance!);
+        final shrunk = arbitrary.shrink(_current as T, _distance!);
         _previousShrunk = shrunk;
         _shrunkQueue = Queue.of(shrunk);
-        _minShrunk = _cache;
+        _minShrunk = _current;
         return true;
       case ActionShrinkingState.running:
         if (_shrunkQueue!.isNotEmpty) {
@@ -151,7 +163,7 @@ final class ActionContext<State, System, T, R>
         } else {
           _shrinkGranularity++;
           _distance!.granularity = _shrinkGranularity;
-          final shrunk = arbitrary.shrink(_cache as T, _distance!);
+          final shrunk = arbitrary.shrink(_current as T, _distance!);
           if (const DeepCollectionEquality().equals(shrunk, _previousShrunk)) {
             _shrinkState = ActionShrinkingState.finished;
             return false;
@@ -176,14 +188,14 @@ final class ActionContext<State, System, T, R>
 final class Action0<State, System, R> extends Action<State, System, void, R> {
   Action0(
     String description, {
-    required void Function(State) update,
+    required void Function(State) nextState,
     required R Function(System) run,
-    super.require,
-    super.ensure,
+    super.precondition,
+    super.postcondition,
   }) : super(
           description,
           null_(),
-          update: (s, _) => update(s),
+          nextState: (s, _) => nextState(s),
           run: (sys, _) => run(sys),
         );
 }
@@ -195,14 +207,14 @@ final class Action2<State, System, E1, E2, R>
     String description,
     Arbitrary<E1> arbitrary1,
     Arbitrary<E2> arbitrary2, {
-    required void Function(State, E1, E2) update,
+    required void Function(State, E1, E2) nextState,
     required R Function(System, E1, E2) run,
-    super.require,
-    super.ensure,
+    super.precondition,
+    super.postcondition,
   }) : super(
           description,
           combine2(arbitrary1, arbitrary2, (a, b) => (a, b)),
-          update: (s, args) => update(s, args.$1, args.$2),
+          nextState: (s, args) => nextState(s, args.$1, args.$2),
           run: (sys, args) => run(sys, args.$1, args.$2),
         );
 }
