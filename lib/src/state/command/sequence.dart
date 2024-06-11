@@ -1,6 +1,7 @@
 import 'dart:math';
 
-import 'package:kiri_check/src/state/command.dart';
+import 'package:kiri_check/src/state/command/command.dart';
+import 'package:kiri_check/src/state/command/context.dart';
 
 /// A command that runs other commands in sequence.
 final class Sequence<State, System> extends Command<State, System> {
@@ -15,27 +16,23 @@ final class Sequence<State, System> extends Command<State, System> {
   final List<Command<State, System>> commands;
 
   @override
-  CommandContext<State, System> createContext(Random random) {
-    throw UnsupportedError('Sequence does not support createContext');
-  }
-
-  @override
-  dynamic run(System system) {
+  dynamic run(CommandContext<State, System> context, System system) {
     throw UnsupportedError('Sequence does not support run');
   }
 
   @override
-  void nextState(State state) {
+  void nextState(CommandContext<State, System> context, State state) {
     throw UnsupportedError('Sequence does not support update');
   }
 
   @override
-  bool ensures(State state, dynamic result) {
+  bool ensures(
+      CommandContext<State, System> context, State state, dynamic result) {
     throw UnsupportedError('Sequence does not support ensures');
   }
 
   @override
-  bool requires(State state) {
+  bool requires(CommandContext<State, System> context, State state) {
     throw UnsupportedError('Sequence does not support requires');
   }
 }
