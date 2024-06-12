@@ -26,13 +26,13 @@ final class Sequence<State, System> extends Command<State, System> {
   }
 
   @override
-  bool ensures(
+  bool postcondition(
       CommandContext<State, System> context, State state, dynamic result) {
-    throw UnsupportedError('Sequence does not support ensures');
+    throw UnsupportedError('Sequence does not support postcondition');
   }
 
   @override
-  bool requires(CommandContext<State, System> context, State state) {
-    throw UnsupportedError('Sequence does not support requires');
+  bool precondition(CommandContext<State, System> context, State state) {
+    throw UnsupportedError('Sequence does not support precondition');
   }
 }

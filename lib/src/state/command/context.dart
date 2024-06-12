@@ -66,12 +66,12 @@ final class CommandContext<State, System> {
     return command.run(this, system);
   }
 
-  bool requires(State state) {
-    return command.requires(this, state);
+  bool precondition(State state) {
+    return command.precondition(this, state);
   }
 
-  bool ensures(State state, dynamic result) {
-    return command.ensures(this, state, result);
+  bool postcondition(State state, dynamic result) {
+    return command.postcondition(this, state, result);
   }
 
   bool tryShrink() {
