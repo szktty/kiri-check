@@ -55,7 +55,7 @@ final class Traversal<State, System> {
         final commandContext =
             CommandContext(command, random: context.property.random)
               ..nextValue();
-        if (commandContext.requires(state)) {
+        if (commandContext.precondition(state)) {
           commandContext.nextState(state);
           contexts.add(commandContext);
           tries++;

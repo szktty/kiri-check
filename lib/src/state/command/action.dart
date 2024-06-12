@@ -24,8 +24,8 @@ final class Action<State, System, T, R> extends Command<State, System> {
     this.arbitrary, {
     required void Function(State, T) nextState,
     required R Function(System, T) run,
-    bool Function(State)? precondition,
-    bool Function(State, R)? postcondition,
+    bool Function(State, T)? precondition,
+    bool Function(State, T, R)? postcondition,
   }) {
     _nextState = nextState;
     _run = run;
@@ -40,8 +40,8 @@ final class Action<State, System, T, R> extends Command<State, System> {
   late final R Function(System, T) _run;
   late final void Function(State, T) _nextState;
 
-  late final bool Function(State)? _precondition;
-  late final bool Function(State, R)? _postcondition;
+  late final bool Function(State, T)? _precondition;
+  late final bool Function(State, T, R)? _postcondition;
 
   @override
   void nextState(CommandContext<State, System> context, State state) {
@@ -54,14 +54,19 @@ final class Action<State, System, T, R> extends Command<State, System> {
   }
 
   @override
-  bool requires(CommandContext<State, System> context, State state) {
-    return _precondition?.call(state) ?? true;
+  bool precondition(CommandContext<State, System> context, State state) {
+    return _precondition?.call(state, context.currentValue as T) ?? true;
   }
 
   @override
-  bool ensures(
+  bool postcondition(
       CommandContext<State, System> context, State state, dynamic result) {
-    return _postcondition?.call(state, result as R) ?? true;
+    return _postcondition?.call(
+          state,
+          context.currentValue as T,
+          result as R,
+        ) ??
+        true;
   }
 }
 
@@ -71,13 +76,15 @@ final class Action0<State, System, R> extends Action<State, System, void, R> {
     String description, {
     required void Function(State) nextState,
     required R Function(System) run,
-    super.precondition,
-    super.postcondition,
+    bool Function(State)? precondition,
+    bool Function(State, R)? postcondition,
   }) : super(
           description,
           null,
           nextState: (s, _) => nextState(s),
           run: (sys, _) => run(sys),
+          precondition: (s, _) => precondition?.call(s) ?? true,
+          postcondition: (s, _, r) => postcondition?.call(s, r) ?? true,
         );
 }
 

@@ -14,9 +14,9 @@ abstract class Command<State, System> {
 
   void nextState(CommandContext<State, System> context, State state);
 
-  bool requires(CommandContext<State, System> context, State state);
+  bool precondition(CommandContext<State, System> context, State state);
 
-  bool ensures(
+  bool postcondition(
     CommandContext<State, System> context,
     State state,
     dynamic result,
@@ -41,14 +41,14 @@ abstract class Container<State, System> extends Command<State, System> {
   }
 
   @override
-  bool requires(CommandContext<State, System> context, State state) {
-    return command.requires(context, state);
+  bool precondition(CommandContext<State, System> context, State state) {
+    return command.precondition(context, state);
   }
 
   @override
-  bool ensures(
+  bool postcondition(
       CommandContext<State, System> context, State state, dynamic result) {
-    return command.ensures(context, state, result);
+    return command.postcondition(context, state, result);
   }
 }
 
@@ -70,14 +70,14 @@ final class Initialize<State, System> extends Command<State, System> {
   }
 
   @override
-  bool ensures(
+  bool postcondition(
       CommandContext<State, System> context, State state, dynamic result) {
-    throw UnsupportedError('Initialize does not support ensures');
+    throw UnsupportedError('Initialize does not support postcondition');
   }
 
   @override
-  bool requires(CommandContext<State, System> context, State state) {
-    throw UnsupportedError('Initialize does not support requires');
+  bool precondition(CommandContext<State, System> context, State state) {
+    throw UnsupportedError('Initialize does not support precondition');
   }
 }
 
@@ -100,13 +100,13 @@ final class Finalize<State, System> extends Command<State, System> {
   }
 
   @override
-  bool ensures(
+  bool postcondition(
       CommandContext<State, System> context, State state, dynamic result) {
-    throw UnsupportedError('Finalize does not support ensures');
+    throw UnsupportedError('Finalize does not support postcondition');
   }
 
   @override
-  bool requires(CommandContext<State, System> context, State state) {
-    throw UnsupportedError('Finalize does not support requires');
+  bool precondition(CommandContext<State, System> context, State state) {
+    throw UnsupportedError('Finalize does not support precondition');
   }
 }

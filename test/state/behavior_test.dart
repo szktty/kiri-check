@@ -21,25 +21,19 @@ final class CounterBehavior extends Behavior<CounterState, CounterSystem> {
         integer(),
         nextState: (s, value) => s.count = value,
         run: (system, value) => system.count = value,
-        postcondition: (s, result) => s.count == result,
+        postcondition: (s, value, result) => (s.count = value) == result,
       ),
       Action0(
         'increment',
         nextState: (s) => s.count++,
-        run: (system) => --system.count,
-        postcondition: (s, result) => s.count == result,
+        run: (system) => ++system.count,
+        postcondition: (s, count) => s.count + 1 == count,
       ),
       Action0(
         'decrement',
         nextState: (s) => s.count--,
-        run: (system) {
-          system.count--;
-          return system.count;
-        },
-        postcondition: (s, result) {
-          print('postcondition: ${s.count} $result');
-          return s.count == result;
-        },
+        run: (system) => --system.count,
+        postcondition: (s, count) => s.count - 1 == count,
       ),
     ];
   }
@@ -55,34 +49,28 @@ final class CounterSystem {
   int count;
 }
 
-final class PreconditionCountBehavior
-    extends Behavior<PreconditionCountState, Null> {
+final class PreconditionCountBehavior extends Behavior<Null, Null> {
   @override
-  PreconditionCountState createState() => PreconditionCountState();
+  Null createState() => null;
 
   @override
-  Null createSystem(PreconditionCountState s) => null;
+  Null createSystem(Null s) => null;
 
   int preconditionsOnSelect = 0;
   int preconditionsOnRun = 0;
 
   @override
-  List<Command<PreconditionCountState, Null>> generateCommands(
-    PreconditionCountState state,
+  List<Command<Null, Null>> generateCommands(
+    Null state,
   ) {
     var onSelect = true;
     return [
       Action0(
         'count',
-        nextState: (s) {
-          print('nextState');
-          if (onSelect) {
-            preconditionsOnSelect--;
-            preconditionsOnRun++;
-            onSelect = false;
-          }
+        nextState: (s) {},
+        run: (system) {
+          onSelect = false;
         },
-        run: (system) {},
         precondition: (s) {
           if (onSelect) {
             preconditionsOnSelect++;
@@ -96,42 +84,38 @@ final class PreconditionCountBehavior
   }
 
   @override
-  void dispose(PreconditionCountState s, Null system) {
+  void dispose(Null s, Null system) {
     print(
       'preconditionsOnSelect: $preconditionsOnSelect, preconditionsOnRun: $preconditionsOnRun',
     );
   }
 }
 
-final class PreconditionCountState {}
-
-final class PreconditionConditionalBehavior
-    extends Behavior<PreconditionCountState, Null> {
+final class PreconditionConditionalBehavior extends Behavior<Null, Null> {
   @override
-  PreconditionCountState createState() => PreconditionCountState();
+  Null createState() => null;
 
   @override
-  Null createSystem(PreconditionCountState s) => null;
+  Null createSystem(Null s) => null;
 
-  int tryPreconditions = 0;
+  int preconditions = 0;
 
   @override
-  List<Command<PreconditionCountState, Null>> generateCommands(
-    PreconditionCountState state,
+  List<Command<Null, Null>> generateCommands(
+    Null state,
   ) {
     var onSelect = true;
     var i = -1;
     return [
       Action0(
         'count',
-        nextState: (s) {
-          print('run action');
+        nextState: (s) {},
+        run: (system) {
           onSelect = false;
         },
-        run: (system) {},
         precondition: (s) {
-          tryPreconditions++;
-          if (onSelect && i < 10) {
+          preconditions++;
+          if (onSelect) {
             i++;
             return i.isEven;
           } else {
@@ -143,24 +127,23 @@ final class PreconditionConditionalBehavior
   }
 
   @override
-  void dispose(PreconditionCountState s, Null system) {
-    print('preconditions: $tryPreconditions');
+  void dispose(Null s, Null system) {
+    print('preconditions: $preconditions');
   }
 }
 
-final class PostconditionCountBehavior
-    extends Behavior<PostconditionCountState, Null> {
+final class PostconditionCountBehavior extends Behavior<Null, Null> {
   @override
-  PostconditionCountState createState() => PostconditionCountState();
+  Null createState() => null;
 
   @override
-  Null createSystem(PostconditionCountState s) => null;
+  Null createSystem(Null s) => null;
 
   int postconditions = 0;
 
   @override
-  List<Command<PostconditionCountState, Null>> generateCommands(
-    PostconditionCountState state,
+  List<Command<Null, Null>> generateCommands(
+    Null state,
   ) {
     return [
       Action0(
@@ -169,7 +152,7 @@ final class PostconditionCountBehavior
           print('run action');
         },
         run: (system) {},
-        postcondition: (s, system) {
+        postcondition: (s, _) {
           postconditions++;
           return true;
         },
@@ -178,12 +161,10 @@ final class PostconditionCountBehavior
   }
 
   @override
-  void dispose(PostconditionCountState s, Null system) {
+  void dispose(Null s, Null system) {
     print('postconditions: $postconditions');
   }
 }
-
-final class PostconditionCountState {}
 
 final class TestCallbacksBehavior extends Behavior<TestCallbacksState, Null> {
   int setUpCount = 0;
@@ -267,7 +248,7 @@ void main() {
         maxCycles: 10,
         maxSteps: 10,
         tearDown: () {
-          expect(behavior.tryPreconditions, 250);
+          expect(behavior.preconditions, 250);
         },
       );
     });

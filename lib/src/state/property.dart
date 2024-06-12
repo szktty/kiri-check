@@ -197,9 +197,9 @@ final class StatefulProperty<State, System> extends Property<State> {
     CommandContext<State, System> commandContext,
   ) {
     final state = context.state;
-    if (commandContext.requires(state)) {
+    if (commandContext.precondition(state)) {
       final result = commandContext.run(context.system);
-      if (commandContext.ensures(state, result)) {
+      if (commandContext.postcondition(state, result)) {
         commandContext.nextState(state);
         return true;
       } else {
