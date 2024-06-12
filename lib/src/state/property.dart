@@ -139,6 +139,7 @@ final class StatefulProperty<State, System> extends Property<State> {
 
       behavior.setUp();
       final commandState = behavior.createState();
+      behavior.onGenerate(commandState);
       final commands = behavior.generateCommands(commandState);
       final traversal = Traversal(propertyContext, commands);
       final sequence = traversal.generateSequence(commandState);
@@ -149,6 +150,7 @@ final class StatefulProperty<State, System> extends Property<State> {
 
       printVerbose('Create state: ${state.runtimeType}');
       printVerbose('Create system: ${system.runtimeType}');
+      behavior.onExecute(state, system);
 
       for (var i = 0; i < sequence.steps.length; i++) {
         final step = sequence.steps[i];

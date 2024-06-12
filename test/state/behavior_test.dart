@@ -56,38 +56,40 @@ final class PreconditionCountBehavior extends Behavior<Null, Null> {
   @override
   Null createSystem(Null s) => null;
 
-  int preconditionsOnSelect = 0;
-  int preconditionsOnRun = 0;
+  int preconditionsOnGenerate = 0;
+  int preconditionsOnExecute = 0;
+
+  bool _onGenerate = true;
+
+  @override
+  void onGenerate(Null s) {
+    _onGenerate = true;
+  }
+
+  @override
+  void onExecute(Null s, Null sys) {
+    _onGenerate = false;
+  }
 
   @override
   List<Command<Null, Null>> generateCommands(
     Null state,
   ) {
-    var onSelect = true;
     return [
       Action0(
         'count',
         nextState: (s) {},
-        run: (system) {
-          onSelect = false;
-        },
+        run: (system) {},
         precondition: (s) {
-          if (onSelect) {
-            preconditionsOnSelect++;
+          if (_onGenerate) {
+            preconditionsOnGenerate++;
           } else {
-            preconditionsOnRun++;
+            preconditionsOnExecute++;
           }
           return true;
         },
       ),
     ];
-  }
-
-  @override
-  void dispose(Null s, Null system) {
-    print(
-      'preconditionsOnSelect: $preconditionsOnSelect, preconditionsOnRun: $preconditionsOnRun',
-    );
   }
 }
 
@@ -98,24 +100,39 @@ final class PreconditionConditionalBehavior extends Behavior<Null, Null> {
   @override
   Null createSystem(Null s) => null;
 
-  int preconditions = 0;
+  int preconditionsOnGenerate = 0;
+  int preconditionsOnExecute = 0;
+
+  bool _onGenerate = true;
+
+  @override
+  void onGenerate(Null s) {
+    _onGenerate = true;
+  }
+
+  @override
+  void onExecute(Null s, Null sys) {
+    _onGenerate = false;
+  }
 
   @override
   List<Command<Null, Null>> generateCommands(
     Null state,
   ) {
-    var onSelect = true;
-    var i = -1;
+    var i = 0;
     return [
       Action0(
         'count',
         nextState: (s) {},
-        run: (system) {
-          onSelect = false;
-        },
+        run: (system) {},
         precondition: (s) {
-          preconditions++;
-          if (onSelect) {
+          if (_onGenerate) {
+            preconditionsOnGenerate++;
+          } else {
+            preconditionsOnExecute++;
+          }
+
+          if (_onGenerate) {
             i++;
             return i.isEven;
           } else {
@@ -124,11 +141,6 @@ final class PreconditionConditionalBehavior extends Behavior<Null, Null> {
         },
       ),
     ];
-  }
-
-  @override
-  void dispose(Null s, Null system) {
-    print('preconditions: $preconditions');
   }
 }
 
@@ -235,8 +247,8 @@ void main() {
         maxCycles: 10,
         maxSteps: 10,
         tearDown: () {
-          expect(behavior.preconditionsOnSelect, 100);
-          expect(behavior.preconditionsOnRun, 100);
+          expect(behavior.preconditionsOnGenerate, 100);
+          expect(behavior.preconditionsOnExecute, 100);
         },
       );
     });
@@ -248,7 +260,8 @@ void main() {
         maxCycles: 10,
         maxSteps: 10,
         tearDown: () {
-          expect(behavior.preconditions, 250);
+          expect(behavior.preconditionsOnGenerate, 200);
+          expect(behavior.preconditionsOnExecute, 100);
         },
       );
     });
