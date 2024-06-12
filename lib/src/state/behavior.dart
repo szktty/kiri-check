@@ -32,4 +32,10 @@ abstract class Behavior<State, System> {
 
   /// Called once after all tests are run.
   void tearDownAll() {}
+
+  /// Called at the beginning of the command generation phase.
+  void onGenerate(State state) {}
+
+  /// Called at the beginning of the execution phase.
+  void onExecute(State state, System system) {}
 }

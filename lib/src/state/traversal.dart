@@ -26,14 +26,14 @@ final class Traversal<State, System> {
   final List<Command<State, System>> finalizeCommands = [];
   final List<Command<State, System>> actionCommands = [];
 
-  List<CommandContext<State, System>> _selectCommands(State state) {
-    final selected = <CommandContext<State, System>>[];
+  List<CommandContext<State, System>> _generateCommands(State state) {
+    final generated = <CommandContext<State, System>>[];
     final finalizers = <CommandContext<State, System>>[];
     var tries = 0;
 
     bool hasNext() =>
         tries < context.property.maxCommandTries &&
-        finalizers.length + selected.length < context.property.maxSteps;
+        finalizers.length + generated.length < context.property.maxSteps;
 
     void addCommand(
       List<CommandContext<State, System>> contexts,
@@ -76,21 +76,21 @@ final class Traversal<State, System> {
       }
     }
 
-    addCommands(selected, initializeCommands);
+    addCommands(generated, initializeCommands);
     addCommands(finalizers, finalizeCommands);
 
     while (hasNext()) {
       final n = context.property.random.nextInt(actionCommands.length);
-      addCommand(selected, actionCommands[n]);
+      addCommand(generated, actionCommands[n]);
       tries++;
     }
 
-    selected.addAll(finalizers);
-    return selected;
+    generated.addAll(finalizers);
+    return generated;
   }
 
   TraversalSequence<State, System> generateSequence(State state) {
-    final contexts = _selectCommands(state);
+    final contexts = _generateCommands(state);
     final sequence = TraversalSequence<State, System>();
     for (final context in contexts) {
       sequence.addStep(TraversalStep(context));
