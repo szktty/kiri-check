@@ -38,10 +38,14 @@
 <code-block lang="mermaid">
     stateDiagram-v2
       direction TB
+
+         state if_init_precond <<choice>>
+
          [*] --> CreateState
          CreateState --> InitializePrecondition
-         InitializePrecondition --> GenerateCommands: true
-         InitializePrecondition --> Fail: false
+         InitializePrecondition --> if_init_precond
+         if_init_precond --> GenerateCommands: true
+         if_init_precond --> Fail: false
           GenerateCommands --> GenerationLoop
           GenerationLoop --> [*]
 
@@ -85,11 +89,17 @@
 <code-block lang="mermaid">
     stateDiagram-v2
          direction TB
+
+         state if_init_precond <<choice>>
+
           [*] --> CreateState
          CreateState --> InitializePrecondition
-         InitializePrecondition --> CreateSystem
+         InitializePrecondition --> if_init_precond
+        if_init_precond --> CreateSystem: true
+        if_init_precond --> Fail: false
         CreateSystem --> ExecutionLoop
-        ExecutionLoop --> [*]
+        ExecutionLoop --> Dispose
+        Dispose --> [*]
 
         state ExecutionLoop {
          direction TB
@@ -112,6 +122,7 @@
        ExecutionLoop: Execution loop
       NextState: Command.nextState(State)
       Run: Command.run(System)
+      Dispose: Behavior.dispose(System)
 </code-block>
 
 - Behavior.initializePrecondition(State)までの処理はコマンド生成フェーズと同じ
