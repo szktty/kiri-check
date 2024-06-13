@@ -9,7 +9,7 @@ import 'package:meta/meta.dart';
 abstract class Behavior<State, System> {
   /// Creates a new state.
   @factory
-  State createState();
+  State initialState();
 
   bool initialPrecondition(State state) => true;
 
@@ -20,8 +20,8 @@ abstract class Behavior<State, System> {
   /// Generates a list of commands to run on the given state.
   List<Command<State, System>> generateCommands(State state);
 
-  /// Disposes of the given system.
-  void dispose(System system) {}
+  /// Destroy the given system.
+  void destroy(System system);
 
   /// Called before the test is run.
   void setUp() {}

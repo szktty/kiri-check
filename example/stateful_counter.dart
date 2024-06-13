@@ -46,7 +46,7 @@ final class CounterSystem {
 // ステートフルテスト内容を定義する
 final class CounterBehavior extends Behavior<CounterModel, CounterSystem> {
   @override
-  CounterModel createState() {
+  CounterModel initialState() {
     return CounterModel();
   }
 

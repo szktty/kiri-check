@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 
 final class CounterBehavior extends Behavior<CounterState, CounterSystem> {
   @override
-  CounterState createState() {
+  CounterState initialState() {
     return CounterState();
   }
 
@@ -12,6 +12,9 @@ final class CounterBehavior extends Behavior<CounterState, CounterSystem> {
   CounterSystem createSystem(CounterState s) {
     return CounterSystem(s.count);
   }
+
+  @override
+  void destroy(CounterSystem system) {}
 
   @override
   List<Command<CounterState, CounterSystem>> generateCommands(CounterState s) {
@@ -55,10 +58,13 @@ final class InitialPreconditionBehavior extends Behavior<Null, Null> {
   bool shouldFail = false;
 
   @override
-  Null createState() => null;
+  Null initialState() => null;
 
   @override
   Null createSystem(Null s) => null;
+
+  @override
+  void destroy(Null system) {}
 
   int initialPreconditionCalled = 0;
 
@@ -84,7 +90,7 @@ final class InitialPreconditionBehavior extends Behavior<Null, Null> {
 
 final class PreconditionCountBehavior extends Behavior<Null, Null> {
   @override
-  Null createState() => null;
+  Null initialState() => null;
 
   @override
   Null createSystem(Null s) => null;
@@ -100,6 +106,9 @@ final class PreconditionCountBehavior extends Behavior<Null, Null> {
     initialPreconditionCalled++;
     return true;
   }
+
+  @override
+  void destroy(Null system) {}
 
   @override
   void onGenerate(Null s) {
@@ -135,10 +144,13 @@ final class PreconditionCountBehavior extends Behavior<Null, Null> {
 
 final class PreconditionConditionalBehavior extends Behavior<Null, Null> {
   @override
-  Null createState() => null;
+  Null initialState() => null;
 
   @override
   Null createSystem(Null s) => null;
+
+  @override
+  void destroy(Null system) {}
 
   int preconditionsOnGenerate = 0;
   int preconditionsOnExecute = 0;
@@ -186,7 +198,7 @@ final class PreconditionConditionalBehavior extends Behavior<Null, Null> {
 
 final class PostconditionCountBehavior extends Behavior<Null, Null> {
   @override
-  Null createState() => null;
+  Null initialState() => null;
 
   @override
   Null createSystem(Null s) => null;
@@ -213,7 +225,7 @@ final class PostconditionCountBehavior extends Behavior<Null, Null> {
   }
 
   @override
-  void dispose(Null system) {
+  void destroy(Null system) {
     print('postconditions: $postconditions');
   }
 }
@@ -226,7 +238,7 @@ final class TestCallbacksBehavior extends Behavior<TestCallbacksState, Null> {
   int disposeCount = 0;
 
   @override
-  TestCallbacksState createState() => TestCallbacksState();
+  TestCallbacksState initialState() => TestCallbacksState();
 
   @override
   Null createSystem(TestCallbacksState s) => null;
@@ -241,7 +253,7 @@ final class TestCallbacksBehavior extends Behavior<TestCallbacksState, Null> {
   }
 
   @override
-  void dispose(Null system) {
+  void destroy(Null system) {
     disposeCount++;
   }
 

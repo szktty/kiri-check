@@ -139,8 +139,8 @@ final class StatefulProperty<State, System> extends Property<State> {
     return (result, exception);
   }
 
-  (bool, State) _createState() {
-    final state = behavior.createState();
+  (bool, State) _initialState() {
+    final state = behavior.initialState();
     return (behavior.initialPrecondition(state), state);
   }
 
@@ -155,7 +155,7 @@ final class StatefulProperty<State, System> extends Property<State> {
       behavior.setUp();
 
       printVerbose('Generate commands...');
-      final (initPrecond0, state0) = _createState();
+      final (initPrecond0, state0) = _initialState();
       if (!initPrecond0) {
         behavior.tearDown();
         throw KiriCheckException('initial precondition is not satisfied');
@@ -166,7 +166,7 @@ final class StatefulProperty<State, System> extends Property<State> {
       final traversal = Traversal(propertyContext, commands);
       final sequence = traversal.generateSequence(state0);
 
-      final (initPrecond, state) = _createState();
+      final (initPrecond, state) = _initialState();
       if (!initPrecond) {
         behavior.tearDown();
         throw KiriCheckException('initial precondition is not satisfied');
@@ -215,7 +215,7 @@ final class StatefulProperty<State, System> extends Property<State> {
       onDispose?.call(behavior, system);
     }
     behavior
-      ..dispose(system)
+      ..destroy(system)
       ..tearDown();
   }
 
@@ -349,7 +349,7 @@ final class _StatefulPropertyShrinker<State, System> {
   bool _checkShrunkSequence(TraversalSequence<State, System> sequence,
       {required String stepType}) {
     behavior.setUp();
-    final (initPrecond, state) = property._createState();
+    final (initPrecond, state) = property._initialState();
     if (!initPrecond) {
       return false;
     }
@@ -386,7 +386,7 @@ final class _StatefulPropertyShrinker<State, System> {
     StateContext<State, System>? shrunkContext;
     while (_hasShrinkCycle && !allShrinkDone) {
       printVerbose('Shrink cycle ${_shrinkCycle + 1}');
-      final (initPrecond, state) = property._createState();
+      final (initPrecond, state) = property._initialState();
       if (!initPrecond) {
         printVerbose('  Error: initial precondition is not satisfied');
         return shrunkContext;
