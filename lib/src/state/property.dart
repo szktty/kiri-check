@@ -82,7 +82,7 @@ final class StatefulProperty<State, System> extends Property<State> {
 
   final Behavior<State, System> behavior;
 
-  final void Function(Behavior<State, System>, State, System)? onDispose;
+  final void Function(Behavior<State, System>, System)? onDispose;
   final void Function(StatefulFalsifyingExample<State, System>)? onFalsify;
 
   late final int maxCycles;
@@ -93,9 +93,11 @@ final class StatefulProperty<State, System> extends Property<State> {
 
   @override
   void check(PropertyTest test) {
-    final result = _check(test);
+    final (result, exception) = _check(test);
 
-    if (result != null) {
+    if (exception != null) {
+      throw exception;
+    } else if (result != null) {
       final description = result.toString();
       printVerbose('');
       printVerbose(description);
@@ -119,14 +121,27 @@ final class StatefulProperty<State, System> extends Property<State> {
     }
   }
 
-  StatefulShrinkingResult<State, System>? _check(PropertyTest test) {
+  (StatefulShrinkingResult<State, System>?, Exception?) _check(
+      PropertyTest test) {
     printVerbose('Check behavior: ${behavior.runtimeType}');
     this.setUp?.call();
     behavior.setUpAll();
-    final result = _checkSequences(test);
+
+    StatefulShrinkingResult<State, System>? result;
+    Exception? exception;
+    try {
+      result = _checkSequences(test);
+    } on Exception catch (e) {
+      exception = e;
+    }
     behavior.tearDownAll();
     this.tearDown?.call();
-    return result;
+    return (result, exception);
+  }
+
+  (bool, State) _createState() {
+    final state = behavior.createState();
+    return (behavior.initialPrecondition(state), state);
   }
 
   StatefulShrinkingResult<State, System>? _checkSequences(PropertyTest test) {
@@ -138,13 +153,24 @@ final class StatefulProperty<State, System> extends Property<State> {
       printVerbose('Cycle ${propertyContext.cycle + 1}');
 
       behavior.setUp();
-      final commandState = behavior.createState();
-      behavior.onGenerate(commandState);
-      final commands = behavior.generateCommands(commandState);
-      final traversal = Traversal(propertyContext, commands);
-      final sequence = traversal.generateSequence(commandState);
 
-      final state = behavior.createState();
+      printVerbose('Generate commands...');
+      final (initPrecond0, state0) = _createState();
+      if (!initPrecond0) {
+        behavior.tearDown();
+        throw KiriCheckException('initial precondition is not satisfied');
+      }
+
+      behavior.onGenerate(state0);
+      final commands = behavior.generateCommands(state0);
+      final traversal = Traversal(propertyContext, commands);
+      final sequence = traversal.generateSequence(state0);
+
+      final (initPrecond, state) = _createState();
+      if (!initPrecond) {
+        behavior.tearDown();
+        throw KiriCheckException('initial precondition is not satisfied');
+      }
       final system = behavior.createSystem(state);
       final stateContext = StateContext(state, system, this, test);
 
@@ -163,7 +189,7 @@ final class StatefulProperty<State, System> extends Property<State> {
           }
         } on Exception catch (e) {
           printVerbose('  Error: $e');
-          _disposeBehavior(behavior, state, system);
+          _disposeBehavior(behavior, system);
 
           final shrinker = _StatefulPropertyShrinker(
             propertyContext,
@@ -175,7 +201,7 @@ final class StatefulProperty<State, System> extends Property<State> {
           return shrinker.shrink();
         }
       }
-      _disposeBehavior(behavior, state, system);
+      _disposeBehavior(behavior, system);
     }
     printVerbose('--------------------------------------------');
     return null;
@@ -183,14 +209,13 @@ final class StatefulProperty<State, System> extends Property<State> {
 
   void _disposeBehavior(
     Behavior<State, System> behavior,
-    State state,
     System system,
   ) {
     if (onDispose != null) {
-      onDispose?.call(behavior, state, system);
+      onDispose?.call(behavior, system);
     }
     behavior
-      ..dispose(state, system)
+      ..dispose(system)
       ..tearDown();
   }
 
@@ -324,7 +349,10 @@ final class _StatefulPropertyShrinker<State, System> {
   bool _checkShrunkSequence(TraversalSequence<State, System> sequence,
       {required String stepType}) {
     behavior.setUp();
-    final state = behavior.createState();
+    final (initPrecond, state) = property._createState();
+    if (!initPrecond) {
+      return false;
+    }
     final system = behavior.createSystem(state);
     final stateContext =
         StateContext(state, system, property, propertyContext.test);
@@ -343,11 +371,11 @@ final class _StatefulPropertyShrinker<State, System> {
         }
         lastException = e;
 
-        property._disposeBehavior(behavior, state, system);
+        property._disposeBehavior(behavior, system);
         return false;
       }
     }
-    property._disposeBehavior(behavior, state, system);
+    property._disposeBehavior(behavior, system);
     return true;
   }
 
@@ -358,8 +386,12 @@ final class _StatefulPropertyShrinker<State, System> {
     StateContext<State, System>? shrunkContext;
     while (_hasShrinkCycle && !allShrinkDone) {
       printVerbose('Shrink cycle ${_shrinkCycle + 1}');
-      behavior.setUp();
-      final state = propertyContext.behavior.createState();
+      final (initPrecond, state) = property._createState();
+      if (!initPrecond) {
+        printVerbose('  Error: initial precondition is not satisfied');
+        return shrunkContext;
+      }
+
       final system = propertyContext.behavior.createSystem(state);
       final stateContext =
           StateContext(state, system, property, propertyContext.test);
@@ -381,7 +413,7 @@ final class _StatefulPropertyShrinker<State, System> {
           break;
         }
       }
-      property._disposeBehavior(behavior, state, system);
+      property._disposeBehavior(behavior, system);
       propertyContext.shrinkCycle++;
     }
     return shrunkContext;

@@ -20,7 +20,7 @@ import 'package:test/scaffolding.dart';
 ///   - `cycleTimeout`: The timeout for each cycle.
 ///   - `setUp`: A function to run before each test case.
 ///   - `tearDown`: A function to run after each test case.
-///   - `onDispose`: A callback function that is called when state is disposed.
+///   - `onDispose`: A callback function that is called when system is disposed.
 ///   - `onFalsify`: A callback function that is called when a falsifying
 ///     example is found.
 ///   - `ignoreFalsify`: If set to true, the test will not be marked as failed even if
@@ -38,7 +38,7 @@ void runBehavior<State, System>(
   Timeout? cycleTimeout,
   void Function()? setUp,
   void Function()? tearDown,
-  void Function(Behavior<State, System>, State, System)? onDispose,
+  void Function(Behavior<State, System>, System)? onDispose,
   void Function(StatefulFalsifyingExample<State, System>)? onFalsify,
   bool? ignoreFalsify,
 }) {
