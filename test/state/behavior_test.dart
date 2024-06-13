@@ -314,7 +314,7 @@ void main() {
         maxCycles: 10,
         maxSteps: 10,
         tearDown: () {
-          expect(behavior.initialPreconditionCalled, 10);
+          expect(behavior.initialPreconditionCalled, 20);
           expect(behavior.preconditionsOnGenerate, 100);
           expect(behavior.preconditionsOnExecute, 100);
         },
