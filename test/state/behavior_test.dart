@@ -49,6 +49,39 @@ final class CounterSystem {
   int count;
 }
 
+final class InitialPreconditionBehavior extends Behavior<Null, Null> {
+  InitialPreconditionBehavior({this.shouldFail = false});
+
+  bool shouldFail = false;
+
+  @override
+  Null createState() => null;
+
+  @override
+  Null createSystem(Null s) => null;
+
+  int initialPreconditionCalled = 0;
+
+  @override
+  bool initialPrecondition(Null state) {
+    initialPreconditionCalled++;
+    return !shouldFail;
+  }
+
+  @override
+  List<Command<Null, Null>> generateCommands(
+    Null state,
+  ) {
+    return [
+      Action0(
+        'no op',
+        nextState: (s) {},
+        run: (system) {},
+      ),
+    ];
+  }
+}
+
 final class PreconditionCountBehavior extends Behavior<Null, Null> {
   @override
   Null createState() => null;
@@ -56,10 +89,17 @@ final class PreconditionCountBehavior extends Behavior<Null, Null> {
   @override
   Null createSystem(Null s) => null;
 
+  int initialPreconditionCalled = 0;
   int preconditionsOnGenerate = 0;
   int preconditionsOnExecute = 0;
 
   bool _onGenerate = true;
+
+  @override
+  bool initialPrecondition(Null state) {
+    initialPreconditionCalled++;
+    return true;
+  }
 
   @override
   void onGenerate(Null s) {
@@ -173,7 +213,7 @@ final class PostconditionCountBehavior extends Behavior<Null, Null> {
   }
 
   @override
-  void dispose(Null s, Null system) {
+  void dispose(Null system) {
     print('postconditions: $postconditions');
   }
 }
@@ -201,7 +241,7 @@ final class TestCallbacksBehavior extends Behavior<TestCallbacksState, Null> {
   }
 
   @override
-  void dispose(TestCallbacksState s, Null system) {
+  void dispose(Null system) {
     disposeCount++;
   }
 
@@ -240,13 +280,41 @@ void main() {
       );
     });
 
-    property('precondition calls on selecting and running commands', () {
+    group('initial precondition', () {
+      property('success', () {
+        final behavior = InitialPreconditionBehavior();
+        runBehavior(
+          behavior,
+          maxCycles: 10,
+          maxSteps: 10,
+          tearDown: () {
+            expect(behavior.initialPreconditionCalled, 20);
+          },
+        );
+      });
+
+      property('failure', () {
+        final behavior = InitialPreconditionBehavior(shouldFail: true);
+        runBehavior(
+          behavior,
+          maxCycles: 10,
+          maxSteps: 10,
+          tearDown: () {
+            expect(behavior.initialPreconditionCalled, 1);
+          },
+          ignoreFalsify: true,
+        );
+      });
+    });
+
+    property('precondition calls', () {
       final behavior = PreconditionCountBehavior();
       runBehavior(
         behavior,
         maxCycles: 10,
         maxSteps: 10,
         tearDown: () {
+          expect(behavior.initialPreconditionCalled, 10);
           expect(behavior.preconditionsOnGenerate, 100);
           expect(behavior.preconditionsOnExecute, 100);
         },

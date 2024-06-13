@@ -417,11 +417,22 @@ final class PropertyTestRunner {
 
       Statistics.initialize();
 
-      property.check(test);
+      Exception? exception;
+      try {
+        property.check(test);
+      } on KiriCheckException catch (e) {
+        exception = e;
+      } on Exception catch (e) {
+        rethrow;
+      }
 
       _printStatistics();
 
       printNormal('');
+
+      if (exception != null) {
+        print('Error: $exception');
+      }
     }
   }
 
