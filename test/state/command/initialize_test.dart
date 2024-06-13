@@ -15,7 +15,7 @@ final class InitializeState {
 
 final class InitializeBehavior extends Behavior<InitializeState, Null> {
   @override
-  InitializeState createState() => InitializeState();
+  InitializeState initialState() => InitializeState();
 
   @override
   Null createSystem(InitializeState s) => null;
@@ -45,7 +45,7 @@ final class InitializeBehavior extends Behavior<InitializeState, Null> {
   }
 
   @override
-  void dispose(InitializeState s, Null system) {
+  void destroy(InitializeState s, Null system) {
     expect(s.history.first, Marker.a);
     expect(s.history[1], Marker.b);
     expect(s.history.where((e) => e == Marker.a).length, 1);

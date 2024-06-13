@@ -14,7 +14,7 @@ final class SequenceTestState {
 
 final class SequenceTestBehavior extends Behavior<SequenceTestState, Null> {
   @override
-  SequenceTestState createState() {
+  SequenceTestState initialState() {
     return SequenceTestState();
   }
 

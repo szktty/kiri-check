@@ -7,7 +7,7 @@ import 'sample_system.dart';
 
 class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
   @override
-  BankAccountModel createState() {
+  BankAccountModel initialState() {
     return BankAccountModel();
   }
 

@@ -6,7 +6,7 @@ import 'package:test/test.dart';
 final class SubsequenceTestBehavior
     extends Behavior<SubsequenceTestState, Null> {
   @override
-  SubsequenceTestState createState() {
+  SubsequenceTestState initialState() {
     return SubsequenceTestState();
   }
 
@@ -60,7 +60,7 @@ final class SubsequenceTestState {
 
 final class FlagTestBehavior extends Behavior<FlagTestState, Null> {
   @override
-  FlagTestState createState() {
+  FlagTestState initialState() {
     return FlagTestState();
   }
 
@@ -118,7 +118,7 @@ final class FlagTestState {
 final class ShrinkingValueTestBehavior
     extends Behavior<ShrinkingValueTestState, Null> {
   @override
-  ShrinkingValueTestState createState() {
+  ShrinkingValueTestState initialState() {
     return ShrinkingValueTestState();
   }
 

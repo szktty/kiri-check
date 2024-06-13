@@ -10,7 +10,7 @@ final class ConditionalTestState {
 final class ConditionalTestBehavior
     extends Behavior<ConditionalTestState, Null> {
   @override
-  ConditionalTestState createState() => ConditionalTestState();
+  ConditionalTestState initialState() => ConditionalTestState();
 
   @override
   Null createSystem(ConditionalTestState s) => null;
@@ -36,7 +36,7 @@ final class ConditionalTestBehavior
   }
 
   @override
-  void dispose(ConditionalTestState s, Null system) {
+  void destroy(ConditionalTestState s, Null system) {
     expect(s.precondition, isTrue);
     expect(s.postcondition, isTrue);
   }
