@@ -24,37 +24,60 @@ final class InitializeBehavior extends Behavior<InitializeState, Null> {
   List<Command<InitializeState, Null>> generateCommands(InitializeState s) {
     return [
       Initialize(
-        'first a',
-        Action0<InitializeState, Null>('a', (s, system) {
-          s.history.add(Marker.a);
-        }),
+        Action0(
+          'a',
+          nextState: (s) {
+            s.history.add(Marker.a);
+          },
+          run: (system) {},
+        ),
       ),
       Initialize(
-        'first b',
-        Action0<InitializeState, Null>('b', (s, system) {
-          s.history.add(Marker.b);
-        }),
+        Action0(
+          'b',
+          nextState: (s) {
+            s.history.add(Marker.b);
+          },
+          run: (system) {},
+        ),
       ),
-      Action0<InitializeState, Null>('c', (s, system) {
-        s.history.add(Marker.c);
-      }),
-      Action0<InitializeState, Null>('d', (s, system) {
-        s.history.add(Marker.d);
-      }),
+      Action0(
+        'c',
+        nextState: (s) {
+          s.history.add(Marker.c);
+        },
+        run: (system) {},
+        precondition: checkState,
+      ),
+      Action0(
+        'd',
+        nextState: (s) {
+          s.history.add(Marker.d);
+        },
+        run: (system) {},
+        precondition: checkState,
+      ),
     ];
   }
 
-  @override
-  void destroy(InitializeState s, Null system) {
+  bool checkState(InitializeState s) {
     expect(s.history.first, Marker.a);
     expect(s.history[1], Marker.b);
     expect(s.history.where((e) => e == Marker.a).length, 1);
     expect(s.history.where((e) => e == Marker.b).length, 1);
+    return true;
   }
+
+  @override
+  void destroy(Null system) {}
 }
 
 void main() {
   property('basic', () {
-    runBehavior(InitializeBehavior());
+    runBehavior(
+      InitializeBehavior(),
+      maxCycles: 10,
+      maxSteps: 10,
+    );
   });
 }

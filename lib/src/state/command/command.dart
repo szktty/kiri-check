@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:kiri_check/src/state/command/context.dart';
 import 'package:meta/meta.dart';
 
@@ -55,7 +53,7 @@ abstract class Container<State, System> extends Command<State, System> {
 /// A command that initializes the state and system with another command.
 final class Initialize<State, System> extends Command<State, System> {
   /// Creates a new initialize command.
-  Initialize(super.description, this.command);
+  Initialize(this.command) : super(command.description);
 
   final Command<State, System> command;
 
@@ -84,8 +82,7 @@ final class Initialize<State, System> extends Command<State, System> {
 /// A command that finalizes the state and system with another command.
 final class Finalize<State, System> extends Command<State, System> {
   /// Creates a new finalize command.
-
-  Finalize(super.description, this.command);
+  Finalize(this.command) : super(command.description);
 
   final Command<State, System> command;
 
