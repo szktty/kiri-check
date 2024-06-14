@@ -4,7 +4,7 @@ import 'package:kiri_check/stateful_test.dart';
 import 'package:test/expect.dart';
 import 'package:test/test.dart';
 
-final class SequenceTestState {
+final class SequenceTestSystem {
   final events = <int>[];
 
   void add(int event) {
@@ -12,55 +12,56 @@ final class SequenceTestState {
   }
 }
 
-final class SequenceTestBehavior extends Behavior<SequenceTestState, Null> {
+final class SequenceTestBehavior extends Behavior<Null, SequenceTestSystem> {
   @override
-  SequenceTestState initialState() {
-    return SequenceTestState();
-  }
-
-  @override
-  Null createSystem(SequenceTestState s) {
+  Null initialState() {
     return null;
   }
 
   @override
-  List<Command<SequenceTestState, Null>> generateCommands(SequenceTestState s) {
+  SequenceTestSystem createSystem(Null _) {
+    return SequenceTestSystem();
+  }
+
+  @override
+  List<Command<Null, SequenceTestSystem>> generateCommands(Null s) {
     return [
-      Initialize('first sequence', _sequence(1, 3)),
+      Initialize(_sequence(1, 3)),
       _sequence(4, 6),
-      Finalize('last sequence', _sequence(7, 9)),
+      Finalize(_sequence(7, 9)),
     ];
   }
 
-  Sequence<SequenceTestState, Null> _sequence(int start, int end) {
+  Sequence<Null, SequenceTestSystem> _sequence(int start, int end) {
     return Sequence('sequence', [
       for (var i = start; i <= end; i++)
         Action0(
           'add $i',
-          (s, system) {
-            s.add(i);
+          nextState: (s) {},
+          run: (system) {
+            system.add(i);
           },
         ),
     ]);
+  }
+
+  @override
+  void destroy(SequenceTestSystem system) {
+    final equals = const DeepCollectionEquality().equals;
+    final events = system.events;
+    expect(events.sublist(0, 3), predicate((e) => equals(e, [1, 2, 3])));
+    expect(
+      events.sublist(events.length - 3, events.length),
+      predicate((e) => equals(e, [7, 8, 9])),
+    );
+    for (var i = 0; i < events.length - 6; i++) {
+      expect(events[i + 3], [4, 5, 6][i % 3]);
+    }
   }
 }
 
 void main() {
   property('with initializer and finalizer which contain sequence', () {
-    runBehavior(
-      SequenceTestBehavior(),
-      onDestroy: (behavior, state, system) {
-        final equals = const DeepCollectionEquality().equals;
-        final events = state.events;
-        expect(events.sublist(0, 3), predicate((e) => equals(e, [1, 2, 3])));
-        expect(
-          events.sublist(events.length - 3, events.length),
-          predicate((e) => equals(e, [7, 8, 9])),
-        );
-        for (var i = 0; i < events.length - 6; i++) {
-          expect(events[i + 3], [4, 5, 6][i % 3]);
-        }
-      },
-    );
+    runBehavior(SequenceTestBehavior(), maxCycles: 10, maxSteps: 10);
   });
 }
