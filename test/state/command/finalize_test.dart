@@ -9,52 +9,80 @@ enum Marker {
   d,
 }
 
-final class FinalizeState {
-  final List<Marker> history = [];
-}
+final class FinalizeState {}
 
 final class FinalizeBehavior extends Behavior<FinalizeState, Null> {
   @override
-  FinalizeState initialState() => FinalizeState();
+  FinalizeState initialState() {
+    history.clear();
+    return FinalizeState();
+  }
 
   @override
   Null createSystem(FinalizeState s) => null;
+
+  final List<Marker> history = [];
 
   @override
   List<Command<FinalizeState, Null>> generateCommands(FinalizeState s) {
     return [
       Finalize(
-        'final a',
-        Action0<FinalizeState, Null>('a', (s, system) {
-          s.history.add(Marker.a);
-        }),
+        Action0(
+          'a',
+          nextState: (s) {
+            history.add(Marker.a);
+          },
+          run: (system) {},
+        ),
       ),
       Finalize(
-        'final b',
-        Action0<FinalizeState, Null>('b', (s, system) {
-          s.history.add(Marker.b);
-        }),
+        Action0(
+          'b',
+          nextState: (s) {
+            history.add(Marker.b);
+          },
+          run: (system) {},
+        ),
       ),
-      Action0<FinalizeState, Null>('c', (s, system) {
-        s.history.add(Marker.c);
-      }),
-      Action0<FinalizeState, Null>('d', (s, system) {
-        s.history.add(Marker.d);
-      }),
+      Action0(
+        'c',
+        nextState: (s) {
+          history.add(Marker.c);
+        },
+        run: (system) {},
+      ),
+      Action0(
+        'd',
+        nextState: (s) {
+          history.add(Marker.d);
+        },
+        run: (system) {},
+      ),
     ];
   }
 
   @override
-  void destroy(FinalizeState s, Null system) {
-    expect(s.history[s.history.length - 2], Marker.a);
-    expect(s.history.last, Marker.b);
-    expect(s.history.where((e) => e == Marker.a).length, 1);
-    expect(s.history.where((e) => e == Marker.b).length, 1);
+  void tearDown() {
+    if (history.length > 1) {
+      expect(history.removeLast(), equals(Marker.b));
+      expect(history.removeLast(), equals(Marker.a));
+    }
+    for (final e in history) {
+      expect(e, isNot(Marker.a));
+      expect(e, isNot(Marker.b));
+    }
   }
+
+  @override
+  void destroy(Null system) {}
 }
 
 void main() {
   property('basic', () {
-    runBehavior(FinalizeBehavior());
+    runBehavior(
+      FinalizeBehavior(),
+      maxCycles: 10,
+      maxSteps: 10,
+    );
   });
 }

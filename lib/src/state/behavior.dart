@@ -23,16 +23,16 @@ abstract class Behavior<State, System> {
   /// Destroy the given system.
   void destroy(System system);
 
-  /// Called before the test is run.
+  /// Called before the cycle is run.
   void setUp() {}
 
-  /// Called once before all tests are run.
+  /// Called once before all cycles are run.
   void setUpAll() {}
 
-  /// Called after the test is run.
+  /// Called after the cycle is run.
   void tearDown() {}
 
-  /// Called once after all tests are run.
+  /// Called once after all cycles are run.
   void tearDownAll() {}
 
   /// Called at the beginning of the command generation phase.
