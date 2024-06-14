@@ -150,4 +150,7 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
       ...basicWithdrawActions(s),
     ];
   }
+
+  @override
+  void destroy(BankSystem system) {}
 }

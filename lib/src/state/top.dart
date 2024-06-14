@@ -20,7 +20,7 @@ import 'package:test/scaffolding.dart';
 ///   - `cycleTimeout`: The timeout for each cycle.
 ///   - `setUp`: A function to run before each test case.
 ///   - `tearDown`: A function to run after each test case.
-///   - `onDispose`: A callback function that is called when system is disposed.
+///   - `onDestroy`: A callback function that is called when system is destroyd.
 ///   - `onFalsify`: A callback function that is called when a falsifying
 ///     example is found.
 ///   - `ignoreFalsify`: If set to true, the test will not be marked as failed even if
@@ -38,7 +38,7 @@ void runBehavior<State, System>(
   Timeout? cycleTimeout,
   void Function()? setUp,
   void Function()? tearDown,
-  void Function(Behavior<State, System>, System)? onDispose,
+  void Function(Behavior<State, System>, System)? onDestroy,
   void Function(StatefulFalsifyingExample<State, System>)? onFalsify,
   bool? ignoreFalsify,
 }) {
@@ -55,7 +55,7 @@ void runBehavior<State, System>(
     ),
     setUp: setUp,
     tearDown: tearDown,
-    onDispose: onDispose,
+    onDestroy: onDestroy,
     onFalsify: onFalsify,
   );
   PropertyTestManager.addProperty(property);

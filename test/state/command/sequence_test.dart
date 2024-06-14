@@ -49,7 +49,7 @@ void main() {
   property('with initializer and finalizer which contain sequence', () {
     runBehavior(
       SequenceTestBehavior(),
-      onDispose: (behavior, state, system) {
+      onDestroy: (behavior, state, system) {
         final equals = const DeepCollectionEquality().equals;
         final events = state.events;
         expect(events.sublist(0, 3), predicate((e) => equals(e, [1, 2, 3])));

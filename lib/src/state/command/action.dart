@@ -72,6 +72,14 @@ final class Action<State, System, T, R> extends Command<State, System> {
 
 /// A command [Action] with no arbitrary.
 final class Action0<State, System, R> extends Action<State, System, void, R> {
+  /// Creates a new action command with no arbitrary.
+  ///
+  /// Parameters:
+  /// - `description`: The description of the action.
+  /// - `nextState`: A function to update the state.
+  /// - `run`: A function to perform the action.
+  /// - `precondition`: A function to test the precondition of the action.
+  /// - `postcondition`: A function to test the postcondition of the action.
   Action0(
     String description, {
     required void Function(State) nextState,
@@ -89,14 +97,23 @@ final class Action0<State, System, R> extends Action<State, System, void, R> {
 }
 
 /// A command [Action] with 2 arbitraries.
-final class Action2<State, System, E1, E2, R>
-    extends Action<State, System, (E1, E2), R> {
+final class Action2<State, System, T1, T2, R>
+    extends Action<State, System, (T1, T2), R> {
+  /// Creates a new action command with 2 arbitraries.
+  ///
+  /// Parameters:
+  /// - `description`: The description of the action.
+  /// - `arbitrary1`: The arbitrary used to generate the first value.
+  /// - `arbitrary2`: The arbitrary used to generate the second value.
+  /// - `run`: A function to perform the action.
+  /// - `precondition`: A function to test the precondition of the action.
+  /// - `postcondition`: A function to test the postcondition of the action.
   Action2(
     String description,
-    Arbitrary<E1> arbitrary1,
-    Arbitrary<E2> arbitrary2, {
-    required void Function(State, E1, E2) nextState,
-    required R Function(System, E1, E2) run,
+    Arbitrary<T1> arbitrary1,
+    Arbitrary<T2> arbitrary2, {
+    required void Function(State, T1, T2) nextState,
+    required R Function(System, T1, T2) run,
     super.precondition,
     super.postcondition,
   }) : super(
