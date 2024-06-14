@@ -68,7 +68,7 @@ final class StatefulProperty<State, System> extends Property<State> {
     Timeout? cycleTimeout,
     super.setUp,
     super.tearDown,
-    this.onDispose,
+    this.onDestroy,
     this.onFalsify,
   }) {
     maxCycles = settings.maxStatefulCycles ?? KiriCheck.maxStatefulCycles;
@@ -82,7 +82,7 @@ final class StatefulProperty<State, System> extends Property<State> {
 
   final Behavior<State, System> behavior;
 
-  final void Function(Behavior<State, System>, System)? onDispose;
+  final void Function(Behavior<State, System>, System)? onDestroy;
   final void Function(StatefulFalsifyingExample<State, System>)? onFalsify;
 
   late final int maxCycles;
@@ -189,7 +189,7 @@ final class StatefulProperty<State, System> extends Property<State> {
           }
         } on Exception catch (e) {
           printVerbose('  Error: $e');
-          _disposeBehavior(behavior, system);
+          _destroyBehavior(behavior, system);
 
           final shrinker = _StatefulPropertyShrinker(
             propertyContext,
@@ -201,18 +201,18 @@ final class StatefulProperty<State, System> extends Property<State> {
           return shrinker.shrink();
         }
       }
-      _disposeBehavior(behavior, system);
+      _destroyBehavior(behavior, system);
     }
     printVerbose('--------------------------------------------');
     return null;
   }
 
-  void _disposeBehavior(
+  void _destroyBehavior(
     Behavior<State, System> behavior,
     System system,
   ) {
-    if (onDispose != null) {
-      onDispose?.call(behavior, system);
+    if (onDestroy != null) {
+      onDestroy?.call(behavior, system);
     }
     behavior
       ..destroy(system)
@@ -371,11 +371,11 @@ final class _StatefulPropertyShrinker<State, System> {
         }
         lastException = e;
 
-        property._disposeBehavior(behavior, system);
+        property._destroyBehavior(behavior, system);
         return false;
       }
     }
-    property._disposeBehavior(behavior, system);
+    property._destroyBehavior(behavior, system);
     return true;
   }
 
@@ -413,7 +413,7 @@ final class _StatefulPropertyShrinker<State, System> {
           break;
         }
       }
-      property._disposeBehavior(behavior, system);
+      property._destroyBehavior(behavior, system);
       propertyContext.shrinkCycle++;
     }
     return shrunkContext;

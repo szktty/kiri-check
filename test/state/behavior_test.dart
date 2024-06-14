@@ -235,7 +235,7 @@ final class TestCallbacksBehavior extends Behavior<TestCallbacksState, Null> {
   int setUpAllCount = 0;
   int tearDownCount = 0;
   int tearDownAllCount = 0;
-  int disposeCount = 0;
+  int destroyCount = 0;
 
   @override
   TestCallbacksState initialState() => TestCallbacksState();
@@ -254,7 +254,7 @@ final class TestCallbacksBehavior extends Behavior<TestCallbacksState, Null> {
 
   @override
   void destroy(Null system) {
-    disposeCount++;
+    destroyCount++;
   }
 
   @override
@@ -367,7 +367,7 @@ void main() {
         tearDown: () {
           expect(behavior.setUpCount, 10);
           expect(behavior.setUpAllCount, 1);
-          expect(behavior.disposeCount, 10);
+          expect(behavior.destroyCount, 10);
           expect(behavior.tearDownCount, 10);
           expect(behavior.tearDownAllCount, 1);
         },
