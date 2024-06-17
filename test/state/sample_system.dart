@@ -1,11 +1,11 @@
 import 'sample_model.dart';
 
-final class BankSystem {
+final class BankAccountManager {
   final BankAccountSettings settings = BankAccountSettings();
   final Map<int, BankAccountSystem> accounts = {};
 
-  void register(int id) {
-    accounts[id] = BankAccountSystem(id, settings.defaultBalance);
+  BankAccountSystem register(int id) {
+    return accounts[id] = BankAccountSystem(id, settings.defaultBalance);
   }
 
   bool frozen(int id) {

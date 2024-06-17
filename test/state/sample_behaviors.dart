@@ -5,113 +5,103 @@ import 'package:test/test.dart';
 import 'sample_model.dart';
 import 'sample_system.dart';
 
-class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
+class BankAccountBehavior
+    extends Behavior<BankAccountModel, BankAccountSystem> {
+  BankAccountManager? manager;
+
+  @override
+  void setUp() {
+    manager = BankAccountManager();
+  }
+
   @override
   BankAccountModel initialState() {
     return BankAccountModel();
   }
 
   @override
-  BankSystem createSystem(BankAccountModel state) {
-    return BankSystem()..register(state.id);
+  BankAccountSystem createSystem(BankAccountModel state) {
+    return manager!.register(state.id);
   }
 
-  Action0<BankAccountModel, BankSystem> nextDayAction() {
+  Action0<BankAccountModel, BankAccountSystem, bool> nextDayAction() {
     return Action0(
       'next day',
-      (s, system) {
-        s.nextDay();
+      nextState: (s) => s.nextDay(),
+      run: (system) {
         system.nextDay();
+        return system.frozen;
       },
-      postcondition: (s, system) {
-        return s.frozen == system.frozen(s.id) &&
-            s.balance == system.getBalance(s.id);
+      postcondition: (s, frozen) {
+        return frozen == false;
       },
     );
   }
 
-  List<Action0<BankAccountModel, BankSystem>> freezeActions() {
+  List<Action0<BankAccountModel, BankAccountSystem, bool>> freezeActions() {
     return [
       Action0(
         'freeze',
-        (s, system) {
-          expect(system.freeze(s.id), s.freeze());
+        nextState: (s) => s.freeze(),
+        run: (system) {
+          system.freeze();
+          return system.frozen;
         },
-        postcondition: (s, system) {
-          return s.frozen && system.frozen(s.id);
+        postcondition: (s, frozen) {
+          return frozen == true;
         },
       ),
       Action0(
         'unfreeze',
-        (s, system) {
-          expect(system.unfreeze(s.id), s.unfreeze());
+        nextState: (s) => s.unfreeze(),
+        run: (system) {
+          system.unfreeze();
+          return system.frozen;
         },
-        postcondition: (s, system) {
-          print(
-            'postcondition: frozen: ${s.frozen}, ${system.frozen(s.id)}, balance: ${s.balance}, ${system.getBalance(s.id)}',
-          );
-          return !s.frozen && !system.frozen(s.id);
+        postcondition: (s, frozen) {
+          return frozen == false;
         },
       ),
     ];
   }
 
-  Action<BankAccountModel, BankSystem, int> amountAction(
-    String description,
-    void Function(BankAccountModel, BankSystem, int) action, {
-    String? reason,
-    int min = 0,
-    int? max,
-  }) {
-    return Action(
-      description,
-      integer(min: min, max: max),
-      action,
-      postcondition: (s, system) {
-        print(
-          'postcondition: frozen: ${s.frozen}, ${system.frozen(s.id)}, balance: ${s.balance}, ${system.getBalance(s.id)}',
-        );
-        return s.frozen == system.frozen(s.id) &&
-            s.balance == system.getBalance(s.id);
-      },
-    );
-  }
-
-  Action<BankAccountModel, BankSystem, int> depositAction(
+  Command<BankAccountModel, BankAccountSystem> depositAction(
     String description, {
-    String? reason,
     int min = 0,
     int? max,
   }) =>
-      amountAction(
+      Action(
         description,
-        (s, system, amount) =>
-            expect(system.deposit(s.id, amount), s.deposit(amount)),
-        reason: reason,
-        min: min,
-        max: max,
-      );
-
-  Action<BankAccountModel, BankSystem, int> withdrawAction(
-    String description, {
-    String? reason,
-    int min = 0,
-    int? max,
-  }) =>
-      amountAction(
-        description,
-        (s, system, amount) {
-          print(
-            'current withdraw per day: ${s.withdrawPerDay}, ${system.accounts[s.id]!.withdrawPerDay}',
-          );
-          expect(system.withdraw(s.id, amount), s.withdraw(amount));
+        integer(min: min, max: max),
+        nextState: (s, amount) => s.deposit(amount),
+        run: (system, amount) {
+          system.deposit(amount);
+          return system.balance;
         },
-        reason: reason,
-        min: min,
-        max: max,
+        postcondition: (s, amount, balance) {
+          return s.balance + amount == balance;
+        },
       );
 
-  List<Command<BankAccountModel, BankSystem>> basicDepositActions(
+  Command<BankAccountModel, BankAccountSystem> withdrawAction(
+    String description, {
+    int min = 0,
+    int? max,
+  }) =>
+      Action(
+        description,
+        integer(min: min, max: max),
+        nextState: (s, amount) => s.withdraw(amount),
+        run: (system, amount) {
+          system.withdraw(amount);
+          return system.balance;
+        },
+        postcondition: (s, amount, balance) {
+          return s.balance - amount == balance;
+        },
+      );
+
+  List<Command<BankAccountModel, BankAccountSystem>> basicDepositActions(
     BankAccountModel s,
   ) =>
       [
@@ -125,7 +115,7 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
         ),
       ];
 
-  List<Command<BankAccountModel, BankSystem>> basicWithdrawActions(
+  List<Command<BankAccountModel, BankAccountSystem>> basicWithdrawActions(
     BankAccountModel s,
   ) =>
       [
@@ -140,7 +130,7 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
       ];
 
   @override
-  List<Command<BankAccountModel, BankSystem>> generateCommands(
+  List<Command<BankAccountModel, BankAccountSystem>> generateCommands(
     BankAccountModel s,
   ) {
     return [
@@ -152,5 +142,5 @@ class BankAccountBehavior extends Behavior<BankAccountModel, BankSystem> {
   }
 
   @override
-  void destroy(BankSystem system) {}
+  void destroy(BankAccountSystem system) {}
 }

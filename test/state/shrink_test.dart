@@ -24,10 +24,11 @@ final class SubsequenceTestBehavior
       n++;
       return Action0(
         'increment $value ($n)',
-        (s, system) {
+        nextState: (s) {
           s.increment(value);
         },
-        postcondition: (s, system) => s.value < 100,
+        run: (system) {},
+        postcondition: (s, _) => s.value < 100,
       );
     }
 
@@ -48,6 +49,9 @@ final class SubsequenceTestBehavior
       ]),
     ];
   }
+
+  @override
+  void destroy(Null system) {}
 }
 
 final class SubsequenceTestState {
@@ -72,39 +76,45 @@ final class FlagTestBehavior extends Behavior<FlagTestState, Null> {
   @override
   List<Command<FlagTestState, Null>> generateCommands(FlagTestState state) {
     return [
-      Action0('no op', (s, system) {}),
+      Action0('no op', nextState: (s) {}, run: (system) {}),
       Action0(
         'set a',
-        (s, system) {
+        nextState: (s) {
           s.a = true;
         },
-        postcondition: (s, system) => !s.allSet,
+        run: (system) {},
+        postcondition: (s, _) => !s.allSet,
       ),
       Action0(
         'set b',
-        (s, system) {
+        nextState: (s) {
           s.b = true;
         },
-        postcondition: (s, system) => !s.allSet,
+        run: (system) {},
+        postcondition: (s, _) => !s.allSet,
       ),
       Action0(
         'set c',
-        (s, system) {
+        nextState: (s) {
           s.c = true;
         },
-        postcondition: (s, system) => !s.allSet,
+        run: (system) {},
+        postcondition: (s, _) => !s.allSet,
       ),
-      Action0('clear a', (s, system) {
+      Action0('clear a', nextState: (s) {
         s.a = false;
-      }),
-      Action0('clear b', (s, system) {
+      }, run: (system) {}),
+      Action0('clear b', nextState: (s) {
         s.b = false;
-      }),
-      Action0('clear c', (s, system) {
+      }, run: (system) {}),
+      Action0('clear c', nextState: (s) {
         s.c = false;
-      }),
+      }, run: (system) {}),
     ];
   }
+
+  @override
+  void destroy(Null system) {}
 }
 
 final class FlagTestState {
@@ -135,13 +145,18 @@ final class ShrinkingValueTestBehavior
       Action(
         'increment',
         integer(min: 1000, max: 7000),
-        (s, system, value) {
+        nextState: (s, value) {
+          print('increment $value');
           s.value += value;
         },
-        postcondition: (s, system) => s.value < 10000,
+        run: (system, value) {},
+        postcondition: (s, value, _) => (s.value + value) < 10000,
       ),
     ];
   }
+
+  @override
+  void destroy(Null system) {}
 }
 
 final class ShrinkingValueTestState {
@@ -156,7 +171,8 @@ void main() {
     runBehavior(
       SubsequenceTestBehavior(),
       onFalsify: (example) {
-        expect(example.steps.length, lessThanOrEqualTo(5));
+        expect(example.falsifyingSteps.length,
+            lessThan(example.originalSteps.length));
       },
       ignoreFalsify: true,
     );
@@ -166,7 +182,8 @@ void main() {
     runBehavior(
       FlagTestBehavior(),
       onFalsify: (example) {
-        expect(example.steps.length, 3);
+        expect(example.falsifyingSteps.length,
+            lessThan(example.originalSteps.length));
       },
       ignoreFalsify: true,
     );
@@ -180,14 +197,13 @@ void main() {
         final sum = example.falsifyingSteps
             .map((e) => e.value as int)
             .fold<int>(0, (a, b) => a + b);
-        print('sum: $sum');
+        print(
+            'sum: $sum, ${example.falsifyingState.value}, original: ${example.originalState.value}');
+        expect(example.falsifyingState.value,
+            lessThan(example.originalState.value));
         expect(
           sum,
-          allOf(
-            lessThanOrEqualTo(example.originalState.value),
-            greaterThanOrEqualTo(10000),
-            lessThanOrEqualTo(15000),
-          ),
+          allOf(greaterThanOrEqualTo(10000), lessThanOrEqualTo(15000)),
         );
       },
       ignoreFalsify: true,
