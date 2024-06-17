@@ -401,9 +401,9 @@ final class _StatefulPropertyShrinker<State, System> {
         printVerbose('Shrink value step ${i + 1}: ${step.command.description}');
         try {
           if (step.commandContext.tryShrink()) {
+            step.commandContext.nextValue();
             allShrinkDone = false;
           }
-          // TODO: tryShrink と nextValue を分けるべき？
           stateContext.runCommand(step.commandContext);
         } on Exception catch (e) {
           printVerbose('  Error: $e');
