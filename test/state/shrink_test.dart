@@ -197,8 +197,6 @@ void main() {
         final sum = example.falsifyingSteps
             .map((e) => e.value as int)
             .fold<int>(0, (a, b) => a + b);
-        print(
-            'sum: $sum, ${example.falsifyingState.value}, original: ${example.originalState.value}');
         expect(example.falsifyingState.value,
             lessThan(example.originalState.value));
         expect(
