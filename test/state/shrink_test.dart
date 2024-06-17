@@ -166,7 +166,6 @@ final class ShrinkingValueTestState {
 void main() {
   KiriCheck.verbosity = Verbosity.verbose;
 
-  /*
   property('extract subsequence', () {
     runBehavior(
       SubsequenceTestBehavior(),
@@ -188,7 +187,6 @@ void main() {
       ignoreFalsify: true,
     );
   });
-   */
 
   property('shrink values', () {
     runBehavior(
