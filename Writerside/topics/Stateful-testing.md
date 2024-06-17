@@ -1,18 +1,21 @@
 # Stateful testing
 
+<note>
+ステートフルテストの実装はベータ版であり、APIは今後変更する可能性がある。
+</note>
+
 ## What should be tested
 
 - 何をテストするのか
 - kiri-checkのステートフルテストでは、抽象モデルと実システムの状態変化を照合する
 - 抽象モデルとは、実システムのあるべき振る舞いを表現したもの
-- ランダムなコマンドにより抽象モデルと実システムの状態を変化させ、実システムの状態がモデルと比較して妥当であるかを検証する
+- 抽象モデルと実システムの状態をランダムに変化させ、実システムの変化後の状態が抽象モデルと比較して妥当であるかを検証する
 - そのため、抽象モデルの実装は正確かつシンプルにすべき
 
 <note>
-- 注釈
-- これらをモデルベースと呼ばれることがあるが、kiri-checkでは名称に特にこだわらない
-- 便宜的にモデルと呼んでいるだけで、テストの実体はFSMに対する検証である。抽象モデルも実システムも、必ずしも完全なモデルを表す必要はない
-- また、kiri-checkのステートフルテストはモデル検査とは異なる。仕様の妥当性を検査するものではなく、実装に対するテストである
+- 抽象モデルと実システムを比較するテストはモデルベーステストと呼ばれることがあるが、kiri-checkでは単にステートフルテストと呼ぶ
+- このドキュメントではあるべき振る舞いを便宜的にモデルと呼んでいるものの、あくまで状態変化に対する検証である。完璧なモデルを用意する必要はない
+- また、ステートフルテストはモデル検査とは異なる。仕様の妥当性を検査するものではなく、実装に対するテストである
 </note>
 
 ## Model and commands
@@ -59,7 +62,7 @@
 
       SelectCommand: Randomly select
       Precondition: Command.precondition(State)
-      CreateState: Behavior.createState()
+      CreateState: Behavior.initializeState()
       InitializePrecondition: Behavior.initializePrecondition(State)
       GenerateCommands: Behavior.generateCommands(State)
       GenerationLoop: Command selection loop
@@ -67,7 +70,7 @@
 </code-block>
 
 - Behavior.craeteState()で抽象モデルを生成する
-  - createState()はユーザーが定義すべきメソッド
+  - initializeState()はユーザーが定義すべきメソッド
 - 生成したインスタンスはBehavior.initializePrecondition(State)で初期化時の事前条件をチェックする
   - 戻り値がfalseであればテストは失敗になる。
   - initializePrecondition()はユーザーが定義可能なメソッド。デフォルトの実装ではtrueを返す
@@ -116,13 +119,13 @@
 
       Precondition: Command.precondition(State)
       Postcondition: Command.postcondition(State, Result)
-      CreateState: Behavior.createState()
+      CreateState: Behavior.initializeState()
       CreateSystem: Behavior.createSystem(State)
       InitializePrecondition: Behavior.initializePrecondition(State)
        ExecutionLoop: Execution loop
       NextState: Command.nextState(State)
       Run: Command.run(System)
-      Dispose: Behavior.dispose(System)
+      Dispose: Behavior.destroy(System)
 </code-block>
 
 - Behavior.initializePrecondition(State)までの処理はコマンド生成フェーズと同じ
@@ -149,5 +152,71 @@
 ## Shrinking
 
 - エラーが発生した場合、コマンド列を縮小する
-- 部分列、削除、値の縮小
+- 3つのフェーズ:部分列、削除、値の縮小
 - 縮小されたコマンド列が最小のエラーを示す
+- 以下例
+
+<code-block lang="mermaid">
+flowchart TB
+  phase0 -->|Split into sequences| phase1
+  phase1 -->|Fail: 2 4 4 6| phase2
+  phase2 -->|Minimum sequence: 2 6| phase3
+  phase3 -->|Minimum values: 0 1| result
+
+  subgraph phase0 [Failed sequence]
+  direction LR
+  p0c1[1] ~~~ p0c2[5] ~~~ p0c3[7] ~~~ p0c4[3] ~~~ p0c5[2] ~~~ p0c6[4] ~~~ p0c7[4] ~~~ p0c8[6] ~~~ p0c9[2] ~~~ p0c10[8] ~~~ p0c11[1] ~~~ p0c12[7]
+  end
+
+  subgraph phase1 [Phase 1: Partial sequences]
+  direction LR
+  phase1a ~~~ phase1b ~~~ phase1c
+  subgraph phase1a [ ]
+  direction LR
+  p2s1[1] ~~~ p2s2[5] ~~~ p2s3[7] ~~~ p2s4[3]
+  end
+  subgraph phase1b [ ]
+  direction LR
+  p2s5[2] ~~~ p2s6[4] ~~~ p2s7[4] ~~~ p2s8[6]
+  end
+  subgraph phase1c [ ]
+  direction LR
+  p2s9[2] ~~~ p2s10[8] ~~~ p2s11[1] ~~~ p2s12[7]
+  end
+  end
+
+  subgraph phase2 [Phase 2: Reduced sequences]
+  phase2a ~~~ phase2b ~~~ phase2c
+  subgraph phase2a [Reduced: 2]
+  direction LR
+  p2a1[4] ~~~ p2a2[4] ~~~ p2a3[6]
+  end
+  subgraph phase2b [Reduced: 4]
+  direction LR
+  p2b1[2] ~~~ p2b2[6]
+  end
+  subgraph phase2c [Reduced: 6]
+  direction LR
+  p2c1[2] ~~~ p2c2[4] ~~~ p2c3[4]
+  end
+  end
+
+  subgraph phase3 [Phase 3: Shrinking values]
+  direction TB
+  phase3a --> phase3b
+  phase3b --> phase3c[Repeat]
+  subgraph phase3a [ ]
+  direction LR
+  p3a1[2] ~~~ p3a2[6]
+  end
+  subgraph phase3b [ ]
+  direction LR
+  p3b1[1] ~~~ p3b2[3]
+  end
+  end
+
+  subgraph result [Falsifying sequence]
+  direction LR
+  r1[0] ~~~ r2[1]
+  end
+</code-block>
