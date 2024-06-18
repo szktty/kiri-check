@@ -43,7 +43,7 @@ final class CounterSystem {
   }
 }
 
-// ステートフルテスト内容を定義する
+// Definition of stateful test content.
 final class CounterBehavior extends Behavior<CounterModel, CounterSystem> {
   @override
   CounterModel initialState() {
@@ -65,7 +65,7 @@ final class CounterBehavior extends Behavior<CounterModel, CounterSystem> {
           system.reset();
           return system.count;
         },
-        postcondition: (s, count) => s.count == count,
+        postcondition: (s, count) => count == 0,
       ),
       Action0(
         'increment',
@@ -74,7 +74,7 @@ final class CounterBehavior extends Behavior<CounterModel, CounterSystem> {
           system.increment();
           return system.count;
         },
-        postcondition: (s, count) => s.count == count,
+        postcondition: (s, count) => s.count + 1 == count,
       ),
       Action0(
         'decrement',
@@ -83,22 +83,16 @@ final class CounterBehavior extends Behavior<CounterModel, CounterSystem> {
           system.decrement();
           return system.count;
         },
-        postcondition: (s, count) => s.count == count,
-      ),
-      Action(
-        'set',
-        integer(),
-        nextState: (s, count) => s.count = count,
-        run: (system, count) => system.count = count,
-        postcondition: (s, count) => s.count == count,
+        postcondition: (s, count) => s.count - 1 == count,
       ),
     ];
   }
+
+  @override
+  void destroy(CounterSystem system) {}
 }
 
 void main() {
-  KiriCheck.verbosity = Verbosity.verbose;
-
   property('counter', () {
     // Run a stateful test.
     runBehavior(CounterBehavior());
