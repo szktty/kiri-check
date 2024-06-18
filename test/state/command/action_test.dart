@@ -38,7 +38,7 @@ abstract class ActionTestBehaviorBase
       ConditionalTestSystem(s.result);
 
   @override
-  void destroy(ConditionalTestSystem system) {
+  void destroySystem(ConditionalTestSystem system) {
     expect(system.run, isTrue);
   }
 }

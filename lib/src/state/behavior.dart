@@ -21,7 +21,7 @@ abstract class Behavior<State, System> {
   List<Command<State, System>> generateCommands(State state);
 
   /// Destroy the given system.
-  void destroy(System system);
+  void destroySystem(System system);
 
   /// Called before the cycle is run.
   void setUp() {}

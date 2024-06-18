@@ -14,7 +14,7 @@ final class CounterBehavior extends Behavior<CounterState, CounterSystem> {
   }
 
   @override
-  void destroy(CounterSystem system) {}
+  void destroySystem(CounterSystem system) {}
 
   @override
   List<Command<CounterState, CounterSystem>> generateCommands(CounterState s) {
@@ -64,7 +64,7 @@ final class InitialPreconditionBehavior extends Behavior<Null, Null> {
   Null createSystem(Null s) => null;
 
   @override
-  void destroy(Null system) {}
+  void destroySystem(Null system) {}
 
   int initialPreconditionCalled = 0;
 
@@ -108,7 +108,7 @@ final class PreconditionCountBehavior extends Behavior<Null, Null> {
   }
 
   @override
-  void destroy(Null system) {}
+  void destroySystem(Null system) {}
 
   @override
   void onGenerate(Null s) {
@@ -150,7 +150,7 @@ final class PreconditionConditionalBehavior extends Behavior<Null, Null> {
   Null createSystem(Null s) => null;
 
   @override
-  void destroy(Null system) {}
+  void destroySystem(Null system) {}
 
   int preconditionsOnGenerate = 0;
   int preconditionsOnExecute = 0;
@@ -225,7 +225,7 @@ final class PostconditionCountBehavior extends Behavior<Null, Null> {
   }
 
   @override
-  void destroy(Null system) {
+  void destroySystem(Null system) {
     print('postconditions: $postconditions');
   }
 }
@@ -253,7 +253,7 @@ final class TestCallbacksBehavior extends Behavior<TestCallbacksState, Null> {
   }
 
   @override
-  void destroy(Null system) {
+  void destroySystem(Null system) {
     destroyCount++;
   }
 
