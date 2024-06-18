@@ -1,7 +1,7 @@
 # Stateful testing
 
 <note>
-ステートフルテストの実装はベータ版であり、APIは今後変更する可能性がある。
+The implementation of stateful testing is in beta, and the API may change in the future.
 </note>
 
 ## What should be tested
