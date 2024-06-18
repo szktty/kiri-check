@@ -11,6 +11,7 @@ abstract class Behavior<State, System> {
   @factory
   State initialState();
 
+  /// Returns true if the given state satisfies the initial precondition.
   bool initialPrecondition(State state) => true;
 
   /// Creates a new system with the given state.

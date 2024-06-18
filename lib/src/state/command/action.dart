@@ -9,7 +9,7 @@ import 'package:kiri_check/src/state/command/command.dart';
 import 'package:kiri_check/src/state/command/context.dart';
 import 'package:meta/meta.dart';
 
-/// A command that performs an action with generated values.
+/// A command that performs actions with generated values.
 final class Action<State, System, T, R> extends Command<State, System> {
   /// Creates a new action command.
   ///
@@ -33,7 +33,7 @@ final class Action<State, System, T, R> extends Command<State, System> {
     _postcondition = postcondition;
   }
 
-  /// :nodoc:
+  /// @nodoc
   @internal
   final Arbitrary<T>? arbitrary;
 
@@ -69,6 +69,9 @@ final class Action<State, System, T, R> extends Command<State, System> {
         true;
   }
 }
+
+/// Type alias of [Action].
+typedef Action1<State, System, T, R> = Action<State, System, T, R>;
 
 /// A command [Action] with no arbitrary.
 final class Action0<State, System, R> extends Action<State, System, void, R> {
