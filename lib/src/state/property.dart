@@ -215,7 +215,7 @@ final class StatefulProperty<State, System> extends Property<State> {
       onDestroy?.call(behavior, system);
     }
     behavior
-      ..destroy(system)
+      ..destroySystem(system)
       ..tearDown();
   }
 

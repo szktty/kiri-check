@@ -74,7 +74,7 @@ final class FinalizeBehavior extends Behavior<FinalizeState, Null> {
   }
 
   @override
-  void destroy(Null system) {}
+  void destroySystem(Null system) {}
 }
 
 void main() {

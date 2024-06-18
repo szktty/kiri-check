@@ -69,7 +69,7 @@ final class InitializeBehavior extends Behavior<InitializeState, Null> {
   }
 
   @override
-  void destroy(Null system) {}
+  void destroySystem(Null system) {}
 }
 
 void main() {

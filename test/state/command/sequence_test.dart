@@ -46,7 +46,7 @@ final class SequenceTestBehavior extends Behavior<Null, SequenceTestSystem> {
   }
 
   @override
-  void destroy(SequenceTestSystem system) {
+  void destroySystem(SequenceTestSystem system) {
     final equals = const DeepCollectionEquality().equals;
     final events = system.events;
     expect(events.sublist(0, 3), predicate((e) => equals(e, [1, 2, 3])));

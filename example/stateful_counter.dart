@@ -89,7 +89,7 @@ final class CounterBehavior extends Behavior<CounterModel, CounterSystem> {
   }
 
   @override
-  void destroy(CounterSystem system) {}
+  void destroySystem(CounterSystem system) {}
 }
 
 void main() {

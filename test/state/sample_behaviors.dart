@@ -142,5 +142,5 @@ class BankAccountBehavior
   }
 
   @override
-  void destroy(BankAccountSystem system) {}
+  void destroySystem(BankAccountSystem system) {}
 }

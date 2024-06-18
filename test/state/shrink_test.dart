@@ -51,7 +51,7 @@ final class SubsequenceTestBehavior
   }
 
   @override
-  void destroy(Null system) {}
+  void destroySystem(Null system) {}
 }
 
 final class SubsequenceTestState {
@@ -114,7 +114,7 @@ final class FlagTestBehavior extends Behavior<FlagTestState, Null> {
   }
 
   @override
-  void destroy(Null system) {}
+  void destroySystem(Null system) {}
 }
 
 final class FlagTestState {
@@ -156,7 +156,7 @@ final class ShrinkingValueTestBehavior
   }
 
   @override
-  void destroy(Null system) {}
+  void destroySystem(Null system) {}
 }
 
 final class ShrinkingValueTestState {
