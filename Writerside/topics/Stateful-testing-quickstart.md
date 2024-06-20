@@ -76,7 +76,8 @@ kiri-checkのステートフルテストでは、モデルと実システムに�
 コマンドの定義を含むテスト内容は、`Behavior`のサブクラスで定義する。まずはコードを以下に示す。
 
 ```Java
-// TODO: import
+import 'package:kiri_check/kiri_check.dart';
+import 'package:kiri_check/stateful_test.dart';
 
 final class CounterBehavior extends Behavior<CounterModel, CounterSystem> {
   @override
@@ -127,7 +128,7 @@ final class CounterBehavior extends Behavior<CounterModel, CounterSystem> {
 }
 ```
 
-TODO: ステートフルテストを行うには、kiri_check/kiri_check.dartに加えてkiri_check/stateful_test.dart をimportする必要がある。
+ステートフルテストを行うには、 `kiri_check/kiri_check.dart` に加えて `kiri_check/stateful_test.dart` をインポートする。
 
 `Behavior`を継承した`CounterBehavior`が今回のカウンターのテスト内容となる。
 `Behavior`はモデルと実システムの2つの型パラメーターを持つので、今回の実装では先に定義した`CounterModel`と`CounterSystem`を指定する。
@@ -180,12 +181,16 @@ TODO: ステートフルテストを行うには、kiri_check/kiri_check.dartに
 
 ## Run the test
 
-TODO
+`property`のブロック内で`runBehavior`を呼ぶ。
+`runBehavior`は先に定義した`Behavior`を引数に受け取る。
 
-実行
-
-runBehavior
-
+```java
+void main() {
+property('counter', () {
+runBehavior(CounterBehavior());
+});
+}
+```
 
 ## Complete code
 
@@ -294,4 +299,6 @@ void main() {
 
 ## Where to next?
 
-TODO
+- [execution model](Stateful-testing.md#stateful-test-execution-model)を読み、ステートフルテストの挙動について知っておくとよい。
+- `KiriCheck.verbosity` に `Verbosity.verbose` を指定し、ランダムに実行されるコマンドを確認してみよう。
+- わざとエラーを埋め込んで、シュリンクの挙動を確認してみよう。
