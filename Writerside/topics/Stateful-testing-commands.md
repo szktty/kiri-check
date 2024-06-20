@@ -21,8 +21,13 @@ void runBehavior<State, System>(
 })
 ```
 
+TODO
 
 ## Behavior
+
+```java
+abstract class Behavior<State, System>
+```
 
 Describes behavior of a stateful test.
 
