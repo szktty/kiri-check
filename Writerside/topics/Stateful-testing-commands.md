@@ -4,7 +4,7 @@
 
 ## Run stateful tests
 
-### `runBehavior` {id="stateful-test-run-behavior}
+### `runBehavior` {id="stateful-test-run-behavior"}
 
 ```Java
 void runBehavior<State, System>(
