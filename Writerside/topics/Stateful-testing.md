@@ -1,3 +1,5 @@
+<show-structure for="chapter,procedure" depth="2"/>
+
 # Stateful testing
 
 <note>
@@ -6,27 +8,25 @@ The implementation of stateful testing is in beta, and the API may change in the
 
 ## What should be tested
 
-ステートフルテストでは、状態を持つ実システムの動作の妥当性を検査する。
-実システムにコマンドと呼ぶランダムな操作を繰り返し行い、その前後の状態をモデルと照合する。
-したがって、実システムに加えてモデルの実装が必要になる。
+In stateful testing, the validity of the behavior of a stateful system is examined.
+Random operations, called commands, are repeatedly executed on the real system, and the states before and after these operations are compared with those of a separately implemented model.
 
-実行中にエラーが発生したりモデルと照合した結果が妥当でない場合、ステートレステストと同様にシュリンクが行われる。
-ステートフルテストのシュリンクは、失敗する最小限の操作の組み合わせを探す。
+If an error occurs during execution or the comparison with the model is invalid, shrinking is performed similarly to stateless testing.
+Shrinking in stateful testing aims to find the minimal combination of commands and values that cause the failure.
 
 
 ## Execution model {id="stateful-test-execution-model"}
 
-- 3段階のフェーズ
-- コマンド選択フェーズ
-  - 実行対象のコマンドを生成する
-  - 事前条件が偽でも失敗にはならず、コマンドは実行対象にならない
-- コマンド実行フェーズ
-  - 事前条件が偽の場合、失敗扱いになる
-  - シュリンクを開始する
+In stateful testing, tests are divided into multiple cycles. Each cycle consists of initializing the state and system, performing steps of random commands, and verifying the postconditions of commands.
+
+Each cycle is executed in two phases. The first phase involves generating the commands to be executed, and the second phase involves executing these commands. In the second phases, if an error occurs or a check fails, shrinking begins.
+
 
 ### Command generation phase
 
-- コマンド生成フェーズでは抽象モデルのみ扱う。実システムは扱わない
+In the command generation phase, commands to be executed are randomly generated. This phase only involves the model, and the real system is not yet created.
+
+The following diagram illustrates the command generation phase:
 
 <code-block lang="mermaid">
     stateDiagram-v2
@@ -59,25 +59,20 @@ The implementation of stateful testing is in beta, and the API may change in the
       NextState: Command.nextState(State)
 </code-block>
 
-- Behavior.craeteState()で抽象モデルを生成する
-  - initializeState()はユーザーが定義すべきメソッド
-- 生成したインスタンスはBehavior.initializePrecondition(State)で初期化時の事前条件をチェックする
-  - 戻り値がfalseであればテストは失敗になる。
-  - initializePrecondition()はユーザーが定義可能なメソッド。デフォルトの実装ではtrueを返す
-  - 破壊的な変更を行うべきではない
-- Behavior.generateCommands(State)で、実行すべきコマンドのリストを生成する
-  - コマンドのリストのうち使用されるコマンドは、次のループで決定される
-  - 生成時は抽象モデルのオブジェクトを参照可能
-  - ユーザーが定義すべきメソッド
-- 以降、生成したコマンドのリストから選択するループ。実行するコマンドのリストを抽出する
-- ランダムにコマンドを一つ選び、そのコマンドに対してCommand.precondition(State)を実行する
-  - 戻り値がfalseであればスキップして次のコマンド選択へ
-  - 抽象モデルを参照可能
-  - 破壊的な変更を行うべきではない
-- Command.nextState(State)を実行し、抽象モデルの状態を変化させる。内容はコマンドに依存する
-- 選択したコマンドが指定の数に達したら終了
+The process begins with `Behavior.createState()`, which generates the model. This method, `initializeState()`, should be defined by the user. The generated instance is then checked for initialization preconditions using `Behavior.initializePrecondition(State)`. If the return value is false, the test fails. `initializePrecondition()` is a method that can be defined by the user and by default returns true. It is important that no destructive changes are made during this check.
+
+Next, `Behavior.generateCommands(State)` generates a list of commands to be executed. This method allows the model object to be referenced during generation and should be defined by the user. The commands to be used are determined in the subsequent loop.
+
+The command selection loop begins, where commands are selected from the generated list. A command is randomly chosen, and `Command.precondition(State)` is executed for that command. If the return value is false, the process skips to the next command selection. The model can be referenced during this check, and no destructive changes should be made.
+
+If the precondition check passes, `Command.nextState(State)` is executed to change the state of the model according to the command. This loop continues until the specified number of commands has been selected and executed.
+
 
 ### Execution phase
+
+In the execution phase, the generated commands are applied to the real system for testing.
+
+The following diagram illustrates the execution phase:
 
 <code-block lang="mermaid">
     stateDiagram-v2
@@ -118,33 +113,30 @@ The implementation of stateful testing is in beta, and the API may change in the
       Dispose: Behavior.destroy(System)
 </code-block>
 
-- Behavior.initializePrecondition(State)までの処理はコマンド生成フェーズと同じ
-- Behavior.createSystem(State)で実システムを生成する
-- 以降では、コマンド生成フェーズで生成したコマンドのリストを順に実行する
-- まず、Command.precondition(State)でコマンドの事前条件をチェックする
-  - コマンド生成フェーズと異なり、結果がfalseであればシュリンクを開始する
-  - コマンド生成フェーズの事前条件チェックとは状況が異なるので、ここで失敗する可能性もある
-  - 破壊的な変更を行うべきではない
-- Command.run(System) を実行し、実システムを操作する
-  - アービトラリーを使うコマンドであれば、生成した値も使える
-  - 何らかの例外が発生するとシュリンクを開始する
-  - 任意の戻り値が次の処理(事後条件のチェック)で使われる
-- Command.postconditionを実行し、事後条件をチェックする
-  - falseであればシュリンク
-  - コマンド実行後にあるべき状態の抽象モデルを生成し、実システムと比較するか、あるいは両者の変更の差分を比較する。問題がなければtrueを返し、あればfalseを返してシュリンクを開始する
-  - 抽象モデルと、runの戻り値を使って事後条件をチェックする
-  - アービトラリーを使うコマンドであれば、runで使ったのと同じ値を参照できる
-  - nextStateが呼ばれる前に事後条件をチェックするので注意。この時点での抽象モデルの状態は、実システムのコマンド実行前と同じ
-  - 抽象モデルに破壊的な変更を行うべきではない。このあとにnextStateが呼ばれる
-- Command.nextStateで抽象モデルの状態を進める
-- すべてのコマンドを実行するか、シュリンクが終了したら終了
+The process up to `Behavior.initializePrecondition(State)` is the same as in the command generation phase. `Behavior.createSystem(State)` then generates the real system. Next, the list of commands generated in the command generation phase is executed in sequence.
+
+First, `Command.precondition(State)` checks the precondition of the command. Unlike the command generation phase, if the result is false, shrinking begins. Since the situation is different from the command generation phase, it is possible for a command to fail here. No destructive changes should be made.
+
+`Command.run(System)` is executed to manipulate the real system. If the command uses arbitraries, the generated values are also used. If any exception occurs, shrinking begins. The return value is used in the next step (postcondition check).
+
+`Command.postcondition(State, Result)` is executed to check the postcondition. If the result is false, shrinking begins. The postcondition verifies the expected state of the model against the real system after the command execution, or compares the differences between the two. If there are no issues, it returns true; otherwise, it returns false and shrinking begins. The model and the return value of `run` are used to check the postcondition.
+
+If the command uses arbitraries, the same values used in `run` are referenced. Note that the postcondition is checked before `nextState` is called. At this point, the state of the model is the same as before the command execution in the real system. No destructive changes should be made to the model. `nextState` will be called afterward.
+
+Finally, `Command.nextState(State)` progresses the state of the model. The process ends when all commands are executed or shrinking completes.
+
 
 ## Shrinking
 
-- エラーが発生した場合、コマンド列を縮小する
-- 3つのフェーズ:部分列、削除、値の縮小
-- 縮小されたコマンド列が最小のエラーを示す
-- 以下例
+When an error occurs, the test initiates a process called shrinking. The goal of shrinking is to identify the minimal sequence of commands that causes the failure. This process is divided into three phases.
+
+First, the sequence of commands that caused the error is split into several partial sequences. This allows us to determine which partial sequence still causes the error. In the diagram below, the original sequence of commands is divided into three partial sequences. Each partial sequence is tested to see if the error can be reproduced, and the partial sequence that reproduces the error is carried forward to the next phase.
+
+Next, the selected partial sequence is further reduced by removing unnecessary commands to identify the minimal sequence that causes the error. In this phase, commands within the partial sequence are removed one by one to see which combinations still cause the error. The diagram shows how the sequence is minimized to identify the smallest sequence that still causes the error.
+
+Finally, the arguments or generated values of the commands are shrunk. In this phase, the values used in the commands are reduced or simplified to see if the error still occurs. This helps identify the minimal combination of values that causes the error. The example in the diagram shows the final shrunk values.
+
+The following diagram illustrates the process from error occurrence to shrinking, ultimately identifying the minimal sequence of commands that causes the error:
 
 <code-block lang="mermaid">
 flowchart TB
