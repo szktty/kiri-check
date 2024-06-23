@@ -12,7 +12,7 @@
         </description>
 
         <spotlight>
-            <a href="Quickstart.md" type="learn" summary="Learn how to set up and quickly write properties."/>
+            <a href="Quickstart.md" type="start" summary="Learn how to set up and quickly write properties."/>
             <a href="Arbitraries.md" type="library"
                summary="Arbitraries provide test data generation and shrink counterexamples."/>
         </spotlight>
@@ -43,6 +43,18 @@
                 <a href="Generation.md#generate-enums" summary="Use arbitraries to generate enum values."/>
                 <a href="Shrinking.md" summary="Overview of the shrinking process behavior."/>
                 <a href="Statistics.md" summary="Collect metrics for a test."/>
+            </cards>
+
+            <cards>
+                <title>Stateful testing</title>
+                <a href="Stateful-testing-quickstart.md"
+                   summary="Learn how to set up and quickly write stateful properties."/>
+                <a href="Write-stateful-properties.md"
+                   summary="write properties for stateful testing."/>
+                <a href="Stateful-testing-commands.md"
+                   summary="Behavior and commands provide test specification."/>
+                <a href="Stateful-testing.md#stateful-test-execution-model"
+                   summary="Execution model and cycle structure of stateful testing."/>
             </cards>
         </misc>
     </section-starting-page>
