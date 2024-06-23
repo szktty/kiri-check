@@ -281,7 +281,7 @@ final class TestCallbacksBehavior extends Behavior<TestCallbacksState, Null> {
 final class TestCallbacksState {}
 
 void main() {
-  KiriCheck.verbosity = Verbosity.verbose;
+  // KiriCheck.verbosity = Verbosity.verbose;
 
   group('StatefulProperty', () {
     property('basic', () {
