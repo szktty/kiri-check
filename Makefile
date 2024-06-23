@@ -17,7 +17,7 @@ doc:
 dhttpd:
 	dart pub global run dhttpd --path doc/api
 
-pubpoint:
+pubpoints:
 	pana .
 
 unicode:
