@@ -1,6 +1,5 @@
 import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/stateful_test.dart';
-import 'package:test/test.dart';
 
 import 'sample_model.dart';
 import 'sample_system.dart';

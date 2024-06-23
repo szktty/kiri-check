@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:kiri_check/src/state/command/command.dart';
 import 'package:kiri_check/src/state/command/context.dart';
 
@@ -27,7 +25,10 @@ final class Sequence<State, System> extends Command<State, System> {
 
   @override
   bool postcondition(
-      CommandContext<State, System> context, State state, dynamic result) {
+    CommandContext<State, System> context,
+    State state,
+    dynamic result,
+  ) {
     throw UnsupportedError('Sequence does not support postcondition');
   }
 

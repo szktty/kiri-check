@@ -422,7 +422,7 @@ final class PropertyTestRunner {
         property.check(test);
       } on KiriCheckException catch (e) {
         exception = e;
-      } on Exception catch (e) {
+      } on Exception {
         rethrow;
       }
 

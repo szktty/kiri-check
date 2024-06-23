@@ -1,10 +1,4 @@
-import 'dart:collection';
-import 'dart:math';
-
-import 'package:collection/collection.dart';
 import 'package:kiri_check/kiri_check.dart';
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/state/command/command.dart';
 import 'package:kiri_check/src/state/command/context.dart';
 import 'package:meta/meta.dart';
@@ -60,7 +54,10 @@ final class Action<State, System, T, R> extends Command<State, System> {
 
   @override
   bool postcondition(
-      CommandContext<State, System> context, State state, dynamic result) {
+    CommandContext<State, System> context,
+    State state,
+    dynamic result,
+  ) {
     return _postcondition?.call(
           state,
           context.currentValue as T,
@@ -251,11 +248,24 @@ final class Action5<State, System, T1, T2, T3, T4, T5, R>
               run(sys, args.$1, args.$2, args.$3, args.$4, args.$5),
           precondition: (s, args) =>
               precondition?.call(
-                  s, args.$1, args.$2, args.$3, args.$4, args.$5) ??
+                s,
+                args.$1,
+                args.$2,
+                args.$3,
+                args.$4,
+                args.$5,
+              ) ??
               true,
           postcondition: (s, args, r) =>
               postcondition?.call(
-                  s, args.$1, args.$2, args.$3, args.$4, args.$5, r) ??
+                s,
+                args.$1,
+                args.$2,
+                args.$3,
+                args.$4,
+                args.$5,
+                r,
+              ) ??
               true,
         );
 }
@@ -300,16 +310,38 @@ final class Action6<State, System, T1, T2, T3, T4, T5, T6, R>
             (a, b, c, d, e, f) => (a, b, c, d, e, f),
           ),
           nextState: (s, args) => nextState(
-              s, args.$1, args.$2, args.$3, args.$4, args.$5, args.$6),
+            s,
+            args.$1,
+            args.$2,
+            args.$3,
+            args.$4,
+            args.$5,
+            args.$6,
+          ),
           run: (sys, args) =>
               run(sys, args.$1, args.$2, args.$3, args.$4, args.$5, args.$6),
           precondition: (s, args) =>
               precondition?.call(
-                  s, args.$1, args.$2, args.$3, args.$4, args.$5, args.$6) ??
+                s,
+                args.$1,
+                args.$2,
+                args.$3,
+                args.$4,
+                args.$5,
+                args.$6,
+              ) ??
               true,
           postcondition: (s, args, r) =>
               postcondition?.call(
-                  s, args.$1, args.$2, args.$3, args.$4, args.$5, args.$6, r) ??
+                s,
+                args.$1,
+                args.$2,
+                args.$3,
+                args.$4,
+                args.$5,
+                args.$6,
+                r,
+              ) ??
               true,
         );
 }
@@ -357,16 +389,49 @@ final class Action7<State, System, T1, T2, T3, T4, T5, T6, T7, R>
             (a, b, c, d, e, f, g) => (a, b, c, d, e, f, g),
           ),
           nextState: (s, args) => nextState(
-              s, args.$1, args.$2, args.$3, args.$4, args.$5, args.$6, args.$7),
-          run: (sys, args) => run(sys, args.$1, args.$2, args.$3, args.$4,
-              args.$5, args.$6, args.$7),
+            s,
+            args.$1,
+            args.$2,
+            args.$3,
+            args.$4,
+            args.$5,
+            args.$6,
+            args.$7,
+          ),
+          run: (sys, args) => run(
+            sys,
+            args.$1,
+            args.$2,
+            args.$3,
+            args.$4,
+            args.$5,
+            args.$6,
+            args.$7,
+          ),
           precondition: (s, args) =>
-              precondition?.call(s, args.$1, args.$2, args.$3, args.$4, args.$5,
-                  args.$6, args.$7) ??
+              precondition?.call(
+                s,
+                args.$1,
+                args.$2,
+                args.$3,
+                args.$4,
+                args.$5,
+                args.$6,
+                args.$7,
+              ) ??
               true,
           postcondition: (s, args, r) =>
-              postcondition?.call(s, args.$1, args.$2, args.$3, args.$4,
-                  args.$5, args.$6, args.$7, r) ??
+              postcondition?.call(
+                s,
+                args.$1,
+                args.$2,
+                args.$3,
+                args.$4,
+                args.$5,
+                args.$6,
+                args.$7,
+                r,
+              ) ??
               true,
         );
 }
@@ -416,17 +481,54 @@ final class Action8<State, System, T1, T2, T3, T4, T5, T6, T7, T8, R>
             arbitrary8,
             (a, b, c, d, e, f, g, h) => (a, b, c, d, e, f, g, h),
           ),
-          nextState: (s, args) => nextState(s, args.$1, args.$2, args.$3,
-              args.$4, args.$5, args.$6, args.$7, args.$8),
-          run: (sys, args) => run(sys, args.$1, args.$2, args.$3, args.$4,
-              args.$5, args.$6, args.$7, args.$8),
+          nextState: (s, args) => nextState(
+            s,
+            args.$1,
+            args.$2,
+            args.$3,
+            args.$4,
+            args.$5,
+            args.$6,
+            args.$7,
+            args.$8,
+          ),
+          run: (sys, args) => run(
+            sys,
+            args.$1,
+            args.$2,
+            args.$3,
+            args.$4,
+            args.$5,
+            args.$6,
+            args.$7,
+            args.$8,
+          ),
           precondition: (s, args) =>
-              precondition?.call(s, args.$1, args.$2, args.$3, args.$4, args.$5,
-                  args.$6, args.$7, args.$8) ??
+              precondition?.call(
+                s,
+                args.$1,
+                args.$2,
+                args.$3,
+                args.$4,
+                args.$5,
+                args.$6,
+                args.$7,
+                args.$8,
+              ) ??
               true,
           postcondition: (s, args, r) =>
-              postcondition?.call(s, args.$1, args.$2, args.$3, args.$4,
-                  args.$5, args.$6, args.$7, args.$8, r) ??
+              postcondition?.call(
+                s,
+                args.$1,
+                args.$2,
+                args.$3,
+                args.$4,
+                args.$5,
+                args.$6,
+                args.$7,
+                args.$8,
+                r,
+              ) ??
               true,
         );
 }

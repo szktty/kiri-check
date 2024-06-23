@@ -122,7 +122,8 @@ final class StatefulProperty<State, System> extends Property<State> {
   }
 
   (StatefulShrinkingResult<State, System>?, Exception?) _check(
-      PropertyTest test) {
+    PropertyTest test,
+  ) {
     printVerbose('Check behavior: ${behavior.runtimeType}');
     this.setUp?.call();
     behavior.setUpAll();
@@ -346,8 +347,10 @@ final class _StatefulPropertyShrinker<State, System> {
     return minShrunkSequence;
   }
 
-  bool _checkShrunkSequence(TraversalSequence<State, System> sequence,
-      {required String stepType}) {
+  bool _checkShrunkSequence(
+    TraversalSequence<State, System> sequence, {
+    required String stepType,
+  }) {
     behavior.setUp();
     final (initPrecond, state) = property._initialState();
     if (!initPrecond) {

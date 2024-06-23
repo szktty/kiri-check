@@ -101,15 +101,27 @@ final class FlagTestBehavior extends Behavior<FlagTestState, Null> {
         run: (system) {},
         postcondition: (s, _) => !s.allSet,
       ),
-      Action0('clear a', nextState: (s) {
-        s.a = false;
-      }, run: (system) {}),
-      Action0('clear b', nextState: (s) {
-        s.b = false;
-      }, run: (system) {}),
-      Action0('clear c', nextState: (s) {
-        s.c = false;
-      }, run: (system) {}),
+      Action0(
+        'clear a',
+        nextState: (s) {
+          s.a = false;
+        },
+        run: (system) {},
+      ),
+      Action0(
+        'clear b',
+        nextState: (s) {
+          s.b = false;
+        },
+        run: (system) {},
+      ),
+      Action0(
+        'clear c',
+        nextState: (s) {
+          s.c = false;
+        },
+        run: (system) {},
+      ),
     ];
   }
 
@@ -170,8 +182,10 @@ void main() {
     runBehavior(
       SubsequenceTestBehavior(),
       onFalsify: (example) {
-        expect(example.falsifyingSteps.length,
-            lessThan(example.originalSteps.length));
+        expect(
+          example.falsifyingSteps.length,
+          lessThan(example.originalSteps.length),
+        );
       },
       ignoreFalsify: true,
     );
@@ -181,8 +195,10 @@ void main() {
     runBehavior(
       FlagTestBehavior(),
       onFalsify: (example) {
-        expect(example.falsifyingSteps.length,
-            lessThan(example.originalSteps.length));
+        expect(
+          example.falsifyingSteps.length,
+          lessThan(example.originalSteps.length),
+        );
       },
       ignoreFalsify: true,
     );
@@ -195,8 +211,10 @@ void main() {
         final sum = example.falsifyingSteps
             .map((e) => e.value as int)
             .fold<int>(0, (a, b) => a + b);
-        expect(example.falsifyingState.value,
-            lessThan(example.originalState.value));
+        expect(
+          example.falsifyingState.value,
+          lessThan(example.originalState.value),
+        );
         expect(
           sum,
           allOf(greaterThanOrEqualTo(10000), lessThanOrEqualTo(15000)),

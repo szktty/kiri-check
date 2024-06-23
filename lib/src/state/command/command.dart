@@ -47,7 +47,10 @@ final class Initialize<State, System> extends Command<State, System> {
 
   @override
   bool postcondition(
-      CommandContext<State, System> context, State state, dynamic result) {
+    CommandContext<State, System> context,
+    State state,
+    dynamic result,
+  ) {
     throw UnsupportedError('Initialize does not support postcondition');
   }
 
@@ -77,7 +80,10 @@ final class Finalize<State, System> extends Command<State, System> {
 
   @override
   bool postcondition(
-      CommandContext<State, System> context, State state, dynamic result) {
+    CommandContext<State, System> context,
+    State state,
+    dynamic result,
+  ) {
     throw UnsupportedError('Finalize does not support postcondition');
   }
 
