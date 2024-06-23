@@ -7,7 +7,6 @@ import 'package:kiri_check/src/random.dart';
 import 'package:test/test.dart';
 
 void main() {
-  // TODO: double
   group('default random', () {
     test('bool', () {
       final random = RandomContextImpl(DateTime.now().microsecondsSinceEpoch);
