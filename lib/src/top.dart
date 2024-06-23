@@ -100,7 +100,7 @@ void forAll<T>(
   void Function(T)? onFalsify,
   bool? ignoreFalsify,
 }) {
-  final property = Property(
+  final property = StatelessProperty(
     arbitrary: arbitrary as ArbitraryInternal<T>,
     settings: PropertySettings<T>(
       maxExamples: maxExamples,

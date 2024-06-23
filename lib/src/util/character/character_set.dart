@@ -46,6 +46,7 @@ final class CharacterSet {
     return CharacterSet()..addCodePoints(codePoints);
   }
 
+  /// @nodoc
   @internal
   factory CharacterSet.fromUnicodeCategories(List<UnicodeCategory> categories) {
     final set = CharacterSet();

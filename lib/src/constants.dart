@@ -1,4 +1,3 @@
-// TODO: stub で web に対応する
 abstract class Constants {
   static const intMax = int64Max;
   static const intMin = int64Min;

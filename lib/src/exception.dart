@@ -1,10 +1,19 @@
+class KiriCheckException implements Exception {
+  KiriCheckException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 class PropertyException implements Exception {
   PropertyException(this.message);
 
   final String message;
 
   @override
-  String toString() => 'PropertyException: $message';
+  String toString() => message;
 }
 
 final class PropertyFailure extends PropertyException {
