@@ -204,7 +204,7 @@ to [Stateful Testing](https://szktty.github.io/kiri-check/stateful-testing.html)
 
 ## Author
 
-[SUZUKI Tetsuya](https://github.com/szktty)
+[SUZUKI Tetsuya](https://github.com/szktty) <tetsuya.suzuki@gmail.com>
 
 ## License
 
