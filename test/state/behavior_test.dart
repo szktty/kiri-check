@@ -213,7 +213,7 @@ final class PostconditionCountBehavior extends Behavior<Null, Null> {
       Action0(
         'count',
         nextState: (s) {
-          print('run action');
+          // print('run action');
         },
         run: (system) {},
         postcondition: (s, _) {
@@ -226,7 +226,7 @@ final class PostconditionCountBehavior extends Behavior<Null, Null> {
 
   @override
   void destroySystem(Null system) {
-    print('postconditions: $postconditions');
+    // print('postconditions: $postconditions');
   }
 }
 

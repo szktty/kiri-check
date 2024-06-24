@@ -158,7 +158,7 @@ final class ShrinkingValueTestBehavior
         'increment',
         integer(min: 1000, max: 7000),
         nextState: (s, value) {
-          print('increment $value');
+          // print('increment $value');
           s.value += value;
         },
         run: (system, value) {},
