@@ -5,7 +5,7 @@ final class BankAccountManager {
   final Map<int, BankAccountSystem> accounts = {};
 
   BankAccountSystem register(int id) {
-    return accounts[id] = BankAccountSystem(id, settings.defaultBalance);
+    return accounts[id] = BankAccountSystem(this, id, settings.defaultBalance);
   }
 
   bool frozen(int id) {
@@ -22,76 +22,72 @@ final class BankAccountManager {
     return accounts[id]!.balance;
   }
 
-  BankAccountResult freeze(int id) {
+  BankAccountError? freeze(int id) {
     final account = accounts[id]!;
     if (account.frozen) {
-      return BankAccountResult.alreadyFrozen;
+      return BankAccountError.alreadyFrozen;
     } else {
-      account.freeze();
-      return BankAccountResult.success;
+      account.frozen = true;
+      return null;
     }
   }
 
-  BankAccountResult unfreeze(int id) {
+  BankAccountError? unfreeze(int id) {
     final account = accounts[id]!;
     if (!account.frozen) {
-      return BankAccountResult.notFrozen;
+      return BankAccountError.notFrozen;
     } else {
-      account.unfreeze();
-      return BankAccountResult.success;
+      account.frozen = false;
+      return null;
     }
   }
 
-  BankAccountResult deposit(int id, int amount) {
+  dynamic deposit(int id, int amount) {
     final result = _validateDeposit(id, amount);
     if (result != null) {
       return result;
     } else {
-      final account = accounts[id]!;
-      account.deposit(amount);
-      return BankAccountResult.success;
+      return accounts[id]!.balance += amount;
     }
   }
 
-  BankAccountResult? _validateDeposit(int id, int amount) {
+  BankAccountError? _validateDeposit(int id, int amount) {
     final account = accounts[id]!;
     if (account.frozen) {
-      return BankAccountResult.frozen;
+      return BankAccountError.frozen;
     } else if (account.transactions.length > settings.maxOperationsPerDay) {
-      return BankAccountResult.overMaxOperationsPerDay;
+      return BankAccountError.overMaxOperationsPerDay;
     } else if (amount + account.depositPerDay > settings.maxDepositPerDay) {
-      return BankAccountResult.overMaxDepositPerDay;
+      return BankAccountError.overMaxDepositPerDay;
     } else if (amount + account.balance > settings.maxBalance) {
-      return BankAccountResult.overBalance;
+      return BankAccountError.overBalance;
     } else {
       return null;
     }
   }
 
-  BankAccountResult withdraw(int id, int amount) {
+  dynamic withdraw(int id, int amount) {
     final result = _validateWithdraw(id, amount);
     if (result != null) {
       return result;
     } else {
-      final charged = _charge(amount);
-      accounts[id]!.withdraw(charged);
-      return BankAccountResult.success;
+      return accounts[id]!.balance -= _charge(amount);
     }
   }
 
   int _charge(int amount) => (amount + amount * settings.chargeRate).toInt();
 
-  BankAccountResult? _validateWithdraw(int id, int amount) {
+  BankAccountError? _validateWithdraw(int id, int amount) {
     final account = accounts[id]!;
     final charged = _charge(amount);
     if (account.frozen) {
-      return BankAccountResult.frozen;
+      return BankAccountError.frozen;
     } else if (account.transactions.length > settings.maxOperationsPerDay) {
-      return BankAccountResult.overMaxOperationsPerDay;
+      return BankAccountError.overMaxOperationsPerDay;
     } else if (amount + account.withdrawPerDay > settings.maxWithdrawPerDay) {
-      return BankAccountResult.overMaxWithdrawPerDay;
+      return BankAccountError.overMaxWithdrawPerDay;
     } else if (account.balance - charged < settings.minBalance) {
-      return BankAccountResult.underBalance;
+      return BankAccountError.underBalance;
     } else {
       return null;
     }
@@ -99,8 +95,9 @@ final class BankAccountManager {
 }
 
 final class BankAccountSystem {
-  BankAccountSystem(this.id, this.balance);
+  BankAccountSystem(this.manager, this.id, this.balance);
 
+  BankAccountManager manager;
   int id;
   bool frozen = false;
   int balance = 0;
@@ -108,11 +105,11 @@ final class BankAccountSystem {
   final List<BankAccountTransaction> transactions = [];
 
   void freeze() {
-    frozen = true;
+    manager.freeze(id);
   }
 
   void unfreeze() {
-    frozen = false;
+    manager.unfreeze(id);
   }
 
   void nextDay() {
@@ -134,16 +131,26 @@ final class BankAccountSystem {
   int get withdrawPerDay =>
       withdrawTransactions.fold(0, (sum, t) => sum + t.amount);
 
-  void deposit(int amount) {
-    balance += amount;
-    transactions
-        .add(BankAccountTransaction.deposit(transactions.length, amount));
+  dynamic deposit(int amount) {
+    final result = manager.deposit(id, amount);
+    if (result is int) {
+      transactions
+          .add(BankAccountTransaction.deposit(transactions.length, amount));
+      return balance;
+    } else {
+      return result;
+    }
   }
 
-  void withdraw(int amount) {
-    balance -= amount;
-    transactions
-        .add(BankAccountTransaction.withdraw(transactions.length, amount));
+  dynamic withdraw(int amount) {
+    final result = manager.withdraw(id, amount);
+    if (result is int) {
+      transactions
+          .add(BankAccountTransaction.withdraw(transactions.length, amount));
+      return balance;
+    } else {
+      return result;
+    }
   }
 }
 

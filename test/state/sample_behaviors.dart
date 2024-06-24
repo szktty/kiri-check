@@ -73,13 +73,8 @@ class BankAccountBehavior
         description,
         integer(min: min, max: max),
         nextState: (s, amount) => s.deposit(amount),
-        run: (system, amount) {
-          system.deposit(amount);
-          return system.balance;
-        },
-        postcondition: (s, amount, balance) {
-          return s.balance + amount == balance;
-        },
+        run: (system, amount) => system.deposit(amount),
+        postcondition: (s, amount, result) => s.tryDeposit(amount) == result,
       );
 
   Command<BankAccountModel, BankAccountSystem> withdrawAction(
@@ -91,13 +86,8 @@ class BankAccountBehavior
         description,
         integer(min: min, max: max),
         nextState: (s, amount) => s.withdraw(amount),
-        run: (system, amount) {
-          system.withdraw(amount);
-          return system.balance;
-        },
-        postcondition: (s, amount, balance) {
-          return s.balance - amount == balance;
-        },
+        run: (system, amount) => system.withdraw(amount),
+        postcondition: (s, amount, result) => s.tryWithdraw(amount) == result,
       );
 
   List<Command<BankAccountModel, BankAccountSystem>> basicDepositActions(
