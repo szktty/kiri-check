@@ -1,5 +1,5 @@
 name: kiri_check
-description: Property-based testing for Dart.
+description: A testing library for property-based testing, enabling custom test data generation, testing stateful systems, and integrating seamlessly with package:test.
 version: 1.0.0
 repository: https://github.com/szktty/kiri-check
 
