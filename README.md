@@ -197,11 +197,6 @@ void main() {
 For more detailed information on stateful testing, including advanced usage and customization options, please refer
 to [Stateful Testing](https://szktty.github.io/kiri-check/stateful-testing.html).
 
-## Roadmap
-
-- Optimize random number generation
-- Web support
-
 ## Author
 
 [SUZUKI Tetsuya](https://github.com/szktty) (tetsuya.suzuki@gmail.com)
