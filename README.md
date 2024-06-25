@@ -30,7 +30,7 @@ Alternatively, add the library to your `pubspec.yaml` and run `dart pub get` or 
 
 ```yaml
 dev_dependencies:
-  kiri_check: ^1.0.0
+  kiri_check: ^1.1.0
 ```
 
 ## Documentation
@@ -196,11 +196,6 @@ void main() {
 
 For more detailed information on stateful testing, including advanced usage and customization options, please refer
 to [Stateful Testing](https://szktty.github.io/kiri-check/stateful-testing.html).
-
-## Roadmap
-
-- Optimize random number generation
-- Web support
 
 ## Author
 
