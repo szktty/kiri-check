@@ -6,8 +6,8 @@ import 'package:kiri_check/src/random.dart';
 
 final class IntArbitrary extends ArbitraryBase<int> {
   IntArbitrary({int? min, int? max}) {
-    this.min = min ?? Constants.intMin;
-    this.max = math.max(this.min, max ?? Constants.intMax);
+    this.min = min ?? Constants.safeIntMin;
+    this.max = math.max(this.min, max ?? Constants.safeIntMax);
     _initWeightedRanges();
   }
 

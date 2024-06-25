@@ -1,4 +1,4 @@
-.PHONY: fix format test doc dhttpd pubpoint unicode
+.PHONY: fix format test test-web doc dhttpd pubpoint unicode
 
 fix:
 	dart fix --apply lib
@@ -11,13 +11,16 @@ format:
 test:
 	dart test
 
+test-web:
+	dart test -p chrome
+
 doc:
 	dart doc
 
 dhttpd:
 	dart pub global run dhttpd --path doc/api
 
-pubpoint:
+pubpoints:
 	pana .
 
 unicode:

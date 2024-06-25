@@ -2,8 +2,7 @@ import 'dart:math' as math;
 
 import 'package:meta/meta.dart';
 
-enum BankAccountResult {
-  success,
+enum BankAccountError {
   frozen,
   alreadyFrozen,
   notFrozen,
@@ -92,25 +91,34 @@ final class BankAccountModel {
     withdrawPerDay = 0;
   }
 
-  BankAccountResult freeze() {
+  BankAccountError? freeze() {
     if (frozen) {
-      return BankAccountResult.alreadyFrozen;
+      return BankAccountError.alreadyFrozen;
     } else {
       frozen = true;
-      return BankAccountResult.success;
+      return null;
     }
   }
 
-  BankAccountResult unfreeze() {
+  BankAccountError? unfreeze() {
     if (frozen) {
       frozen = false;
-      return BankAccountResult.success;
+      return null;
     } else {
-      return BankAccountResult.notFrozen;
+      return BankAccountError.notFrozen;
     }
   }
 
-  BankAccountResult deposit(int amount) {
+  dynamic tryDeposit(int amount) {
+    final result = _validateDeposit(amount);
+    if (result != null) {
+      return result;
+    } else {
+      return balance + amount;
+    }
+  }
+
+  dynamic deposit(int amount) {
     final result = _validateDeposit(amount);
     if (result != null) {
       return result;
@@ -118,25 +126,34 @@ final class BankAccountModel {
       depositPerDay += amount;
       balance += amount;
       addHistory(BankAccountOperation.deposit);
-      return BankAccountResult.success;
+      return balance;
     }
   }
 
-  BankAccountResult? _validateDeposit(int amount) {
+  BankAccountError? _validateDeposit(int amount) {
     if (frozen) {
-      return BankAccountResult.frozen;
+      return BankAccountError.frozen;
     } else if (depositPerDay + amount > settings.maxDepositPerDay) {
-      return BankAccountResult.overMaxDepositPerDay;
+      return BankAccountError.overMaxDepositPerDay;
     } else if (balance + amount > settings.maxBalance) {
-      return BankAccountResult.overBalance;
+      return BankAccountError.overBalance;
     } else if (history.length > settings.maxOperationsPerDay) {
-      return BankAccountResult.overMaxOperationsPerDay;
+      return BankAccountError.overMaxOperationsPerDay;
     } else {
       return null;
     }
   }
 
-  BankAccountResult withdraw(int amount) {
+  dynamic tryWithdraw(int amount) {
+    final result = _validateWithdraw(amount);
+    if (result != null) {
+      return result;
+    } else {
+      return balance - _charge(amount);
+    }
+  }
+
+  dynamic withdraw(int amount) {
     final result = _validateWithdraw(amount);
     if (result != null) {
       return result;
@@ -145,22 +162,22 @@ final class BankAccountModel {
       withdrawPerDay += charged;
       balance -= charged;
       addHistory(BankAccountOperation.withdraw);
-      return BankAccountResult.success;
+      return balance;
     }
   }
 
   int _charge(int amount) => (amount + amount * settings.chargeRate).toInt();
 
-  BankAccountResult? _validateWithdraw(int amount) {
+  BankAccountError? _validateWithdraw(int amount) {
     final charged = _charge(amount);
     if (frozen) {
-      return BankAccountResult.frozen;
+      return BankAccountError.frozen;
     } else if (amount + withdrawPerDay > settings.maxWithdrawPerDay) {
-      return BankAccountResult.overMaxWithdrawPerDay;
+      return BankAccountError.overMaxWithdrawPerDay;
     } else if (balance - charged < settings.minBalance) {
-      return BankAccountResult.underBalance;
+      return BankAccountError.underBalance;
     } else if (history.length > settings.maxOperationsPerDay) {
-      return BankAccountResult.overMaxOperationsPerDay;
+      return BankAccountError.overMaxOperationsPerDay;
     } else {
       return null;
     }

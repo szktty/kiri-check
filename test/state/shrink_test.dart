@@ -158,7 +158,7 @@ final class ShrinkingValueTestBehavior
         'increment',
         integer(min: 1000, max: 7000),
         nextState: (s, value) {
-          print('increment $value');
+          // print('increment $value');
           s.value += value;
         },
         run: (system, value) {},
@@ -176,7 +176,7 @@ final class ShrinkingValueTestState {
 }
 
 void main() {
-  KiriCheck.verbosity = Verbosity.verbose;
+  // KiriCheck.verbosity = Verbosity.verbose;
 
   property('extract subsequence', () {
     runBehavior(
