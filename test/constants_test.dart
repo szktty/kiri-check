@@ -1,5 +1,6 @@
 import 'package:kiri_check/src/constants.dart';
 import 'package:test/test.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 void main() {
   group('Integer value tests', () {
@@ -18,24 +19,16 @@ void main() {
       expect(Constants.int32Max, equals(2147483647));
     });
 
-    test('int64 min and max values', () {
-      expect(Constants.int64Min, equals(-9223372036854775808));
-      expect(Constants.int64Max, equals(9223372036854775807));
-    });
-
-    test('uint8 min and max values', () {
-      expect(Constants.uint8Min, equals(0));
-      expect(Constants.uint8Max, equals(255));
-    });
-
-    test('uint16 min and max values', () {
-      expect(Constants.uint16Min, equals(0));
-      expect(Constants.uint16Max, equals(65535));
-    });
-
-    test('uint32 min and max values', () {
-      expect(Constants.uint32Min, equals(0));
-      expect(Constants.uint32Max, equals(4294967295));
-    });
+    if (UniversalPlatform.isWeb) {
+      test('safe int min and max values (web)', () {
+        expect(Constants.safeIntMin, equals(int.parse('-9007199254740992')));
+        expect(Constants.safeIntMax, equals(int.parse('9007199254740991')));
+      });
+    } else {
+      test('safe int min and max values (native)', () {
+        expect(Constants.safeIntMin, equals(int.parse('-9223372036854775808')));
+        expect(Constants.safeIntMax, equals(int.parse('9223372036854775807')));
+      });
+    }
   });
 }
