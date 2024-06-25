@@ -8,9 +8,13 @@ enum TestEnum { a, b, c }
 void main() {
   group('constant', () {
     property('simple', () {
-      testForAll(constant(42), (value) {
-        expect(value, equals(42));
-      }, variousRatio: null,);
+      testForAll(
+        constant(42),
+        (value) {
+          expect(value, equals(42));
+        },
+        variousRatio: null,
+      );
     });
   });
 

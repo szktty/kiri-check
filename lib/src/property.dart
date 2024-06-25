@@ -11,39 +11,49 @@ import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/statistics.dart';
 import 'package:test/test.dart';
 
-// forAll()
-final class Property<T> {
-  Property({
-    required this.arbitrary,
-    required this.block,
-    required this.settings,
-    this.setUp,
-    this.tearDown,
-  }) {
+abstract class Property<T> {
+  Property({required this.settings, this.setUp, this.tearDown}) {
     random = settings.random ??
         RandomContextImpl(settings.seed ?? Settings.shared.seed);
     timeout = settings.timeout ?? Settings.shared.timeout;
     maxExamples = settings.maxExamples ?? Settings.shared.maxExamples;
     maxTries =
         math.max(settings.maxTries ?? Settings.shared.maxTries, maxExamples);
-    _generationContext = null;
   }
 
   final PropertySettings<T> settings;
-  final ArbitraryInternal<T> arbitrary;
   late final RandomContext random;
-
-  final void Function(T) block;
-  final void Function()? setUp;
-  final void Function()? tearDown;
 
   late final int maxTries;
   late final Timeout? timeout;
   late final int maxExamples;
 
+  final void Function()? setUp;
+  final void Function()? tearDown;
+
+  void check(PropertyTest test);
+}
+
+// forAll()
+final class StatelessProperty<T> extends Property<T> {
+  StatelessProperty({
+    required this.arbitrary,
+    required this.block,
+    required super.settings,
+    super.setUp,
+    super.tearDown,
+  }) {
+    _generationContext = null;
+  }
+
+  final ArbitraryInternal<T> arbitrary;
+
+  final void Function(T) block;
+
   GenerationContextImpl<T>? _generationContext;
   final List<T> _generated = [];
 
+  @override
   void check(PropertyTest test) {
     _generationContext = GenerationContextImpl(
       arbitrary: arbitrary,
@@ -59,7 +69,7 @@ final class Property<T> {
     printVerbose('Edge case policy: ${_generationContext!.edgeCasePolicy}');
     printVerbose('Shrinking policy: ${settings.shrinkingPolicy}');
 
-    setUp?.call();
+    this.setUp?.call();
 
     _generationContext!.generate();
 
@@ -98,10 +108,11 @@ final class Property<T> {
       printVerbose('Minimal failing example: $description');
     } else {
       printVerbose(
-          'No falsifying examples found (${_generationContext!.examples.length} tests passed)',);
+        'No falsifying examples found (${_generationContext!.examples.length} tests passed)',
+      );
     }
 
-    tearDown?.call();
+    this.tearDown?.call();
     if (exception != null) {
       throw exception;
     }
@@ -252,7 +263,7 @@ final class ShrinkingContext<T> {
   static const defaultPolicy = ShrinkingPolicy.bounded;
   static const defaultMaxTries = 100;
 
-  final Property<T> property;
+  final StatelessProperty<T> property;
 
   ArbitraryInternal<T> get arbitrary => property.arbitrary;
 
@@ -406,11 +417,22 @@ final class PropertyTestRunner {
 
       Statistics.initialize();
 
-      property.check(test);
+      Exception? exception;
+      try {
+        property.check(test);
+      } on KiriCheckException catch (e) {
+        exception = e;
+      } on Exception {
+        rethrow;
+      }
 
       _printStatistics();
 
       printNormal('');
+
+      if (exception != null) {
+        print('Error: $exception');
+      }
     }
   }
 
@@ -422,7 +444,8 @@ final class PropertyTestRunner {
       print('Collected test data:');
       for (final entry in metrics) {
         print(
-            '  ${(entry.ratio * 10000).toInt() / 100}% (${entry.count}) ${entry.values.join(', ')}',);
+          '  ${(entry.ratio * 10000).toInt() / 100}% (${entry.count}) ${entry.values.join(', ')}',
+        );
       }
     }
   }

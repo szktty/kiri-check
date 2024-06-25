@@ -122,7 +122,9 @@ abstract class DateTimeArbitraryBase<T> extends ArbitraryBase<T> {
     tz.TZDateTime max,
   ) {
     final offset = random.nextIntInRange(
-        min.microsecondsSinceEpoch, max.microsecondsSinceEpoch,);
+      min.microsecondsSinceEpoch,
+      max.microsecondsSinceEpoch,
+    );
     return NominalDateTime.fromMicrosecondsSinceEpoch(location, offset);
   }
 

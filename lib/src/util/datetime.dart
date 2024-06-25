@@ -37,6 +37,7 @@ final class NominalDateTime implements Comparable<NominalDateTime> {
     this.microsecond = 0,
   ]);
 
+  /// @nodoc
   @internal
   factory NominalDateTime.fromDistance(tz.Location location, int value) {
     var temp = value;
@@ -89,6 +90,7 @@ final class NominalDateTime implements Comparable<NominalDateTime> {
   ) =>
       NominalDateTime.fromTZDateTime(tz.TZDateTime.from(dateTime, location));
 
+  /// @nodoc
   @internal
   factory NominalDateTime.fromMicrosecondsSinceEpoch(
     tz.Location location,
@@ -147,6 +149,7 @@ final class NominalDateTime implements Comparable<NominalDateTime> {
     return false;
   }
 
+  /// @nodoc
   @internal
   int get distance =>
       year * yearUnit +
