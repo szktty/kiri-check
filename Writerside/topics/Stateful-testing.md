@@ -28,36 +28,38 @@ In the command generation phase, commands to be executed are randomly generated.
 
 The following diagram illustrates the command generation phase:
 
-<code-block lang="mermaid">
-    stateDiagram-v2
-      direction TB
+```mermaid
+stateDiagram-v2
+  direction TB
 
-         state if_init_precond <<choice>>
+  [*] --> CreateState
+  CreateState --> InitializePrecondition
+  InitializePrecondition --> if_init_precond
 
-         [*] --> CreateState
-         CreateState --> InitializePrecondition
-         InitializePrecondition --> if_init_precond
-         if_init_precond --> GenerateCommands: true
-         if_init_precond --> Fail: false
-          GenerateCommands --> GenerationLoop
-          GenerationLoop --> [*]
+  state if_init_precond <<choice>>
+  if_init_precond --> GenerateCommands: true
+  if_init_precond --> Fail: false
 
-         state GenerationLoop {
-         state if_precond <<choice>>
-         SelectCommand --> Precondition
-         Precondition --> if_precond
-         if_precond --> NextState: true
-         if_precond --> Skip: false
-        }
+  GenerateCommands --> GenerationLoop
+  GenerationLoop --> [*]
 
-      SelectCommand: Randomly select
-      Precondition: Command.precondition(State)
-      CreateState: Behavior.initializeState()
-      InitializePrecondition: Behavior.initializePrecondition(State)
-      GenerateCommands: Behavior.generateCommands(State)
-      GenerationLoop: Command selection loop
-      NextState: Command.nextState(State)
-</code-block>
+  state GenerationLoop {
+    direction TB
+    SelectCommand --> Precondition
+    state if_precond <<choice>>
+    Precondition --> if_precond
+    if_precond --> NextState: true
+    if_precond --> Skip: false
+  }
+
+  SelectCommand: Randomly select
+  Precondition: Command.precondition(State)
+  CreateState: Behavior.initializeState()
+  InitializePrecondition: Behavior.initializePrecondition(State)
+  GenerateCommands: Behavior.generateCommands(State)
+  GenerationLoop: Command selection loop
+  NextState: Command.nextState(State)
+```
 
 The process begins with `Behavior.createState()`, which generates the model. This method, `initializeState()`, should be defined by the user. The generated instance is then checked for initialization preconditions using `Behavior.initializePrecondition(State)`. If the return value is false, the test fails. `initializePrecondition()` is a method that can be defined by the user and by default returns true. It is important that no destructive changes are made during this check.
 
@@ -74,7 +76,7 @@ In the execution phase, the generated commands are applied to the real system fo
 
 The following diagram illustrates the execution phase:
 
-<code-block lang="mermaid">
+```mermaid
     stateDiagram-v2
          direction TB
 
@@ -111,7 +113,7 @@ The following diagram illustrates the execution phase:
       NextState: Command.nextState(State)
       Run: Command.run(System)
       Dispose: Behavior.destroy(System)
-</code-block>
+```
 
 The process up to `Behavior.initializePrecondition(State)` is the same as in the command generation phase. `Behavior.createSystem(State)` then generates the real system. Next, the list of commands generated in the command generation phase is executed in sequence.
 
@@ -138,7 +140,7 @@ Finally, the arguments or generated values of the commands are shrunk. In this p
 
 The following diagram illustrates the process from error occurrence to shrinking, ultimately identifying the minimal sequence of commands that causes the error:
 
-<code-block lang="mermaid">
+```mermaid
 flowchart TB
   phase0 -->|Split into sequences| phase1
   phase1 -->|Fail: 2 4 4 6| phase2
@@ -201,4 +203,4 @@ flowchart TB
   direction LR
   r1[0] ~~~ r2[1]
   end
-</code-block>
+```
