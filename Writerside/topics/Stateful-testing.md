@@ -61,7 +61,7 @@ stateDiagram-v2
   NextState: Command.nextState(State)
 ```
 
-The process begins with `Behavior.createState()`, which generates the model. This method, `initializeState()`, should be defined by the user. The generated instance is then checked for initialization preconditions using `Behavior.initializePrecondition(State)`. If the return value is false, the test fails. `initializePrecondition()` is a method that can be defined by the user and by default returns true. It is important that no destructive changes are made during this check.
+The process begins with `Behavior.initializeState()`, which generates the model. This method, `initializeState()`, should be defined by the user. The generated instance is then checked for initialization preconditions using `Behavior.initializePrecondition(State)`. If the return value is false, the test fails. `initializePrecondition()` is a method that can be defined by the user and by default returns true. It is important that no destructive changes are made during this check.
 
 Next, `Behavior.generateCommands(State)` generates a list of commands to be executed. This method allows the model object to be referenced during generation and should be defined by the user. The commands to be used are determined in the subsequent loop.
 
