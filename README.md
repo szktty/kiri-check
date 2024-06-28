@@ -197,6 +197,12 @@ void main() {
 For more detailed information on stateful testing, including advanced usage and customization options, please refer
 to [Stateful Testing](https://szktty.github.io/kiri-check/stateful-testing.html).
 
+## TODO
+
+- Example database
+- Replace the PRNG with xorshift to improve performance and remove dependency on current PRNG
+- Reimplement the cache mechanism with a reproducible PRNG using internal state
+
 ## Author
 
 [SUZUKI Tetsuya](https://github.com/szktty) (tetsuya.suzuki@gmail.com)
