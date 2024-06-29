@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:kiri_check/src/constants.dart';
-import 'package:universal_platform/universal_platform.dart';
 
 // xorshift32
 final class RandomState {
