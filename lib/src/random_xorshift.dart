@@ -59,6 +59,9 @@ final class RandomXorshift implements Random {
 
   @override
   int nextInt(int max) {
+    if (max <= 0) {
+      throw ArgumentError('max must be greater than or equal to 0: $max');
+    }
     var value = nextInt32();
     if (value > Constants.safeIntMax) {
       value = value << 32 | nextInt32();
