@@ -1,9 +1,9 @@
-// xorshift32
-
 import 'dart:math';
 
+import 'package:kiri_check/src/constants.dart';
 import 'package:universal_platform/universal_platform.dart';
 
+// xorshift32
 final class RandomState {
   RandomState([this.seed]) {
     if (seed != null) {
@@ -11,11 +11,12 @@ final class RandomState {
         throw ArgumentError('seed must be non-zero');
       }
       RangeError.checkValueInInterval(seed!, 0, 0x7FFFFFFF);
+      x = seed!;
     }
   }
 
   factory RandomState.fromState(RandomState state) {
-    return RandomState(state.seed);
+    return RandomState(state.seed)..x = state.x;
   }
 
   // TODO: 他にいい値はある？
@@ -25,23 +26,23 @@ final class RandomState {
   int x = 123456789;
 }
 
-final class NewRandom implements Random {
-  NewRandom([int? seed]) {
+final class RandomXorshift implements Random {
+  RandomXorshift([int? seed]) {
     state = RandomState(seed);
-    if (seed != null) {
-      state.x = seed;
-    }
   }
 
-  factory NewRandom.fromState(RandomState state) => NewRandom()..state = state;
+  factory RandomXorshift.fromState(RandomState state) =>
+      RandomXorshift()..state = RandomState.fromState(state);
 
-  RandomState state = RandomState();
+  late RandomState state;
 
   int nextInt32() {
     var x = state.x;
     x ^= x << 13;
+    x &= 0xFFFFFFFF;
     x ^= x >> 17;
     x ^= x << 5;
+    x &= 0xFFFFFFFF;
     state.x = x;
     return x;
   }
@@ -60,11 +61,9 @@ final class NewRandom implements Random {
   @override
   int nextInt(int max) {
     var value = nextInt32();
-    if (UniversalPlatform.isWeb) {
-      return nextInt32() % max;
-    } else {
+    if (value > Constants.safeIntMax) {
       value = value << 32 | nextInt32();
-      return value % max;
     }
+    return value % max;
   }
 }
