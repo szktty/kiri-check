@@ -1,6 +1,8 @@
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:kiri_check/src/constants.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 // xorshift32
 final class RandomState {
@@ -53,8 +55,45 @@ final class RandomXorshift implements Random {
 
   @override
   double nextDouble() {
-    // TODO
-    return nextInt32() / 0x7FFFFFFF;
+    if (UniversalPlatform.isWeb) {
+      return _nextDoubleWeb();
+    } else {
+      return _nextDoubleNative();
+    }
+  }
+
+  double _nextDoubleNative() {
+    final lower26 = nextInt(1 << 26);
+    final upper26 = nextInt(1 << 26);
+    final combined = (upper26 << 26) | lower26;
+    final bits = 0x3FF0000000000000 | combined;
+    return _bitsToDoubleNative(bits) - 1.0;
+  }
+
+  double _bitsToDoubleNative(int value) {
+    final uintList = Uint64List(1);
+    uintList[0] = value;
+    final floatList = Float64List.view(uintList.buffer);
+    return floatList[0];
+  }
+
+  double _nextDoubleWeb() {
+    final lower26 = nextInt(1 << 26);
+    final upper26 = nextInt(1 << 26);
+    var combined = BigInt.from(upper26);
+    combined <<= 26;
+    combined |= BigInt.from(lower26);
+    final bits = BigInt.parse('3FF0000000000000', radix: 16) | combined;
+    return _bitsToDoubleWeb(bits) - 1.0;
+  }
+
+  double _bitsToDoubleWeb(BigInt value) {
+    final upper = (value >> 32).toInt();
+    final lower = (value & BigInt.from(0xffffffff)).toInt();
+    final data = ByteData(8)
+      ..setInt32(4, lower)
+      ..setInt32(0, upper);
+    return data.getFloat64(0);
   }
 
   @override
