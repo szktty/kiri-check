@@ -145,7 +145,7 @@ flowchart TB
   phase0 -->|Split into sequences| phase1
   phase1 -->|Fail: 2 4 4 6| phase2
   phase2 -->|Minimum sequence: 2 6| phase3
-  phase3 -->|Minimum values: 0 1| result
+  phase3 --> result
 
   subgraph phase0 [Failed sequence]
   direction LR
@@ -186,21 +186,10 @@ flowchart TB
   end
 
   subgraph phase3 [Phase 3: Shrinking values]
-  direction TB
-  phase3a --> phase3b
-  phase3b --> phase3c[Repeat]
-  subgraph phase3a [ ]
-  direction LR
-  p3a1[2] ~~~ p3a2[6]
-  end
-  subgraph phase3b [ ]
-  direction LR
-  p3b1[1] ~~~ p3b2[3]
-  end
   end
 
-  subgraph result [Falsifying sequence]
+  subgraph result [Falsifying sequence with minimum values]
   direction LR
-  r1[0] ~~~ r2[1]
+  r1[2] ~~~ r2[6]
   end
 ```
