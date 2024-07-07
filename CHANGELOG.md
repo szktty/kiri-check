@@ -1,3 +1,7 @@
+## develop
+
+- [UPDATE] Add tests for asynchronous properties
+
 ## 1.1.0
 
 - [ADD] Support Web platform
