@@ -2,6 +2,7 @@
 
 - [CHANGE] Replace the PRNG with new implemented PRNG which enables to reproduce random values using internal state
 - [CHANGE] Remove the dependency on package:mt19937
+- [UPDATE] Add tests for asynchronous properties
 
 ## 1.1.0
 
