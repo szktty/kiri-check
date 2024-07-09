@@ -10,7 +10,6 @@ dependencies:
   collection: ^1.19.0
   date_kit: ^1.0.2
   meta: ^1.15.0
-  mt19937: ^0.1.0
   test: ^1.25.7
   timezone: ^0.9.3
   universal_platform: ^1.1.0
