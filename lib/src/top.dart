@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/property.dart';
 import 'package:kiri_check/src/property_settings.dart';
@@ -95,6 +97,8 @@ void forAll<T>(
   EdgeCasePolicy? edgeCasePolicy,
   void Function()? setUp,
   void Function()? tearDown,
+  FutureOr<void> Function()? setUpAll,
+  FutureOr<void> Function()? tearDownAll,
   void Function(T)? onGenerate,
   void Function(T)? onShrink,
   void Function(T)? onFalsify,
@@ -119,6 +123,8 @@ void forAll<T>(
     block: block,
     setUp: setUp,
     tearDown: tearDown,
+    setUpAll: setUpAll,
+    tearDownAll: tearDownAll,
   );
   PropertyTestManager.addProperty(property);
 }
@@ -148,4 +154,16 @@ void collect(
     if (value7 != null) value7,
     if (value8 != null) value8,
   ]);
+}
+
+void setUpForAll(FutureOr<void> Function() callback) {
+  PropertyTestManager.setSetUpForAll(callback);
+}
+
+void tearDownForAll(FutureOr<void> Function() callback) {
+  PropertyTestManager.setTearDownForAll(callback);
+}
+
+void addTearDownCurrentForAll(FutureOr<void> Function() callback) {
+  PropertyTestManager.addTearDownCurrentForAll(callback);
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:math' as math;
 
@@ -42,6 +43,8 @@ final class StatelessProperty<T> extends Property<T> {
     required super.settings,
     super.setUp,
     super.tearDown,
+    this.setUpAll,
+    this.tearDownAll,
   }) {
     _generationContext = null;
   }
@@ -49,6 +52,9 @@ final class StatelessProperty<T> extends Property<T> {
   final ArbitraryInternal<T> arbitrary;
 
   final void Function(T) block;
+
+  FutureOr<void> Function()? setUpAll;
+  FutureOr<void> Function()? tearDownAll;
 
   GenerationContextImpl<T>? _generationContext;
   final List<T> _generated = [];
@@ -84,6 +90,7 @@ final class StatelessProperty<T> extends Property<T> {
         } else {
           printVerbose('Trying example: $description');
         }
+        PropertyTestManager.callSetUpForAll();
         settings.onGenerate?.call(example);
         block(example);
       } on Exception catch (e) {
@@ -91,6 +98,10 @@ final class StatelessProperty<T> extends Property<T> {
         final context = ShrinkingContext(this);
         falsified = context.shrink(example, e);
         break;
+      } finally {
+        PropertyTestManager.callTearDownForAll();
+        PropertyTestManager.callTearDownCurrentForAll();
+        PropertyTestManager.clearTearDownCurrentForAll();
       }
     }
 
@@ -383,6 +394,9 @@ final class PropertyTestManager {
   final List<PropertyTest> _tests = [];
 
   PropertyTestRunner? _running;
+  FutureOr<void> Function()? _setUpForAllCallback;
+  FutureOr<void> Function()? _tearDownForAllCallback;
+  final List<FutureOr<void> Function()> _tearDownCurrentForAllCallbacks = [];
 
   static void addTest(PropertyTest test) {
     _instance._tests.add(test);
@@ -395,6 +409,42 @@ final class PropertyTestManager {
       throw StateError('No test run');
     }
     runner.test.add(property);
+  }
+
+  // ignore: use_setters_to_change_properties
+  static void setSetUpForAll(FutureOr<void> Function() callback) {
+    _instance._setUpForAllCallback = callback;
+  }
+
+  static Future<void> callSetUpForAll() async {
+    if (_instance._setUpForAllCallback != null) {
+      await _instance._setUpForAllCallback!();
+    }
+  }
+
+  // ignore: use_setters_to_change_properties
+  static void setTearDownForAll(FutureOr<void> Function() callback) {
+    _instance._tearDownForAllCallback = callback;
+  }
+
+  static Future<void> callTearDownForAll() async {
+    if (_instance._tearDownForAllCallback != null) {
+      await _instance._tearDownForAllCallback!();
+    }
+  }
+
+  static void addTearDownCurrentForAll(FutureOr<void> Function() callback) {
+    _instance._tearDownCurrentForAllCallbacks.add(callback);
+  }
+
+  static Future<void> callTearDownCurrentForAll() async {
+    for (final callback in _instance._tearDownCurrentForAllCallbacks) {
+      await callback();
+    }
+  }
+
+  static void clearTearDownCurrentForAll() {
+    _instance._tearDownCurrentForAllCallbacks.clear();
   }
 
   static void runTest(PropertyTest test) {
