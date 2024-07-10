@@ -74,6 +74,8 @@ void property(
 ///     generated examples.
 ///   - `setUp`: A function to run before each test case.
 ///   - `tearDown`: A function to run after each test case.
+///   - `setUpAll`: A function to run before all test cases.
+///   - `tearDownAll`: A function to run after all test cases.
 ///   - `onGenerate`: A callback function that is called after each example is generated,
 ///     allowing inspection of the generated input.
 ///   - `onShrink`: A callback function that is called after each shrink operation,
@@ -156,14 +158,17 @@ void collect(
   ]);
 }
 
+/// Registers a function to be run before each test in `forAll`.
 void setUpForAll(void Function() callback) {
   PropertyTestManager.setSetUpForAll(callback);
 }
 
+/// Registers a function to be run after each test in `forAll`.
 void tearDownForAll(void Function() callback) {
   PropertyTestManager.setTearDownForAll(callback);
 }
 
+/// Registers a function to be run after the current test in `forAll`.
 void addTearDownCurrentForAll(void Function() callback) {
   PropertyTestManager.addTearDownCurrentForAll(callback);
 }
