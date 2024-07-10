@@ -64,7 +64,7 @@ void main() {
             }
           }
         },
-        tearDown: (_) {
+        tearDownAll: (_) {
           expect(count, greaterThan(0));
         },
       );

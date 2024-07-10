@@ -74,7 +74,7 @@ void main() {
             newDraws.add(y);
           }
         },
-        tearDown: (d) {
+        tearDownAll: (d) {
           expect(newDraws, isNotEmpty);
         },
         ignoreFalsify: true,
