@@ -1,5 +1,5 @@
-import 'package:test/test.dart';
 import 'package:kiri_check/kiri_check.dart';
+import 'package:test/test.dart';
 
 void main() {
   var n = 0;
