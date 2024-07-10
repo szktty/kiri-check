@@ -97,8 +97,8 @@ void forAll<T>(
   EdgeCasePolicy? edgeCasePolicy,
   void Function()? setUp,
   void Function()? tearDown,
-  FutureOr<void> Function()? setUpAll,
-  FutureOr<void> Function()? tearDownAll,
+  void Function()? setUpAll,
+  void Function()? tearDownAll,
   void Function(T)? onGenerate,
   void Function(T)? onShrink,
   void Function(T)? onFalsify,
@@ -156,14 +156,14 @@ void collect(
   ]);
 }
 
-void setUpForAll(FutureOr<void> Function() callback) {
+void setUpForAll(void Function() callback) {
   PropertyTestManager.setSetUpForAll(callback);
 }
 
-void tearDownForAll(FutureOr<void> Function() callback) {
+void tearDownForAll(void Function() callback) {
   PropertyTestManager.setTearDownForAll(callback);
 }
 
-void addTearDownCurrentForAll(FutureOr<void> Function() callback) {
+void addTearDownCurrentForAll(void Function() callback) {
   PropertyTestManager.addTearDownCurrentForAll(callback);
 }

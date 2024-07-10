@@ -2,7 +2,7 @@ import 'package:test/test.dart';
 import 'package:kiri_check/kiri_check.dart';
 
 void main() {
-  const n = 100;
+  var n = 0;
   var setUpForAllCalls = 0;
   var tearDownForAllCalls = 0;
   var setUpAllOfForAllCalls = 0;
@@ -15,17 +15,15 @@ void main() {
   });
 
   tearDownForAll(() {
-    expect(setUpForAllCalls, equals(tearDownForAllCalls + 1));
+    expect(setUpForAllCalls, tearDownForAllCalls + 1);
     tearDownForAllCalls++;
   });
 
   tearDownAll(() {
-    expect(setUpForAllCalls, n);
-    expect(tearDownForAllCalls, n);
     print('setUpForAllCalls: $setUpForAllCalls');
     print('tearDownForAllCalls: $tearDownForAllCalls');
-    print('setUpAllOfForAllCalls: $setUpAllOfForAllCalls');
-    print('tearDownAllOfForAllCalls: $tearDownAllOfForAllCalls');
+    expect(setUpForAllCalls, n);
+    expect(tearDownForAllCalls, n);
   });
 
   property('setUp and tearDown', () {
@@ -34,22 +32,26 @@ void main() {
 
     forAll(
       null_(),
-      (value) {},
-      maxExamples: n,
+      (value) {
+        n++;
+      },
+      maxExamples: 100,
       setUp: () {
         setUpCurrentForAllCalls++;
       },
       tearDown: () {
-        expect(setUpCurrentForAllCalls, equals(tearDownCurrentForAllCalls + 1));
+        expect(setUpCurrentForAllCalls, tearDownCurrentForAllCalls + 1);
         tearDownCurrentForAllCalls++;
       },
       setUpAll: () {
+        expect(setUpCurrentForAllCalls, 0);
+        expect(tearDownCurrentForAllCalls, 0);
         setUpAllOfForAllCalls++;
       },
       tearDownAll: () {
-        expect(setUpCurrentForAllCalls, equals(n));
-        expect(tearDownCurrentForAllCalls, equals(n));
-        expect(setUpAllOfForAllCalls, equals(tearDownAllOfForAllCalls + 1));
+        expect(setUpCurrentForAllCalls, n);
+        expect(tearDownCurrentForAllCalls, n);
+        expect(setUpAllOfForAllCalls, tearDownAllOfForAllCalls + 1);
         tearDownAllOfForAllCalls++;
       },
     );

@@ -53,14 +53,14 @@ final class StatelessProperty<T> extends Property<T> {
 
   final void Function(T) block;
 
-  FutureOr<void> Function()? setUpAll;
-  FutureOr<void> Function()? tearDownAll;
+  void Function()? setUpAll;
+  void Function()? tearDownAll;
 
   GenerationContextImpl<T>? _generationContext;
   final List<T> _generated = [];
 
   @override
-  void check(PropertyTest test) {
+  Future<void> check(PropertyTest test) async {
     _generationContext = GenerationContextImpl(
       arbitrary: arbitrary,
       maxExamples: maxExamples,
@@ -75,7 +75,7 @@ final class StatelessProperty<T> extends Property<T> {
     printVerbose('Edge case policy: ${_generationContext!.edgeCasePolicy}');
     printVerbose('Shrinking policy: ${settings.shrinkingPolicy}');
 
-    this.setUp?.call();
+    this.setUpAll?.call();
 
     _generationContext!.generate();
 
@@ -91,17 +91,16 @@ final class StatelessProperty<T> extends Property<T> {
           printVerbose('Trying example: $description');
         }
         PropertyTestManager.callSetUpForAll();
+        this.setUp?.call();
         settings.onGenerate?.call(example);
         block(example);
+        _callTearDownCallbacks();
       } on Exception catch (e) {
         printVerbose('Falsifying example: $description');
+        _callTearDownCallbacks();
         final context = ShrinkingContext(this);
         falsified = context.shrink(example, e);
         break;
-      } finally {
-        PropertyTestManager.callTearDownForAll();
-        PropertyTestManager.callTearDownCurrentForAll();
-        PropertyTestManager.clearTearDownCurrentForAll();
       }
     }
 
@@ -123,10 +122,18 @@ final class StatelessProperty<T> extends Property<T> {
       );
     }
 
-    this.tearDown?.call();
+    this.tearDownAll?.call();
+
     if (exception != null) {
       throw exception;
     }
+  }
+
+  void _callTearDownCallbacks() {
+    PropertyTestManager.callTearDownCurrentForAll();
+    PropertyTestManager.clearTearDownCurrentForAll();
+    this.tearDown?.call();
+    PropertyTestManager.callTearDownForAll();
   }
 }
 
@@ -394,9 +401,9 @@ final class PropertyTestManager {
   final List<PropertyTest> _tests = [];
 
   PropertyTestRunner? _running;
-  FutureOr<void> Function()? _setUpForAllCallback;
-  FutureOr<void> Function()? _tearDownForAllCallback;
-  final List<FutureOr<void> Function()> _tearDownCurrentForAllCallbacks = [];
+  void Function()? _setUpForAllCallback;
+  void Function()? _tearDownForAllCallback;
+  final List<void Function()> _tearDownCurrentForAllCallbacks = [];
 
   static void addTest(PropertyTest test) {
     _instance._tests.add(test);
@@ -412,34 +419,30 @@ final class PropertyTestManager {
   }
 
   // ignore: use_setters_to_change_properties
-  static void setSetUpForAll(FutureOr<void> Function() callback) {
+  static void setSetUpForAll(void Function() callback) {
     _instance._setUpForAllCallback = callback;
   }
 
-  static Future<void> callSetUpForAll() async {
-    if (_instance._setUpForAllCallback != null) {
-      await _instance._setUpForAllCallback!();
-    }
+  static void callSetUpForAll() {
+    _instance._setUpForAllCallback?.call();
   }
 
   // ignore: use_setters_to_change_properties
-  static void setTearDownForAll(FutureOr<void> Function() callback) {
+  static void setTearDownForAll(void Function() callback) {
     _instance._tearDownForAllCallback = callback;
   }
 
-  static Future<void> callTearDownForAll() async {
-    if (_instance._tearDownForAllCallback != null) {
-      await _instance._tearDownForAllCallback!();
-    }
+  static void callTearDownForAll() {
+    _instance._tearDownForAllCallback?.call();
   }
 
-  static void addTearDownCurrentForAll(FutureOr<void> Function() callback) {
+  static void addTearDownCurrentForAll(void Function() callback) {
     _instance._tearDownCurrentForAllCallbacks.add(callback);
   }
 
-  static Future<void> callTearDownCurrentForAll() async {
+  static void callTearDownCurrentForAll() {
     for (final callback in _instance._tearDownCurrentForAllCallbacks) {
-      await callback();
+      callback();
     }
   }
 
