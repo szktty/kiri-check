@@ -5,10 +5,9 @@ void main() {
   var n = 0;
   var setUpForAllCalls = 0;
   var tearDownForAllCalls = 0;
+  var addTearDownCurrentForAllCalls = 0;
   var setUpAllOfForAllCalls = 0;
   var tearDownAllOfForAllCalls = 0;
-
-  // TODO: addTearDownCurrentForAll
 
   setUpForAll(() {
     setUpForAllCalls++;
@@ -22,8 +21,10 @@ void main() {
   tearDownAll(() {
     print('setUpForAllCalls: $setUpForAllCalls');
     print('tearDownForAllCalls: $tearDownForAllCalls');
+    print('addTearDownCurrentForAllCalls: $addTearDownCurrentForAllCalls');
     expect(setUpForAllCalls, n);
     expect(tearDownForAllCalls, n);
+    expect(addTearDownCurrentForAllCalls, n * 2);
   });
 
   property('setUp and tearDown', () {
@@ -34,6 +35,12 @@ void main() {
       null_(),
       (value) {
         n++;
+        addTearDownCurrentForAll(() {
+          addTearDownCurrentForAllCalls++;
+        });
+        addTearDownCurrentForAll(() {
+          addTearDownCurrentForAllCalls++;
+        });
       },
       maxExamples: 100,
       setUp: () {
