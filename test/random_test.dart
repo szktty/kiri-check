@@ -108,7 +108,8 @@ void main() {
     group('int', () {
       test('equality', () {
         final random = RandomContextImpl(
-            DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF);
+          DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF,
+        );
         var lt100 = 0;
         var lt200 = 0;
         var lt300 = 0;
@@ -158,7 +159,8 @@ void main() {
 
       test('edge cases (0, max)', () {
         final random = RandomContextImpl(
-            DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF);
+          DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF,
+        );
         const max = 100;
         var hasZero = false;
         var hasMax = false;

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/property.dart';
 import 'package:kiri_check/src/property_settings.dart';
