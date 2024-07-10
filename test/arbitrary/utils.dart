@@ -14,7 +14,9 @@ void testForAll<T>(
   ShrinkingPolicy? shrinkingPolicy,
   EdgeCasePolicy? edgeCasePolicy,
   void Function()? setUp,
-  void Function(List<T>)? tearDown,
+  void Function()? tearDown,
+  void Function()? setUpAll,
+  void Function(List<T>)? tearDownAll,
   void Function(T)? onGenerate,
   void Function(T)? onShrink,
   void Function(T)? onFalsify,
@@ -24,11 +26,7 @@ void testForAll<T>(
   final examples = <T>[];
   var hasShrink = false;
 
-  void testSetUp() {
-    setUp?.call();
-  }
-
-  void testTearDown() {
+  void testTearDownAll() {
     if (variousRatio != null) {
       final examplesSet = examples.toSet();
       final expected = (variousRatio * 100).toInt();
@@ -41,7 +39,7 @@ void testForAll<T>(
             '(actual $actual%, expected $expected%)',
       );
     }
-    tearDown?.call(examples);
+    tearDownAll?.call(examples);
   }
 
   forAll(
@@ -59,8 +57,10 @@ void testForAll<T>(
     generationPolicy: generationPolicy,
     shrinkingPolicy: shrinkingPolicy,
     edgeCasePolicy: edgeCasePolicy,
-    setUp: testSetUp,
-    tearDown: testTearDown,
+    setUp: setUp,
+    tearDown: tearDown,
+    setUpAll: setUpAll,
+    tearDownAll: testTearDownAll,
     onGenerate: onGenerate,
     onShrink: (example) {
       hasShrink = true;

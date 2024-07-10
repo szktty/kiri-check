@@ -154,7 +154,7 @@ void main() {
         setUp: () {
           setUpCalled ??= ++n;
         },
-        tearDown: () {
+        tearDownAll: () {
           tearDownCalled ??= ++n;
         },
       );
@@ -169,7 +169,7 @@ void main() {
         (value) {
           i++;
         },
-        tearDown: () {
+        tearDownAll: () {
           expect(i, Settings.shared.maxExamples);
         },
       );
@@ -184,7 +184,7 @@ void main() {
           i++;
         },
         maxExamples: maxExamples,
-        tearDown: () {
+        tearDownAll: () {
           expect(i, maxExamples);
         },
       );
@@ -199,7 +199,7 @@ void main() {
         (value) {
           first ??= value;
         },
-        tearDown: () {
+        tearDownAll: () {
           expect(first, 100);
         },
       );
@@ -248,7 +248,7 @@ void main() {
       forAll(
         enumerable(),
         values.add,
-        tearDown: () {
+        tearDownAll: () {
           expect(
             const DeepCollectionEquality().equals(
               values,
@@ -266,7 +266,7 @@ void main() {
       forAll(
         edgeCase(),
         values.add,
-        tearDown: () {
+        tearDownAll: () {
           for (final case_ in _EdgeCaseArbitrary._edgeCases) {
             expect(values.contains(case_), isTrue);
           }
@@ -280,7 +280,7 @@ void main() {
       forAll(
         edgeCase(),
         values.add,
-        tearDown: () {
+        tearDownAll: () {
           expect(
             _EdgeCaseArbitrary._edgeCases.any(values.contains),
             isTrue,
@@ -296,7 +296,7 @@ void main() {
       forAll(
         edgeCase(),
         values.add,
-        tearDown: () {
+        tearDownAll: () {
           for (final case_ in _EdgeCaseArbitrary._edgeCases) {
             expect(values.contains(case_), isFalse);
           }
@@ -313,7 +313,7 @@ void main() {
         onGenerate: (value) {
           called = true;
         },
-        tearDown: () {
+        tearDownAll: () {
           expect(called, isTrue);
         },
       );
@@ -345,7 +345,7 @@ void main() {
           tries++;
           expect(value, lessThanOrEqualTo(0));
         },
-        tearDown: () {
+        tearDownAll: () {
           expect(tries, max + 1);
         },
         maxShrinkingTries: max,
@@ -361,7 +361,7 @@ void main() {
           values.add(value);
           throw Exception('falsify');
         },
-        tearDown: () {
+        tearDownAll: () {
           expect(values, [100]);
         },
         shrinkingPolicy: ShrinkingPolicy.off,
@@ -380,7 +380,7 @@ void main() {
         onFalsify: (value) {
           falsify = value;
         },
-        tearDown: () {
+        tearDownAll: () {
           expect(falsify, equals(expectedFalsify));
         },
         ignoreFalsify: true,
@@ -399,7 +399,7 @@ void main() {
         onShrink: (value) {
           called = true;
         },
-        tearDown: () {
+        tearDownAll: () {
           expect(called, isTrue);
         },
         ignoreFalsify: true,

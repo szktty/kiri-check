@@ -11,7 +11,7 @@ void main() {
         testForAll(
           boolean(),
           (value) {},
-          tearDown: (examples) {
+          tearDownAll: (examples) {
             expect(examples.contains(true), isTrue);
             expect(examples.contains(false), isTrue);
           },
@@ -25,7 +25,7 @@ void main() {
         testForAll(
           boolean(),
           (value) {},
-          tearDown: (examples) {
+          tearDownAll: (examples) {
             expect(examples.contains(true), isTrue);
             expect(examples.contains(false), isTrue);
           },
@@ -51,7 +51,7 @@ void main() {
           onShrink: (example) {
             shrink = true;
           },
-          tearDown: (_) {
+          tearDownAll: (_) {
             expect(failed, isTrue);
             expect(falsify, isTrue);
             expect(shrink, isFalse);
