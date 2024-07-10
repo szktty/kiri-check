@@ -92,7 +92,7 @@ final class StatefulProperty<State, System> extends Property<State> {
   late final Timeout cycleTimeout;
 
   @override
-  void check(PropertyTest test) {
+  Future<void> check(PropertyTest test) async {
     final (result, exception) = _check(test);
 
     if (exception != null) {
