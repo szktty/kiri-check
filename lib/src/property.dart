@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:math' as math;
 
@@ -42,6 +43,8 @@ final class StatelessProperty<T> extends Property<T> {
     required super.settings,
     super.setUp,
     super.tearDown,
+    this.setUpAll,
+    this.tearDownAll,
   }) {
     _generationContext = null;
   }
@@ -50,11 +53,14 @@ final class StatelessProperty<T> extends Property<T> {
 
   final void Function(T) block;
 
+  void Function()? setUpAll;
+  void Function()? tearDownAll;
+
   GenerationContextImpl<T>? _generationContext;
   final List<T> _generated = [];
 
   @override
-  void check(PropertyTest test) {
+  Future<void> check(PropertyTest test) async {
     _generationContext = GenerationContextImpl(
       arbitrary: arbitrary,
       maxExamples: maxExamples,
@@ -69,7 +75,7 @@ final class StatelessProperty<T> extends Property<T> {
     printVerbose('Edge case policy: ${_generationContext!.edgeCasePolicy}');
     printVerbose('Shrinking policy: ${settings.shrinkingPolicy}');
 
-    this.setUp?.call();
+    this.setUpAll?.call();
 
     _generationContext!.generate();
 
@@ -84,10 +90,14 @@ final class StatelessProperty<T> extends Property<T> {
         } else {
           printVerbose('Trying example: $description');
         }
+        PropertyTestManager.callSetUpForAll();
+        this.setUp?.call();
         settings.onGenerate?.call(example);
         block(example);
+        _callTearDownCallbacks();
       } on Exception catch (e) {
         printVerbose('Falsifying example: $description');
+        _callTearDownCallbacks();
         final context = ShrinkingContext(this);
         falsified = context.shrink(example, e);
         break;
@@ -112,10 +122,18 @@ final class StatelessProperty<T> extends Property<T> {
       );
     }
 
-    this.tearDown?.call();
+    this.tearDownAll?.call();
+
     if (exception != null) {
       throw exception;
     }
+  }
+
+  void _callTearDownCallbacks() {
+    PropertyTestManager.callTearDownCurrentForAll();
+    PropertyTestManager.clearTearDownCurrentForAll();
+    this.tearDown?.call();
+    PropertyTestManager.callTearDownForAll();
   }
 }
 
@@ -383,6 +401,9 @@ final class PropertyTestManager {
   final List<PropertyTest> _tests = [];
 
   PropertyTestRunner? _running;
+  void Function()? _setUpForAllCallback;
+  void Function()? _tearDownForAllCallback;
+  final List<void Function()> _tearDownCurrentForAllCallbacks = [];
 
   static void addTest(PropertyTest test) {
     _instance._tests.add(test);
@@ -395,6 +416,38 @@ final class PropertyTestManager {
       throw StateError('No test run');
     }
     runner.test.add(property);
+  }
+
+  // ignore: use_setters_to_change_properties
+  static void setSetUpForAll(void Function() callback) {
+    _instance._setUpForAllCallback = callback;
+  }
+
+  static void callSetUpForAll() {
+    _instance._setUpForAllCallback?.call();
+  }
+
+  // ignore: use_setters_to_change_properties
+  static void setTearDownForAll(void Function() callback) {
+    _instance._tearDownForAllCallback = callback;
+  }
+
+  static void callTearDownForAll() {
+    _instance._tearDownForAllCallback?.call();
+  }
+
+  static void addTearDownCurrentForAll(void Function() callback) {
+    _instance._tearDownCurrentForAllCallbacks.add(callback);
+  }
+
+  static void callTearDownCurrentForAll() {
+    for (final callback in _instance._tearDownCurrentForAllCallbacks) {
+      callback();
+    }
+  }
+
+  static void clearTearDownCurrentForAll() {
+    _instance._tearDownCurrentForAllCallbacks.clear();
   }
 
   static void runTest(PropertyTest test) {

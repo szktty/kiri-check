@@ -47,7 +47,7 @@ void main() {
       testForAll(
         float(nan: true),
         (value) {},
-        tearDown: (examples) {
+        tearDownAll: (examples) {
           expect(examples, contains(isNaN));
         },
         maxExamples: 10000,
@@ -58,7 +58,7 @@ void main() {
       testForAll(
         float(infinity: true),
         (value) {},
-        tearDown: (examples) {
+        tearDownAll: (examples) {
           expect(examples, contains(double.infinity));
           expect(examples, contains(double.negativeInfinity));
         },
@@ -76,7 +76,7 @@ void main() {
         float(),
         examples2.add,
         seed: seed,
-        tearDown: () {
+        tearDownAll: () {
           expect(
             const DeepCollectionEquality().equals(examples1, examples2),
             isTrue,
@@ -97,7 +97,7 @@ void main() {
           onFalsify: (example) {
             falsify = example;
           },
-          tearDown: (examples) {
+          tearDownAll: (examples) {
             expect(falsify, greaterThan(point));
           },
           ignoreFalsify: true,
@@ -115,7 +115,7 @@ void main() {
           onFalsify: (example) {
             falsify = example;
           },
-          tearDown: (examples) {
+          tearDownAll: (examples) {
             expect(falsify, lessThan(point));
           },
           ignoreFalsify: true,
@@ -134,7 +134,7 @@ void main() {
           onFalsify: (example) {
             falsify = example;
           },
-          tearDown: (examples) {
+          tearDownAll: (examples) {
             expect(falsify, greaterThanOrEqualTo(min));
           },
           ignoreFalsify: true,

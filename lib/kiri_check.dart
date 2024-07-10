@@ -30,7 +30,14 @@ export 'src/arbitrary/top.dart'
 export 'src/home.dart' show KiriCheck, Verbosity;
 export 'src/property_settings.dart'
     show EdgeCasePolicy, GenerationPolicy, ShrinkingPolicy;
-export 'src/top.dart' show collect, forAll, property;
+export 'src/top.dart'
+    show
+        addTearDownCurrentForAll,
+        collect,
+        forAll,
+        property,
+        setUpForAll,
+        tearDownForAll;
 export 'src/util/character/character_set.dart'
     show CharacterEncoding, CharacterSet;
 export 'src/util/datetime.dart' show NominalDateTime;

@@ -271,7 +271,7 @@ void testGeneratingUnicode({
         }
       }
     },
-    tearDown: (_) {
+    tearDownAll: (_) {
       for (final charSet in testCharSets) {
         expect(result[charSet], greaterThan(0), reason: charSet.toString());
       }
