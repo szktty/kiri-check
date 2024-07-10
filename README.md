@@ -197,6 +197,10 @@ void main() {
 For more detailed information on stateful testing, including advanced usage and customization options, please refer
 to [Stateful Testing](https://szktty.github.io/kiri-check/stateful-testing.html).
 
+## Known issues
+
+- [#13](https://github.com/szktty/kiri-check/issues/13) Test results in IntelliJ IDEA do not reflect `tearDownAll`
+
 ## TODO
 
 - Example database
