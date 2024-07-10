@@ -5,6 +5,15 @@
 - [CHANGE] Downgrade the dependencies for Flutter dependencies (#8)
 - [UPDATE] Add tests for asynchronous properties
 
+### API
+
+- [CHANGE] Add `setUpForAll` and `tearDownForAll` global functions
+- [CHANGE] Add `setUpAll` and `tearDownAll` parameters to `forAll`
+- [FIX] Fix the function passed as the `setUp` parameter to `forAll` not being called before each test execution
+  within `forAll`. Previously, the function was only called once.
+- [FIX] Fix the function passed as the `tearDown` parameter to `forAll` not being called before each test execution
+  within `forAll`. Previously, the function was only called once.
+
 ## 1.1.0
 
 - [ADD] Support Web platform
