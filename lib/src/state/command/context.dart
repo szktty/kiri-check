@@ -58,19 +58,19 @@ final class CommandContext<State, System> {
     }
   }
 
-  void nextState(State state) {
-    command.nextState(this, state);
+  Future<void> nextState(State state) async {
+    await command.nextState(this, state);
   }
 
-  dynamic run(System system) {
+  Future<dynamic> run(System system) {
     return command.run(this, system);
   }
 
-  bool precondition(State state) {
+  Future<bool> precondition(State state) {
     return command.precondition(this, state);
   }
 
-  bool postcondition(State state, dynamic result) {
+  Future<bool> postcondition(State state, dynamic result) {
     return command.postcondition(this, state, result);
   }
 
