@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:kiri_check/src/state/command/command.dart';
 import 'package:kiri_check/src/state/top.dart';
 import 'package:meta/meta.dart';
@@ -9,36 +11,36 @@ import 'package:meta/meta.dart';
 abstract class Behavior<State, System> {
   /// Creates a new state.
   @factory
-  State initialState();
+  FutureOr<State> initialState();
 
   /// Returns true if the given state satisfies the initial precondition.
-  bool initialPrecondition(State state) => true;
+  FutureOr<bool> initialPrecondition(State state) => true;
 
   /// Creates a new system with the given state.
   @factory
-  System createSystem(State state);
+  FutureOr<System> createSystem(State state);
 
   /// Generates a list of commands to run on the given state.
-  List<Command<State, System>> generateCommands(State state);
+  FutureOr<List<Command<State, System>>> generateCommands(State state);
 
   /// Destroy the given system.
-  void destroySystem(System system);
+  FutureOr<void> destroySystem(System system);
 
   /// Called before the cycle is run.
-  void setUp() {}
+  FutureOr<void> setUp() async {}
 
   /// Called once before all cycles are run.
-  void setUpAll() {}
+  FutureOr<void> setUpAll() async {}
 
   /// Called after the cycle is run.
-  void tearDown() {}
+  FutureOr<void> tearDown() async {}
 
   /// Called once after all cycles are run.
-  void tearDownAll() {}
+  FutureOr<void> tearDownAll() async {}
 
   /// Called at the beginning of the command generation phase.
-  void onGenerate(State state) {}
+  FutureOr<void> onGenerate(State state) async {}
 
   /// Called at the beginning of the execution phase.
-  void onExecute(State state, System system) {}
+  FutureOr<void> onExecute(State state, System system) async {}
 }

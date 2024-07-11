@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:kiri_check/src/exception.dart';
 import 'package:kiri_check/src/home.dart';
@@ -40,7 +42,7 @@ final class StateContext<State, System> {
 
   Behavior<State, System> get behavior => property.behavior;
 
-  bool runCommand(CommandContext<State, System> commandContext) {
+  Future<bool> runCommand(CommandContext<State, System> commandContext) {
     return property._runCommand(this, commandContext);
   }
 }
@@ -82,8 +84,9 @@ final class StatefulProperty<State, System> extends Property<State> {
 
   final Behavior<State, System> behavior;
 
-  final void Function(Behavior<State, System>, System)? onDestroy;
-  final void Function(StatefulFalsifyingExample<State, System>)? onFalsify;
+  final FutureOr<void> Function(Behavior<State, System>, System)? onDestroy;
+  final FutureOr<void> Function(StatefulFalsifyingExample<State, System>)?
+      onFalsify;
 
   late final int maxCycles;
   late final int maxSteps;
@@ -93,7 +96,7 @@ final class StatefulProperty<State, System> extends Property<State> {
 
   @override
   Future<void> check(PropertyTest test) async {
-    final (result, exception) = _check(test);
+    final (result, exception) = await _check(test);
 
     if (exception != null) {
       throw exception;
@@ -112,7 +115,7 @@ final class StatefulProperty<State, System> extends Property<State> {
           StatefulExampleStep.fromSequence(result.falsifyingSequence),
           result.exception,
         );
-        onFalsify!.call(example);
+        await onFalsify!.call(example);
       }
 
       if (!settings.ignoreFalsify) {
@@ -121,31 +124,33 @@ final class StatefulProperty<State, System> extends Property<State> {
     }
   }
 
-  (StatefulShrinkingResult<State, System>?, Exception?) _check(
+  Future<(StatefulShrinkingResult<State, System>?, Exception?)> _check(
     PropertyTest test,
-  ) {
+  ) async {
     printVerbose('Check behavior: ${behavior.runtimeType}');
-    this.setUp?.call();
-    behavior.setUpAll();
+    await this.setUp?.call();
+    await behavior.setUpAll();
 
     StatefulShrinkingResult<State, System>? result;
     Exception? exception;
     try {
-      result = _checkSequences(test);
+      result = await _checkSequences(test);
     } on Exception catch (e) {
       exception = e;
     }
-    behavior.tearDownAll();
-    this.tearDown?.call();
+    await behavior.tearDownAll();
+    await this.tearDown?.call();
     return (result, exception);
   }
 
-  (bool, State) _initialState() {
-    final state = behavior.initialState();
-    return (behavior.initialPrecondition(state), state);
+  Future<(bool, State)> _initialState() async {
+    final state = await behavior.initialState();
+    return (await behavior.initialPrecondition(state), state);
   }
 
-  StatefulShrinkingResult<State, System>? _checkSequences(PropertyTest test) {
+  Future<StatefulShrinkingResult<State, System>?> _checkSequences(
+    PropertyTest test,
+  ) async {
     final propertyContext = StatefulPropertyContext(this, test);
     for (propertyContext.cycle = 0;
         propertyContext.cycle < maxCycles;
@@ -153,44 +158,44 @@ final class StatefulProperty<State, System> extends Property<State> {
       printVerbose('--------------------------------------------');
       printVerbose('Cycle ${propertyContext.cycle + 1}');
 
-      behavior.setUp();
+      await behavior.setUp();
 
       printVerbose('Generate commands...');
-      final (initPrecond0, state0) = _initialState();
+      final (initPrecond0, state0) = await _initialState();
       if (!initPrecond0) {
-        behavior.tearDown();
+        await behavior.tearDown();
         throw KiriCheckException('initial precondition is not satisfied');
       }
 
-      behavior.onGenerate(state0);
-      final commands = behavior.generateCommands(state0);
+      await behavior.onGenerate(state0);
+      final commands = await behavior.generateCommands(state0);
       final traversal = Traversal(propertyContext, commands);
-      final sequence = traversal.generateSequence(state0);
+      final sequence = await traversal.generateSequence(state0);
 
-      final (initPrecond, state) = _initialState();
+      final (initPrecond, state) = await _initialState();
       if (!initPrecond) {
-        behavior.tearDown();
+        await behavior.tearDown();
         throw KiriCheckException('initial precondition is not satisfied');
       }
-      final system = behavior.createSystem(state);
+      final system = await behavior.createSystem(state);
       final stateContext = StateContext(state, system, this, test);
 
       printVerbose('Create state: ${state.runtimeType}');
       printVerbose('Create system: ${system.runtimeType}');
-      behavior.onExecute(state, system);
+      await behavior.onExecute(state, system);
 
       for (var i = 0; i < sequence.steps.length; i++) {
         final step = sequence.steps[i];
         printVerbose('Step ${i + 1}: ${step.command.description}');
         try {
           step.commandContext.nextValue();
-          final result = stateContext.runCommand(step.commandContext);
+          final result = await stateContext.runCommand(step.commandContext);
           if (!result) {
             i--;
           }
         } on Exception catch (e) {
           printVerbose('  Error: $e');
-          _destroyBehavior(behavior, system);
+          await _destroyBehavior(behavior, system);
 
           final shrinker = _StatefulPropertyShrinker(
             propertyContext,
@@ -202,33 +207,32 @@ final class StatefulProperty<State, System> extends Property<State> {
           return shrinker.shrink();
         }
       }
-      _destroyBehavior(behavior, system);
+      await _destroyBehavior(behavior, system);
     }
     printVerbose('--------------------------------------------');
     return null;
   }
 
-  void _destroyBehavior(
+  Future<void> _destroyBehavior(
     Behavior<State, System> behavior,
     System system,
-  ) {
+  ) async {
     if (onDestroy != null) {
-      onDestroy?.call(behavior, system);
+      await onDestroy?.call(behavior, system);
     }
-    behavior
-      ..destroySystem(system)
-      ..tearDown();
+    await behavior.destroySystem(system);
+    await behavior.tearDown();
   }
 
-  bool _runCommand(
+  Future<bool> _runCommand(
     StateContext<State, System> context,
     CommandContext<State, System> commandContext,
-  ) {
+  ) async {
     final state = context.state;
-    if (commandContext.precondition(state)) {
-      final result = commandContext.run(context.system);
-      if (commandContext.postcondition(state, result)) {
-        commandContext.nextState(state);
+    if (await commandContext.precondition(state)) {
+      final result = await commandContext.run(context.system);
+      if (await commandContext.postcondition(state, result)) {
+        await commandContext.nextState(state);
         return true;
       } else {
         throw PropertyException('postcondition is not satisfied');
@@ -257,10 +261,10 @@ final class _StatefulPropertyShrinker<State, System> {
 
   Behavior<State, System> get behavior => propertyContext.behavior;
 
-  StatefulShrinkingResult<State, System> shrink() {
-    final partial = _checkPartialSequences(originalSequence);
-    final reduced = _checkReducedSequences(partial);
-    final shrunk = _checkValues(reduced);
+  Future<StatefulShrinkingResult<State, System>> shrink() async {
+    final partial = await _checkPartialSequences(originalSequence);
+    final reduced = await _checkReducedSequences(partial);
+    final shrunk = await _checkValues(reduced);
     return StatefulShrinkingResult(
       originalState,
       originalSystem,
@@ -277,9 +281,9 @@ final class _StatefulPropertyShrinker<State, System> {
   bool get _hasShrinkCycle =>
       _shrinkCycle < propertyContext.property.maxShrinkingCycles;
 
-  TraversalSequence<State, System> _checkPartialSequences(
+  Future<TraversalSequence<State, System>> _checkPartialSequences(
     TraversalSequence<State, System> baseSequence,
-  ) {
+  ) async {
     propertyContext.shrinkCycle = 0;
     var previousSequences = <TraversalSequence<State, System>>[];
     var minShrunkSequence = baseSequence;
@@ -297,8 +301,8 @@ final class _StatefulPropertyShrinker<State, System> {
           'Shrink cycle ${_shrinkCycle + 1}: '
           '${shrunkSequence.steps.length} steps',
         );
-        behavior.setUp();
-        if (!_checkShrunkSequence(shrunkSequence, stepType: 'partial')) {
+        await behavior.setUp();
+        if (!await _checkShrunkSequence(shrunkSequence, stepType: 'partial')) {
           if (i < minShrunkNum) {
             minShrunkSequence = shrunkSequence;
             minShrunkNum = i;
@@ -314,9 +318,9 @@ final class _StatefulPropertyShrinker<State, System> {
     return minShrunkSequence;
   }
 
-  TraversalSequence<State, System> _checkReducedSequences(
+  Future<TraversalSequence<State, System>> _checkReducedSequences(
     TraversalSequence<State, System> baseSequence,
-  ) {
+  ) async {
     final commandTypeSet = <String>{};
     for (final step in baseSequence.steps) {
       commandTypeSet.add(step.command.description);
@@ -337,7 +341,7 @@ final class _StatefulPropertyShrinker<State, System> {
       }
 
       if (shrunkSequence.steps.isNotEmpty &&
-          !_checkShrunkSequence(shrunkSequence, stepType: 'reduced')) {
+          !await _checkShrunkSequence(shrunkSequence, stepType: 'reduced')) {
         if (shrunkSequence.steps.length < minShrunkSequence.steps.length) {
           minShrunkSequence = shrunkSequence;
         }
@@ -347,16 +351,16 @@ final class _StatefulPropertyShrinker<State, System> {
     return minShrunkSequence;
   }
 
-  bool _checkShrunkSequence(
+  Future<bool> _checkShrunkSequence(
     TraversalSequence<State, System> sequence, {
     required String stepType,
-  }) {
-    behavior.setUp();
-    final (initPrecond, state) = property._initialState();
+  }) async {
+    await behavior.setUp();
+    final (initPrecond, state) = await property._initialState();
     if (!initPrecond) {
       return false;
     }
-    final system = behavior.createSystem(state);
+    final system = await behavior.createSystem(state);
     final stateContext =
         StateContext(state, system, property, propertyContext.test);
     for (var i = 0; i < sequence.steps.length; i++) {
@@ -366,7 +370,7 @@ final class _StatefulPropertyShrinker<State, System> {
       try {
         step.commandContext.useCache = true;
         step.commandContext.nextValue();
-        stateContext.runCommand(step.commandContext);
+        await stateContext.runCommand(step.commandContext);
       } on Exception catch (e) {
         printVerbose('  Error: $e');
         if (i + 1 < sequence.steps.length) {
@@ -374,28 +378,28 @@ final class _StatefulPropertyShrinker<State, System> {
         }
         lastException = e;
 
-        property._destroyBehavior(behavior, system);
+        await property._destroyBehavior(behavior, system);
         return false;
       }
     }
-    property._destroyBehavior(behavior, system);
+    await property._destroyBehavior(behavior, system);
     return true;
   }
 
-  StateContext<State, System>? _checkValues(
+  Future<StateContext<State, System>?> _checkValues(
     TraversalSequence<State, System> sequence,
-  ) {
+  ) async {
     var allShrinkDone = false;
     StateContext<State, System>? shrunkContext;
     while (_hasShrinkCycle && !allShrinkDone) {
       printVerbose('Shrink cycle ${_shrinkCycle + 1}');
-      final (initPrecond, state) = property._initialState();
+      final (initPrecond, state) = await property._initialState();
       if (!initPrecond) {
         printVerbose('  Error: initial precondition is not satisfied');
         return shrunkContext;
       }
 
-      final system = propertyContext.behavior.createSystem(state);
+      final system = await propertyContext.behavior.createSystem(state);
       final stateContext =
           StateContext(state, system, property, propertyContext.test);
       allShrinkDone = true;
@@ -407,7 +411,7 @@ final class _StatefulPropertyShrinker<State, System> {
             step.commandContext.nextValue();
             allShrinkDone = false;
           }
-          stateContext.runCommand(step.commandContext);
+          await stateContext.runCommand(step.commandContext);
         } on Exception catch (e) {
           printVerbose('  Error: $e');
           lastException = e;
@@ -416,7 +420,7 @@ final class _StatefulPropertyShrinker<State, System> {
           break;
         }
       }
-      property._destroyBehavior(behavior, system);
+      await property._destroyBehavior(behavior, system);
       propertyContext.shrinkCycle++;
     }
     return shrunkContext;

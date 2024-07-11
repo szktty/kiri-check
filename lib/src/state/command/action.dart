@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/src/state/command/command.dart';
 import 'package:kiri_check/src/state/command/context.dart';
+import 'package:kiri_check/src/util/misc.dart';
 import 'package:meta/meta.dart';
 
 /// A command that performs actions with generated values.
@@ -16,10 +19,10 @@ final class Action<State, System, T, R> extends Command<State, System> {
   Action(
     super.description,
     this.arbitrary, {
-    required void Function(State, T) nextState,
-    required R Function(System, T) run,
-    bool Function(State, T)? precondition,
-    bool Function(State, T, R)? postcondition,
+    required FutureOr<void> Function(State, T) nextState,
+    required FutureOr<R> Function(System, T) run,
+    FutureOr<bool> Function(State, T)? precondition,
+    FutureOr<bool> Function(State, T, R)? postcondition,
   }) {
     _nextState = nextState;
     _run = run;
@@ -31,39 +34,50 @@ final class Action<State, System, T, R> extends Command<State, System> {
   @internal
   final Arbitrary<T>? arbitrary;
 
-  late final R Function(System, T) _run;
-  late final void Function(State, T) _nextState;
+  late final FutureOr<R> Function(System, T) _run;
+  late final FutureOr<void> Function(State, T) _nextState;
 
-  late final bool Function(State, T)? _precondition;
-  late final bool Function(State, T, R)? _postcondition;
+  late final FutureOr<bool> Function(State, T)? _precondition;
+  late final FutureOr<bool> Function(State, T, R)? _postcondition;
 
   @override
-  void nextState(CommandContext<State, System> context, State state) {
+  Future<void> nextState(
+    CommandContext<State, System> context,
+    State state,
+  ) async {
     _nextState(state, context.currentValue as T);
   }
 
   @override
-  R run(CommandContext<State, System> context, System system) {
-    return _run(system, context.currentValue as T);
+  Future<R> run(CommandContext<State, System> context, System system) async {
+    return await _run(system, context.currentValue as T);
   }
 
   @override
-  bool precondition(CommandContext<State, System> context, State state) {
-    return _precondition?.call(state, context.currentValue as T) ?? true;
+  Future<bool> precondition(
+    CommandContext<State, System> context,
+    State state,
+  ) {
+    return asyncCallOr(
+      () => _precondition?.call(state, context.currentValue as T),
+      true,
+    );
   }
 
   @override
-  bool postcondition(
+  Future<bool> postcondition(
     CommandContext<State, System> context,
     State state,
     dynamic result,
   ) {
-    return _postcondition?.call(
-          state,
-          context.currentValue as T,
-          result as R,
-        ) ??
-        true;
+    return asyncCallOr(
+      () => _postcondition?.call(
+        state,
+        context.currentValue as T,
+        result as R,
+      ),
+      true,
+    );
   }
 }
 
@@ -82,17 +96,19 @@ final class Action0<State, System, R> extends Action<State, System, void, R> {
   /// - `postcondition`: A function to test the postcondition of the action.
   Action0(
     String description, {
-    required void Function(State) nextState,
-    required R Function(System) run,
-    bool Function(State)? precondition,
-    bool Function(State, R)? postcondition,
+    required FutureOr<void> Function(State) nextState,
+    required FutureOr<R> Function(System) run,
+    FutureOr<bool> Function(State)? precondition,
+    FutureOr<bool> Function(State, R)? postcondition,
   }) : super(
           description,
           null,
           nextState: (s, _) => nextState(s),
           run: (sys, _) => run(sys),
-          precondition: (s, _) => precondition?.call(s) ?? true,
-          postcondition: (s, _, r) => postcondition?.call(s, r) ?? true,
+          precondition: (s, _) =>
+              asyncCallOr(() => precondition?.call(s), true),
+          postcondition: (s, _, r) =>
+              asyncCallOr(() => postcondition?.call(s, r), true),
         );
 }
 
@@ -112,19 +128,21 @@ final class Action2<State, System, T1, T2, R>
     String description,
     Arbitrary<T1> arbitrary1,
     Arbitrary<T2> arbitrary2, {
-    required void Function(State, T1, T2) nextState,
-    required R Function(System, T1, T2) run,
-    bool Function(State, T1, T2)? precondition,
-    bool Function(State, T1, T2, R)? postcondition,
+    required FutureOr<void> Function(State, T1, T2) nextState,
+    required FutureOr<R> Function(System, T1, T2) run,
+    FutureOr<bool> Function(State, T1, T2)? precondition,
+    FutureOr<bool> Function(State, T1, T2, R)? postcondition,
   }) : super(
           description,
           combine2(arbitrary1, arbitrary2, (a, b) => (a, b)),
           nextState: (s, args) => nextState(s, args.$1, args.$2),
           run: (sys, args) => run(sys, args.$1, args.$2),
           precondition: (s, args) =>
-              precondition?.call(s, args.$1, args.$2) ?? true,
-          postcondition: (s, args, r) =>
-              postcondition?.call(s, args.$1, args.$2, r) ?? true,
+              asyncCallOr(() => precondition?.call(s, args.$1, args.$2), true),
+          postcondition: (s, args, r) => asyncCallOr(
+            () => postcondition?.call(s, args.$1, args.$2, r),
+            true,
+          ),
         );
 }
 
@@ -146,19 +164,23 @@ final class Action3<State, System, T1, T2, T3, R>
     Arbitrary<T1> arbitrary1,
     Arbitrary<T2> arbitrary2,
     Arbitrary<T3> arbitrary3, {
-    required void Function(State, T1, T2, T3) nextState,
-    required R Function(System, T1, T2, T3) run,
-    bool Function(State, T1, T2, T3)? precondition,
-    bool Function(State, T1, T2, T3, R)? postcondition,
+    required FutureOr<void> Function(State, T1, T2, T3) nextState,
+    required FutureOr<R> Function(System, T1, T2, T3) run,
+    FutureOr<bool> Function(State, T1, T2, T3)? precondition,
+    FutureOr<bool> Function(State, T1, T2, T3, R)? postcondition,
   }) : super(
           description,
           combine3(arbitrary1, arbitrary2, arbitrary3, (a, b, c) => (a, b, c)),
           nextState: (s, args) => nextState(s, args.$1, args.$2, args.$3),
           run: (sys, args) => run(sys, args.$1, args.$2, args.$3),
-          precondition: (s, args) =>
-              precondition?.call(s, args.$1, args.$2, args.$3) ?? true,
-          postcondition: (s, args, r) =>
-              postcondition?.call(s, args.$1, args.$2, args.$3, r) ?? true,
+          precondition: (s, args) => asyncCallOr(
+            () => precondition?.call(s, args.$1, args.$2, args.$3),
+            true,
+          ),
+          postcondition: (s, args, r) => asyncCallOr(
+            () => postcondition?.call(s, args.$1, args.$2, args.$3, r),
+            true,
+          ),
         );
 }
 
@@ -182,10 +204,10 @@ final class Action4<State, System, T1, T2, T3, T4, R>
     Arbitrary<T2> arbitrary2,
     Arbitrary<T3> arbitrary3,
     Arbitrary<T4> arbitrary4, {
-    required void Function(State, T1, T2, T3, T4) nextState,
-    required R Function(System, T1, T2, T3, T4) run,
-    bool Function(State, T1, T2, T3, T4)? precondition,
-    bool Function(State, T1, T2, T3, T4, R)? postcondition,
+    required FutureOr<void> Function(State, T1, T2, T3, T4) nextState,
+    required FutureOr<R> Function(System, T1, T2, T3, T4) run,
+    FutureOr<bool> Function(State, T1, T2, T3, T4)? precondition,
+    FutureOr<bool> Function(State, T1, T2, T3, T4, R)? postcondition,
   }) : super(
           description,
           combine4(
@@ -198,11 +220,14 @@ final class Action4<State, System, T1, T2, T3, T4, R>
           nextState: (s, args) =>
               nextState(s, args.$1, args.$2, args.$3, args.$4),
           run: (sys, args) => run(sys, args.$1, args.$2, args.$3, args.$4),
-          precondition: (s, args) =>
-              precondition?.call(s, args.$1, args.$2, args.$3, args.$4) ?? true,
-          postcondition: (s, args, r) =>
-              postcondition?.call(s, args.$1, args.$2, args.$3, args.$4, r) ??
-              true,
+          precondition: (s, args) => asyncCallOr(
+            () => precondition?.call(s, args.$1, args.$2, args.$3, args.$4),
+            true,
+          ),
+          postcondition: (s, args, r) => asyncCallOr(
+            () => postcondition?.call(s, args.$1, args.$2, args.$3, args.$4, r),
+            true,
+          ),
         );
 }
 
@@ -228,10 +253,10 @@ final class Action5<State, System, T1, T2, T3, T4, T5, R>
     Arbitrary<T3> arbitrary3,
     Arbitrary<T4> arbitrary4,
     Arbitrary<T5> arbitrary5, {
-    required void Function(State, T1, T2, T3, T4, T5) nextState,
-    required R Function(System, T1, T2, T3, T4, T5) run,
-    bool Function(State, T1, T2, T3, T4, T5)? precondition,
-    bool Function(State, T1, T2, T3, T4, T5, R)? postcondition,
+    required FutureOr<void> Function(State, T1, T2, T3, T4, T5) nextState,
+    required FutureOr<R> Function(System, T1, T2, T3, T4, T5) run,
+    FutureOr<bool> Function(State, T1, T2, T3, T4, T5)? precondition,
+    FutureOr<bool> Function(State, T1, T2, T3, T4, T5, R)? postcondition,
   }) : super(
           description,
           combine5(
@@ -246,27 +271,29 @@ final class Action5<State, System, T1, T2, T3, T4, T5, R>
               nextState(s, args.$1, args.$2, args.$3, args.$4, args.$5),
           run: (sys, args) =>
               run(sys, args.$1, args.$2, args.$3, args.$4, args.$5),
-          precondition: (s, args) =>
-              precondition?.call(
-                s,
-                args.$1,
-                args.$2,
-                args.$3,
-                args.$4,
-                args.$5,
-              ) ??
-              true,
-          postcondition: (s, args, r) =>
-              postcondition?.call(
-                s,
-                args.$1,
-                args.$2,
-                args.$3,
-                args.$4,
-                args.$5,
-                r,
-              ) ??
-              true,
+          precondition: (s, args) => asyncCallOr(
+            () => precondition?.call(
+              s,
+              args.$1,
+              args.$2,
+              args.$3,
+              args.$4,
+              args.$5,
+            ),
+            true,
+          ),
+          postcondition: (s, args, r) => asyncCallOr(
+            () => postcondition?.call(
+              s,
+              args.$1,
+              args.$2,
+              args.$3,
+              args.$4,
+              args.$5,
+              r,
+            ),
+            true,
+          ),
         );
 }
 
@@ -294,10 +321,10 @@ final class Action6<State, System, T1, T2, T3, T4, T5, T6, R>
     Arbitrary<T4> arbitrary4,
     Arbitrary<T5> arbitrary5,
     Arbitrary<T6> arbitrary6, {
-    required void Function(State, T1, T2, T3, T4, T5, T6) nextState,
-    required R Function(System, T1, T2, T3, T4, T5, T6) run,
-    bool Function(State, T1, T2, T3, T4, T5, T6)? precondition,
-    bool Function(State, T1, T2, T3, T4, T5, T6, R)? postcondition,
+    required FutureOr<void> Function(State, T1, T2, T3, T4, T5, T6) nextState,
+    required FutureOr<R> Function(System, T1, T2, T3, T4, T5, T6) run,
+    FutureOr<bool> Function(State, T1, T2, T3, T4, T5, T6)? precondition,
+    FutureOr<bool> Function(State, T1, T2, T3, T4, T5, T6, R)? postcondition,
   }) : super(
           description,
           combine6(
@@ -320,29 +347,31 @@ final class Action6<State, System, T1, T2, T3, T4, T5, T6, R>
           ),
           run: (sys, args) =>
               run(sys, args.$1, args.$2, args.$3, args.$4, args.$5, args.$6),
-          precondition: (s, args) =>
-              precondition?.call(
-                s,
-                args.$1,
-                args.$2,
-                args.$3,
-                args.$4,
-                args.$5,
-                args.$6,
-              ) ??
-              true,
-          postcondition: (s, args, r) =>
-              postcondition?.call(
-                s,
-                args.$1,
-                args.$2,
-                args.$3,
-                args.$4,
-                args.$5,
-                args.$6,
-                r,
-              ) ??
-              true,
+          precondition: (s, args) => asyncCallOr(
+            () => precondition?.call(
+              s,
+              args.$1,
+              args.$2,
+              args.$3,
+              args.$4,
+              args.$5,
+              args.$6,
+            ),
+            true,
+          ),
+          postcondition: (s, args, r) => asyncCallOr(
+            () => postcondition?.call(
+              s,
+              args.$1,
+              args.$2,
+              args.$3,
+              args.$4,
+              args.$5,
+              args.$6,
+              r,
+            ),
+            true,
+          ),
         );
 }
 
@@ -372,10 +401,12 @@ final class Action7<State, System, T1, T2, T3, T4, T5, T6, T7, R>
     Arbitrary<T5> arbitrary5,
     Arbitrary<T6> arbitrary6,
     Arbitrary<T7> arbitrary7, {
-    required void Function(State, T1, T2, T3, T4, T5, T6, T7) nextState,
-    required R Function(System, T1, T2, T3, T4, T5, T6, T7) run,
-    bool Function(State, T1, T2, T3, T4, T5, T6, T7)? precondition,
-    bool Function(State, T1, T2, T3, T4, T5, T6, T7, R)? postcondition,
+    required FutureOr<void> Function(State, T1, T2, T3, T4, T5, T6, T7)
+        nextState,
+    required FutureOr<R> Function(System, T1, T2, T3, T4, T5, T6, T7) run,
+    FutureOr<bool> Function(State, T1, T2, T3, T4, T5, T6, T7)? precondition,
+    FutureOr<bool> Function(State, T1, T2, T3, T4, T5, T6, T7, R)?
+        postcondition,
   }) : super(
           description,
           combine7(
@@ -408,31 +439,33 @@ final class Action7<State, System, T1, T2, T3, T4, T5, T6, T7, R>
             args.$6,
             args.$7,
           ),
-          precondition: (s, args) =>
-              precondition?.call(
-                s,
-                args.$1,
-                args.$2,
-                args.$3,
-                args.$4,
-                args.$5,
-                args.$6,
-                args.$7,
-              ) ??
-              true,
-          postcondition: (s, args, r) =>
-              postcondition?.call(
-                s,
-                args.$1,
-                args.$2,
-                args.$3,
-                args.$4,
-                args.$5,
-                args.$6,
-                args.$7,
-                r,
-              ) ??
-              true,
+          precondition: (s, args) => asyncCallOr(
+            () => precondition?.call(
+              s,
+              args.$1,
+              args.$2,
+              args.$3,
+              args.$4,
+              args.$5,
+              args.$6,
+              args.$7,
+            ),
+            true,
+          ),
+          postcondition: (s, args, r) => asyncCallOr(
+            () => postcondition?.call(
+              s,
+              args.$1,
+              args.$2,
+              args.$3,
+              args.$4,
+              args.$5,
+              args.$6,
+              args.$7,
+              r,
+            ),
+            true,
+          ),
         );
 }
 
@@ -464,10 +497,13 @@ final class Action8<State, System, T1, T2, T3, T4, T5, T6, T7, T8, R>
     Arbitrary<T6> arbitrary6,
     Arbitrary<T7> arbitrary7,
     Arbitrary<T8> arbitrary8, {
-    required void Function(State, T1, T2, T3, T4, T5, T6, T7, T8) nextState,
-    required R Function(System, T1, T2, T3, T4, T5, T6, T7, T8) run,
-    bool Function(State, T1, T2, T3, T4, T5, T6, T7, T8)? precondition,
-    bool Function(State, T1, T2, T3, T4, T5, T6, T7, T8, R)? postcondition,
+    required FutureOr<void> Function(State, T1, T2, T3, T4, T5, T6, T7, T8)
+        nextState,
+    required FutureOr<R> Function(System, T1, T2, T3, T4, T5, T6, T7, T8) run,
+    FutureOr<bool> Function(State, T1, T2, T3, T4, T5, T6, T7, T8)?
+        precondition,
+    FutureOr<bool> Function(State, T1, T2, T3, T4, T5, T6, T7, T8, R)?
+        postcondition,
   }) : super(
           description,
           combine8(
@@ -503,32 +539,34 @@ final class Action8<State, System, T1, T2, T3, T4, T5, T6, T7, T8, R>
             args.$7,
             args.$8,
           ),
-          precondition: (s, args) =>
-              precondition?.call(
-                s,
-                args.$1,
-                args.$2,
-                args.$3,
-                args.$4,
-                args.$5,
-                args.$6,
-                args.$7,
-                args.$8,
-              ) ??
-              true,
-          postcondition: (s, args, r) =>
-              postcondition?.call(
-                s,
-                args.$1,
-                args.$2,
-                args.$3,
-                args.$4,
-                args.$5,
-                args.$6,
-                args.$7,
-                args.$8,
-                r,
-              ) ??
-              true,
+          precondition: (s, args) => asyncCallOr(
+            () => precondition?.call(
+              s,
+              args.$1,
+              args.$2,
+              args.$3,
+              args.$4,
+              args.$5,
+              args.$6,
+              args.$7,
+              args.$8,
+            ),
+            true,
+          ),
+          postcondition: (s, args, r) => asyncCallOr(
+            () => postcondition?.call(
+              s,
+              args.$1,
+              args.$2,
+              args.$3,
+              args.$4,
+              args.$5,
+              args.$6,
+              args.$7,
+              args.$8,
+              r,
+            ),
+            true,
+          ),
         );
 }

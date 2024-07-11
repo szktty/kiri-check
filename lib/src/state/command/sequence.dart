@@ -14,17 +14,17 @@ final class Sequence<State, System> extends Command<State, System> {
   final List<Command<State, System>> commands;
 
   @override
-  dynamic run(CommandContext<State, System> context, System system) {
+  Future<dynamic> run(CommandContext<State, System> context, System system) {
     throw UnsupportedError('Sequence does not support run');
   }
 
   @override
-  void nextState(CommandContext<State, System> context, State state) {
+  Future<void> nextState(CommandContext<State, System> context, State state) {
     throw UnsupportedError('Sequence does not support update');
   }
 
   @override
-  bool postcondition(
+  Future<bool> postcondition(
     CommandContext<State, System> context,
     State state,
     dynamic result,
@@ -33,7 +33,10 @@ final class Sequence<State, System> extends Command<State, System> {
   }
 
   @override
-  bool precondition(CommandContext<State, System> context, State state) {
+  Future<bool> precondition(
+    CommandContext<State, System> context,
+    State state,
+  ) {
     throw UnsupportedError('Sequence does not support precondition');
   }
 }
