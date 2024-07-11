@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:kiri_check/kiri_check.dart';
 import 'package:meta/meta.dart';
 import 'package:test/test.dart';
@@ -5,7 +7,7 @@ import 'package:test/test.dart';
 @isTest
 void testForAll<T>(
   Arbitrary<T> arbitrary,
-  void Function(T) block, {
+  FutureOr<void> Function(T) block, {
   int? maxExamples,
   int? maxTries,
   int? maxShrinkingTries,
@@ -13,13 +15,13 @@ void testForAll<T>(
   GenerationPolicy? generationPolicy,
   ShrinkingPolicy? shrinkingPolicy,
   EdgeCasePolicy? edgeCasePolicy,
-  void Function()? setUp,
-  void Function()? tearDown,
-  void Function()? setUpAll,
-  void Function(List<T>)? tearDownAll,
-  void Function(T)? onGenerate,
-  void Function(T)? onShrink,
-  void Function(T)? onFalsify,
+  FutureOr<void> Function()? setUp,
+  FutureOr<void> Function()? tearDown,
+  FutureOr<void> Function()? setUpAll,
+  FutureOr<void> Function(List<T>)? tearDownAll,
+  FutureOr<void> Function(T)? onGenerate,
+  FutureOr<void> Function(T)? onShrink,
+  FutureOr<void> Function(T)? onFalsify,
   bool? ignoreFalsify,
   double? variousRatio = 0.7,
 }) {

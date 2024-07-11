@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/property.dart';
 import 'package:kiri_check/src/property_settings.dart';
@@ -32,7 +34,7 @@ import 'package:test/test.dart';
 @isTest
 void property(
   Object? description,
-  dynamic Function() body, {
+  FutureOr<void> Function() body, {
   String? testOn,
   Timeout? timeout,
   Object? skip,
@@ -86,7 +88,7 @@ void property(
 ///     useful for logging or analysis purposes.
 void forAll<T>(
   Arbitrary<T> arbitrary,
-  void Function(T) block, {
+  FutureOr<void> Function(T) block, {
   int? maxExamples,
   int? maxTries,
   int? maxShrinkingTries,
@@ -95,13 +97,13 @@ void forAll<T>(
   GenerationPolicy? generationPolicy,
   ShrinkingPolicy? shrinkingPolicy,
   EdgeCasePolicy? edgeCasePolicy,
-  void Function()? setUp,
-  void Function()? tearDown,
-  void Function()? setUpAll,
-  void Function()? tearDownAll,
-  void Function(T)? onGenerate,
-  void Function(T)? onShrink,
-  void Function(T)? onFalsify,
+  FutureOr<void> Function()? setUp,
+  FutureOr<void> Function()? tearDown,
+  FutureOr<void> Function()? setUpAll,
+  FutureOr<void> Function()? tearDownAll,
+  FutureOr<void> Function(T)? onGenerate,
+  FutureOr<void> Function(T)? onShrink,
+  FutureOr<void> Function(T)? onFalsify,
   bool? ignoreFalsify,
 }) {
   final property = StatelessProperty(
@@ -157,16 +159,16 @@ void collect(
 }
 
 /// Registers a function to be run before each test in `forAll`.
-void setUpForAll(void Function() callback) {
+void setUpForAll(FutureOr<void> Function() callback) {
   PropertyTestManager.setSetUpForAll(callback);
 }
 
 /// Registers a function to be run after each test in `forAll`.
-void tearDownForAll(void Function() callback) {
+void tearDownForAll(FutureOr<void> Function() callback) {
   PropertyTestManager.setTearDownForAll(callback);
 }
 
 /// Registers a function to be run after the current test in `forAll`.
-void addTearDownCurrentForAll(void Function() callback) {
+void addTearDownCurrentForAll(FutureOr<void> Function() callback) {
   PropertyTestManager.addTearDownCurrentForAll(callback);
 }

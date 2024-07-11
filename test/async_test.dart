@@ -2,7 +2,7 @@ import 'package:kiri_check/kiri_check.dart';
 import 'package:test/test.dart';
 
 Future<String> simulateApiCall(int id) async {
-  await Future<void>.delayed(const Duration(milliseconds: 100));
+  await Future<void>.delayed(const Duration(milliseconds: 30));
   if (id < 0) {
     throw Exception('Invalid ID');
   }

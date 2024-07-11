@@ -29,10 +29,10 @@ abstract class Property<T> {
   late final Timeout? timeout;
   late final int maxExamples;
 
-  final void Function()? setUp;
-  final void Function()? tearDown;
+  final FutureOr<void> Function()? setUp;
+  final FutureOr<void> Function()? tearDown;
 
-  void check(PropertyTest test);
+  Future<void> check(PropertyTest test);
 }
 
 // forAll()
@@ -51,10 +51,10 @@ final class StatelessProperty<T> extends Property<T> {
 
   final ArbitraryInternal<T> arbitrary;
 
-  final void Function(T) block;
+  final FutureOr<void> Function(T) block;
 
-  void Function()? setUpAll;
-  void Function()? tearDownAll;
+  FutureOr<void> Function()? setUpAll;
+  FutureOr<void> Function()? tearDownAll;
 
   GenerationContextImpl<T>? _generationContext;
   final List<T> _generated = [];
@@ -75,7 +75,7 @@ final class StatelessProperty<T> extends Property<T> {
     printVerbose('Edge case policy: ${_generationContext!.edgeCasePolicy}');
     printVerbose('Shrinking policy: ${settings.shrinkingPolicy}');
 
-    this.setUpAll?.call();
+    await this.setUpAll?.call();
 
     _generationContext!.generate();
 
@@ -90,14 +90,14 @@ final class StatelessProperty<T> extends Property<T> {
         } else {
           printVerbose('Trying example: $description');
         }
-        PropertyTestManager.callSetUpForAll();
-        this.setUp?.call();
+        await PropertyTestManager.callSetUpForAll();
+        await this.setUp?.call();
         settings.onGenerate?.call(example);
-        block(example);
-        _callTearDownCallbacks();
+        await block(example);
+        await _callTearDownCallbacks();
       } on Exception catch (e) {
         printVerbose('Falsifying example: $description');
-        _callTearDownCallbacks();
+        await _callTearDownCallbacks();
         final context = ShrinkingContext(this);
         falsified = context.shrink(example, e);
         break;
@@ -106,7 +106,7 @@ final class StatelessProperty<T> extends Property<T> {
 
     FalsifiedException<T>? exception;
     if (falsified != null) {
-      settings.onFalsify?.call(falsified);
+      await settings.onFalsify?.call(falsified);
       final description = arbitrary.describeExample(falsified);
       if (settings.ignoreFalsify == false) {
         exception = FalsifiedException(
@@ -122,18 +122,18 @@ final class StatelessProperty<T> extends Property<T> {
       );
     }
 
-    this.tearDownAll?.call();
+    await this.tearDownAll?.call();
 
     if (exception != null) {
       throw exception;
     }
   }
 
-  void _callTearDownCallbacks() {
-    PropertyTestManager.callTearDownCurrentForAll();
+  Future<void> _callTearDownCallbacks() async {
+    await PropertyTestManager.callTearDownCurrentForAll();
     PropertyTestManager.clearTearDownCurrentForAll();
-    this.tearDown?.call();
-    PropertyTestManager.callTearDownForAll();
+    await this.tearDown?.call();
+    await PropertyTestManager.callTearDownForAll();
   }
 }
 
@@ -362,7 +362,7 @@ final class PropertyTest {
   });
 
   final Object? description;
-  final dynamic Function() body;
+  final FutureOr<void> Function() body;
   final String? testOn;
   final Timeout? timeout;
   final Object? skip;
@@ -377,8 +377,8 @@ final class PropertyTest {
   }
 
   void register() {
-    void body() {
-      PropertyTestManager.runTest(this);
+    Future<void> body() async {
+      await PropertyTestManager.runTest(this);
     }
 
     test(
@@ -401,9 +401,9 @@ final class PropertyTestManager {
   final List<PropertyTest> _tests = [];
 
   PropertyTestRunner? _running;
-  void Function()? _setUpForAllCallback;
-  void Function()? _tearDownForAllCallback;
-  final List<void Function()> _tearDownCurrentForAllCallbacks = [];
+  FutureOr<void> Function()? _setUpForAllCallback;
+  FutureOr<void> Function()? _tearDownForAllCallback;
+  final List<FutureOr<void> Function()> _tearDownCurrentForAllCallbacks = [];
 
   static void addTest(PropertyTest test) {
     _instance._tests.add(test);
@@ -419,30 +419,30 @@ final class PropertyTestManager {
   }
 
   // ignore: use_setters_to_change_properties
-  static void setSetUpForAll(void Function() callback) {
+  static void setSetUpForAll(FutureOr<void> Function() callback) {
     _instance._setUpForAllCallback = callback;
   }
 
-  static void callSetUpForAll() {
-    _instance._setUpForAllCallback?.call();
+  static Future<void> callSetUpForAll() async {
+    await _instance._setUpForAllCallback?.call();
   }
 
   // ignore: use_setters_to_change_properties
-  static void setTearDownForAll(void Function() callback) {
+  static void setTearDownForAll(FutureOr<void> Function() callback) {
     _instance._tearDownForAllCallback = callback;
   }
 
-  static void callTearDownForAll() {
-    _instance._tearDownForAllCallback?.call();
+  static Future<void> callTearDownForAll() async {
+    await _instance._tearDownForAllCallback?.call();
   }
 
-  static void addTearDownCurrentForAll(void Function() callback) {
+  static void addTearDownCurrentForAll(FutureOr<void> Function() callback) {
     _instance._tearDownCurrentForAllCallbacks.add(callback);
   }
 
-  static void callTearDownCurrentForAll() {
+  static Future<void> callTearDownCurrentForAll() async {
     for (final callback in _instance._tearDownCurrentForAllCallbacks) {
-      callback();
+      await callback();
     }
   }
 
@@ -450,9 +450,9 @@ final class PropertyTestManager {
     _instance._tearDownCurrentForAllCallbacks.clear();
   }
 
-  static void runTest(PropertyTest test) {
+  static Future<void> runTest(PropertyTest test) async {
     _instance._running = PropertyTestRunner(test);
-    _instance._running!.run();
+    await _instance._running!.run();
   }
 }
 
@@ -461,8 +461,8 @@ final class PropertyTestRunner {
 
   final PropertyTest test;
 
-  void run() {
-    test.body();
+  Future<void> run() async {
+    await test.body();
     for (final property in test.properties) {
       printVerbose('Max tries: ${property.maxTries}');
       printVerbose('Max examples: ${property.maxExamples}');
@@ -472,7 +472,7 @@ final class PropertyTestRunner {
 
       Exception? exception;
       try {
-        property.check(test);
+        await property.check(test);
       } on KiriCheckException catch (e) {
         exception = e;
       } on Exception {
