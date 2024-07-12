@@ -28,6 +28,14 @@ final class StatefulFalsifiedException<State, System> implements Exception {
         buffer.writeln('  Shrunk value: ${step.commandContext.minValue}');
       }
     }
+    if (result.exception != null) {
+      buffer.writeln('Exception: ${result.exception}');
+    }
+    if (result.stackTrace != null) {
+      buffer
+        ..writeln('Stack trace:')
+        ..writeln(result.stackTrace);
+    }
     return buffer.toString();
   }
 }
@@ -114,6 +122,7 @@ final class StatefulProperty<State, System> extends Property<State> {
           result.falsifyingSystem,
           StatefulExampleStep.fromSequence(result.falsifyingSequence),
           result.exception,
+          result.stackTrace,
         );
         await onFalsify!.call(example);
       }
@@ -256,6 +265,7 @@ final class _StatefulPropertyShrinker<State, System> {
   final System originalSystem;
   final TraversalSequence<State, System> originalSequence;
   Exception? lastException;
+  StackTrace? lastStackTrace;
 
   StatefulProperty<State, System> get property => propertyContext.property;
 
@@ -273,6 +283,7 @@ final class _StatefulPropertyShrinker<State, System> {
       shrunk?.system ?? originalSystem,
       reduced,
       lastException,
+      lastStackTrace,
     );
   }
 
@@ -371,12 +382,13 @@ final class _StatefulPropertyShrinker<State, System> {
         step.commandContext.useCache = true;
         step.commandContext.nextValue();
         await stateContext.runCommand(step.commandContext);
-      } on Exception catch (e) {
+      } on Exception catch (e, s) {
         printVerbose('  Error: $e');
         if (i + 1 < sequence.steps.length) {
           sequence.truncateSteps(i + 1);
         }
         lastException = e;
+        lastStackTrace = s;
 
         await property._destroyBehavior(behavior, system);
         return false;
@@ -436,6 +448,7 @@ final class StatefulShrinkingResult<State, System> {
     this.falsifyingSystem,
     this.falsifyingSequence,
     this.exception,
+    this.stackTrace,
   );
 
   final State originalState;
@@ -445,6 +458,7 @@ final class StatefulShrinkingResult<State, System> {
   final System falsifyingSystem;
   final TraversalSequence<State, System> falsifyingSequence;
   final Exception? exception;
+  final StackTrace? stackTrace;
 }
 
 /// A falsifying example of a stateful property.
@@ -463,6 +477,7 @@ final class StatefulFalsifyingExample<State, System> {
     this.falsifyingSystem,
     this.falsifyingSteps,
     this.exception,
+    this.stackTrace,
   );
 
   /// The state in which the initial failure occurred.
@@ -485,6 +500,9 @@ final class StatefulFalsifyingExample<State, System> {
 
   /// The exception that occurred during the initial failure or shrinking.
   final Exception? exception;
+
+  /// The stack trace that occurred during the initial failure or shrinking.
+  final StackTrace? stackTrace;
 }
 
 /// A step in a stateful example.
