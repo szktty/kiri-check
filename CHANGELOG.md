@@ -5,6 +5,7 @@
 - [CHANGE] Downgrade the dependencies for Flutter dependencies (#8)
 - [CHANGE] Support asynchronous for stateless testing
 - [CHANGE] Support asynchronous for stateful testing
+- [UPDATE] Show the exception and stack trace of falsifying examples
 
 ### API
 

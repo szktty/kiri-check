@@ -80,6 +80,8 @@ final class StatelessProperty<T> extends Property<T> {
     _generationContext!.generate();
 
     T? falsified;
+    Exception? lastException;
+    StackTrace? lastStackTrace;
     for (var i = 0; i < _generationContext!.examples.length; i++) {
       final example = _generationContext!.examples[i];
       final description = arbitrary.describeExample(example);
@@ -95,11 +97,13 @@ final class StatelessProperty<T> extends Property<T> {
         settings.onGenerate?.call(example);
         await block(example);
         await _callTearDownCallbacks();
-      } on Exception catch (e) {
+      } on Exception catch (e, s) {
         printVerbose('Falsifying example: $description');
         await _callTearDownCallbacks();
         final context = ShrinkingContext(this);
-        falsified = context.shrink(example, e);
+        falsified = context.shrink(example);
+        lastException = context.lastException ?? e;
+        lastStackTrace = context.lastStackTrace ?? s;
         break;
       }
     }
@@ -113,6 +117,8 @@ final class StatelessProperty<T> extends Property<T> {
           example: falsified,
           description: description,
           seed: random.seed,
+          exception: lastException,
+          stackTrace: lastStackTrace,
         );
       }
       printVerbose('Minimal failing example: $description');
@@ -297,7 +303,10 @@ final class ShrinkingContext<T> {
 
   bool get isFull => policy == ShrinkingPolicy.full;
 
-  T? shrink(T original, Exception exception) {
+  Exception? lastException;
+  StackTrace? lastStackTrace;
+
+  T? shrink(T original) {
     if (policy == ShrinkingPolicy.off) {
       return null;
     }
@@ -334,8 +343,10 @@ final class ShrinkingContext<T> {
       try {
         printVerbose('Shrunk example to: $description');
         property.block(example);
-      } on Exception {
+      } on Exception catch (e, s) {
         counter = example;
+        lastException = e;
+        lastStackTrace = s;
       }
     }
 
