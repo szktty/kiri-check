@@ -4,38 +4,46 @@ import 'dart:typed_data';
 import 'package:kiri_check/src/constants.dart';
 import 'package:universal_platform/universal_platform.dart';
 
-// xorshift32
-final class RandomState {
-  RandomState([this.seed]) {
+abstract class RandomState {
+  static RandomState fromState(RandomState state) {
+    return RandomStateXorshift.fromState(state as RandomStateXorshift);
+  }
+
+  int? get seed;
+}
+
+final class RandomStateXorshift extends RandomState {
+  RandomStateXorshift({this.seed, int? x}) {
     if (seed != null) {
       if (seed == 0) {
         throw ArgumentError('seed must be non-zero');
       }
       RangeError.checkValueInInterval(seed!, 0, 0x7FFFFFFF);
-      x = seed!;
     }
+    this.seed = seed;
+    this.x = x ?? seed ?? defaultSeed;
   }
 
-  factory RandomState.fromState(RandomState state) {
-    return RandomState(state.seed)..x = state.x;
+  factory RandomStateXorshift.fromState(RandomStateXorshift state) {
+    return RandomStateXorshift(seed: state.seed, x: state.x);
   }
 
-  // TODO: 他にいい値はある？
-  static const int defaultSeed = 88675123;
-
+  @override
   int? seed;
-  int x = 123456789;
+
+  static const defaultSeed = 88675123;
+  int x = 88675123;
 }
 
 final class RandomXorshift implements Random {
   RandomXorshift([int? seed]) {
-    state = RandomState(seed);
+    state = RandomStateXorshift(seed: seed);
   }
 
-  factory RandomXorshift.fromState(RandomState state) =>
-      RandomXorshift()..state = RandomState.fromState(state);
+  factory RandomXorshift.fromState(RandomStateXorshift state) =>
+      RandomXorshift()..state = RandomStateXorshift.fromState(state);
 
-  late RandomState state;
+  late RandomStateXorshift state;
 
   int nextInt32() {
     var x = state.x;

@@ -30,6 +30,7 @@ export 'src/arbitrary/top.dart'
 export 'src/home.dart' show KiriCheck, Verbosity;
 export 'src/property_settings.dart'
     show EdgeCasePolicy, GenerationPolicy, ShrinkingPolicy;
+export 'src/random_xorshift.dart' show RandomState;
 export 'src/top.dart'
     show
         addTearDownCurrentForAll,

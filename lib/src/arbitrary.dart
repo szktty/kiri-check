@@ -4,6 +4,7 @@ import 'package:kiri_check/src/arbitrary/manipulation/filter.dart';
 import 'package:kiri_check/src/arbitrary/manipulation/flat_map.dart';
 import 'package:kiri_check/src/arbitrary/manipulation/map.dart';
 import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/random_xorshift.dart';
 
 /// Components that generate data and perform shrinking,
 /// which are especially crucial elements in property-based testing.
@@ -19,6 +20,8 @@ abstract class Arbitrary<T> {
   /// `predicate` returns true if each example is valid.
   /// If `predicate` returns false, the example is discarded.
   Arbitrary<T> filter(bool Function(T) predicate);
+
+  T example([RandomState? state]);
 }
 
 abstract class ArbitraryInternal<T> extends Arbitrary<T> {
@@ -121,6 +124,16 @@ abstract class ArbitraryBase<T> implements ArbitraryInternal<T> {
   @override
   Arbitrary<U> flatMap<U>(Arbitrary<U> Function(T) f) =>
       FlatMapArbitraryTransformer<T, U>(this, f);
+
+  @override
+  T example([RandomState? state]) {
+    final state0 = state ??
+        RandomStateXorshift(
+          seed: DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF,
+        );
+    final random = RandomContextImpl.fromState(state0);
+    return generate(random);
+  }
 }
 
 // Distance to the target value.
