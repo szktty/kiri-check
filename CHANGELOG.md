@@ -5,12 +5,14 @@
 - [CHANGE] Downgrade the dependencies for Flutter dependencies (#8)
 - [CHANGE] Support asynchronous for stateless testing
 - [CHANGE] Support asynchronous for stateful testing
+- [CHANGE] Enable random value generation using arbitraries outside of tests (#18)
 - [UPDATE] Show the exception and stack trace of falsifying examples
 
 ### API
 
 - [CHANGE] Add `setUpForAll` and `tearDownForAll` global functions
 - [CHANGE] Add `setUpAll` and `tearDownAll` parameters to `forAll`
+- [CHANGE] Add `Arbitrary.example` to generate an example value outside of tests
 - [FIX] Fix the function passed as the `setUp` parameter to `forAll` not being called before each test execution
   within `forAll`. Previously, the function was only called once.
 - [FIX] Fix the function passed as the `tearDown` parameter to `forAll` not being called before each test execution
