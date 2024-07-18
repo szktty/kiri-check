@@ -1,8 +1,3 @@
-// nextInt, 32/64bit
-// nextBool
-// nextDouble
-// seed
-
 import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/random_xorshift.dart';
 import 'package:test/test.dart';
