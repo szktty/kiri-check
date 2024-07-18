@@ -1,5 +1,4 @@
 import 'package:kiri_check/kiri_check.dart';
-import 'package:kiri_check/src/property_settings.dart';
 import 'package:kiri_check/src/random_xorshift.dart';
 import 'package:meta/meta.dart';
 import 'package:test/test.dart';

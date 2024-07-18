@@ -50,8 +50,10 @@ final class RandomXorshift implements Random {
     state = RandomStateXorshift(seed: seed);
   }
 
-  factory RandomXorshift.fromState(RandomStateXorshift state,
-          {required bool copy}) =>
+  factory RandomXorshift.fromState(
+    RandomStateXorshift state, {
+    required bool copy,
+  }) =>
       RandomXorshift()
         ..state = copy ? RandomStateXorshift.fromState(state) : state;
 

@@ -25,8 +25,11 @@ class ArbitraryCheck<T> {
       property('generates value of correct type', () {
         forAll(constant(generator()), (a) {
           final value = a.example();
-          expect(typeChecker(value), isTrue,
-              reason: 'Type check failed for $name');
+          expect(
+            typeChecker(value),
+            isTrue,
+            reason: 'Type check failed for $name',
+          );
         });
       });
 
@@ -37,9 +40,12 @@ class ArbitraryCheck<T> {
           final uniqueSamples = samples.toSet();
           final actualVariance = uniqueSamples.length / sampleSize;
 
-          expect(actualVariance, greaterThanOrEqualTo(expectedVariance),
-              reason:
-                  'Expected variance of at least $expectedVariance, but got $actualVariance for $name');
+          expect(
+            actualVariance,
+            greaterThanOrEqualTo(expectedVariance),
+            reason:
+                'Expected variance of at least $expectedVariance, but got $actualVariance for $name',
+          );
         });
       });
 
@@ -50,16 +56,22 @@ class ArbitraryCheck<T> {
 
           final value1 = a.example(state: state1);
           final value2 = a.example(state: state2);
-          expect(comparator(value1, value2), isTrue,
-              reason:
-                  'Failed to reproduce value with the same RandomState for $name');
+          expect(
+            comparator(value1, value2),
+            isTrue,
+            reason:
+                'Failed to reproduce value with the same RandomState for $name',
+          );
 
           if (T != Null && T != bool) {
             final state3 = RandomState.fromSeed(24);
             final value3 = a.example(state: state3);
-            expect(comparator(value1, value3), isFalse,
-                reason:
-                    'Generated same value with different RandomState for $name');
+            expect(
+              comparator(value1, value3),
+              isFalse,
+              reason:
+                  'Generated same value with different RandomState for $name',
+            );
           }
         });
       });

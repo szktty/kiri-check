@@ -129,8 +129,9 @@ abstract class ArbitraryBase<T> implements ArbitraryInternal<T> {
   @override
   T example({RandomState? state, bool edgeCase = false}) {
     final random = RandomContextImpl.fromState(
-        state ?? Settings.shared.randomStateForExample,
-        copy: false);
+      state ?? Settings.shared.randomStateForExample,
+      copy: false,
+    );
 
     if (edgeCase && edgeCases != null) {
       return edgeCases![random.nextInt(edgeCases!.length)];

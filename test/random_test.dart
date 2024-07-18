@@ -89,7 +89,8 @@ void main() {
   group('default random', () {
     test('bool', () {
       final random = RandomContextImpl.fromSeed(
-          DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF);
+        DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF,
+      );
       const n = 1000;
       var trues = 0;
       for (var i = 0; i < n; i++) {

@@ -39,7 +39,8 @@ final class FalsifiedException<T> implements Exception {
   String toString() {
     final buffer = StringBuffer()
       ..writeln(
-          'Falsifying example: ${description ?? example}${seed != null ? ' (seed $seed)' : ''}');
+        'Falsifying example: ${description ?? example}${seed != null ? ' (seed $seed)' : ''}',
+      );
 
     if (exception != null) {
       buffer.writeln('Exception: $exception');
