@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:kiri_check/src/arbitrary/manipulation/filter.dart';
 import 'package:kiri_check/src/arbitrary/manipulation/flat_map.dart';
 import 'package:kiri_check/src/arbitrary/manipulation/map.dart';
+import 'package:kiri_check/src/home.dart';
 import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/random_xorshift.dart';
 
@@ -21,7 +22,7 @@ abstract class Arbitrary<T> {
   /// If `predicate` returns false, the example is discarded.
   Arbitrary<T> filter(bool Function(T) predicate);
 
-  T example([RandomState? state]);
+  T example({RandomState? state, bool edgeCase = false});
 }
 
 abstract class ArbitraryInternal<T> extends Arbitrary<T> {
@@ -126,13 +127,17 @@ abstract class ArbitraryBase<T> implements ArbitraryInternal<T> {
       FlatMapArbitraryTransformer<T, U>(this, f);
 
   @override
-  T example([RandomState? state]) {
-    final state0 = state ??
-        RandomStateXorshift(
-          seed: DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF,
-        );
-    final random = RandomContextImpl.fromState(state0);
-    return generate(random);
+  T example({RandomState? state, bool edgeCase = false}) {
+    final random = RandomContextImpl.fromState(
+        state ?? Settings.shared.randomStateForExample,
+        copy: false);
+    print('random: $random');
+
+    if (edgeCase && edgeCases != null) {
+      return edgeCases![random.nextInt(edgeCases!.length)];
+    } else {
+      return generate(random);
+    }
   }
 }
 

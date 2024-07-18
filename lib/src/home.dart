@@ -1,4 +1,6 @@
+import 'package:kiri_check/kiri_check.dart';
 import 'package:kiri_check/src/property_settings.dart';
+import 'package:kiri_check/src/random_xorshift.dart';
 import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 
@@ -153,6 +155,13 @@ final class Settings {
   late int maxShrinkingTries;
   late int maxExamples;
   int? seed;
+  int? seedForExample;
+
+  RandomState? _randomStateForExample;
+
+  RandomState get randomStateForExample =>
+      _randomStateForExample ??= RandomStateXorshift(seed: seedForExample);
+
   late GenerationPolicy generationPolicy;
   late ShrinkingPolicy shrinkingPolicy;
   late EdgeCasePolicy edgeCasePolicy;

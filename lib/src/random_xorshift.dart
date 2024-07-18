@@ -9,30 +9,36 @@ abstract class RandomState {
     return RandomStateXorshift.fromState(state as RandomStateXorshift);
   }
 
-  int? get seed;
+  int get seed;
 }
 
 final class RandomStateXorshift extends RandomState {
-  RandomStateXorshift({this.seed, int? x}) {
+  RandomStateXorshift({int? seed, int? x}) {
     if (seed != null) {
       if (seed == 0) {
         throw ArgumentError('seed must be non-zero');
       }
-      RangeError.checkValueInInterval(seed!, 0, 0x7FFFFFFF);
+      RangeError.checkValueInInterval(seed, 0, 0x7FFFFFFF);
     }
-    this.seed = seed;
-    this.x = x ?? seed ?? defaultSeed;
+    this.seed = seed ?? defaultSeed;
+    this.x = x ?? this.seed;
   }
 
   factory RandomStateXorshift.fromState(RandomStateXorshift state) {
     return RandomStateXorshift(seed: state.seed, x: state.x);
   }
 
-  @override
-  int? seed;
-
   static const defaultSeed = 88675123;
-  int x = 88675123;
+
+  @override
+  late int seed;
+
+  late int x;
+
+  @override
+  String toString() {
+    return 'RandomStateXorshift(seed: $seed, x: $x)';
+  }
 }
 
 final class RandomXorshift implements Random {
@@ -40,8 +46,10 @@ final class RandomXorshift implements Random {
     state = RandomStateXorshift(seed: seed);
   }
 
-  factory RandomXorshift.fromState(RandomStateXorshift state) =>
-      RandomXorshift()..state = RandomStateXorshift.fromState(state);
+  factory RandomXorshift.fromState(RandomStateXorshift state,
+          {required bool copy}) =>
+      RandomXorshift()
+        ..state = copy ? RandomStateXorshift.fromState(state) : state;
 
   late RandomStateXorshift state;
 
