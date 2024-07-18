@@ -22,6 +22,12 @@ abstract class Arbitrary<T> {
   /// If `predicate` returns false, the example is discarded.
   Arbitrary<T> filter(bool Function(T) predicate);
 
+  /// Generates an example of the data.
+  ///
+  /// Parameters:
+  ///
+  /// - `state`: The random state to use when generating data.
+  /// - `edgeCase`: If set to true, the edge cases is generated.
   T example({RandomState? state, bool edgeCase = false});
 }
 

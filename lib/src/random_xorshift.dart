@@ -1,18 +1,27 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/constants.dart';
 import 'package:universal_platform/universal_platform.dart';
 
+/// A random state for the random number generator.
+///
+/// The random state is used to ensure reproducibility of tests.
+///
+/// See also: [Arbitrary.example]
 abstract class RandomState {
+  /// Creates a new random state from a seed.
   static RandomState fromSeed([int? seed]) {
     return RandomStateXorshift(seed: seed);
   }
 
+  /// Creates a new random state copied from an existing state.
   static RandomState fromState(RandomState state) {
     return RandomStateXorshift.fromState(state as RandomStateXorshift);
   }
 
+  /// The seed value to use for the random number generator.
   int get seed;
 }
 

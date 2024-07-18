@@ -12,7 +12,6 @@ import 'package:test/scaffolding.dart';
 ///
 ///   - `behavior`: The behavior to test.
 ///   - `seed`: The seed to use for the random number generator.
-///      examples.
 ///   - `maxCycles`: The maximum number of cycles to check.
 ///   - `maxSteps`: The maximum number of steps of each cycle.
 ///   - `maxCommandTries`: The maximum number of attempts to generate commands.
