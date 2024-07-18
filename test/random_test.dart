@@ -63,7 +63,7 @@ void main() {
     group('random state', () {
       test('copy state', () {
         final r1 = RandomXorshift()..nextInt32();
-        final r2 = RandomXorshift.fromState(r1.state);
+        final r2 = RandomXorshift.fromState(r1.state, copy: true);
         expect(r2.state.seed, r1.state.seed, reason: 'seed');
         expect(r2.state.x, r1.state.x, reason: 'x');
 
