@@ -7,16 +7,17 @@ class ArbitraryCheck<T> {
     required this.name,
     required this.generator,
     required this.typeChecker,
-    required this.expectedVariance,
+    double? expectedVariance,
     bool Function(T, T)? comparator,
   }) {
+    this.expectedVariance = expectedVariance ?? 0.7;
     this.comparator = comparator ?? (a, b) => a == b;
   }
 
   final String name;
   final Arbitrary<T> Function() generator;
   final bool Function(dynamic) typeChecker;
-  final double expectedVariance;
+  late final double expectedVariance;
   late final bool Function(T, T) comparator;
 
   void runTests() {
@@ -86,26 +87,28 @@ void main() {
       name: 'integer',
       generator: integer,
       typeChecker: (v) => v is int,
-      expectedVariance: 0.7,
     ),
     ArbitraryCheck<double>(
       name: 'float',
       generator: float,
       typeChecker: (v) => v is double,
-      expectedVariance: 0.7,
     ),
     ArbitraryCheck<String>(
       name: 'string',
       generator: string,
       typeChecker: (v) => v is String,
-      expectedVariance: 0.7,
     ),
     ArbitraryCheck<List<int>>(
       name: 'list<int>',
       generator: () => list(integer(), minLength: 1),
       typeChecker: (v) => v is List<int>,
-      expectedVariance: 0.7,
       comparator: (a, b) => const ListEquality<int>().equals(a, b),
+    ),
+    ArbitraryCheck<Map<int, int>>(
+      name: 'map<int,int>',
+      generator: () => map(integer(), integer(), minLength: 1),
+      typeChecker: (v) => v is Map<int, int>,
+      comparator: (a, b) => const MapEquality<int, int>().equals(a, b),
     ),
   ];
 
