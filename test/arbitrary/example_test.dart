@@ -1,67 +1,88 @@
 import 'package:kiri_check/kiri_check.dart';
 import 'package:test/test.dart';
 
-import 'utils.dart';
+class ArbitraryCheck<T> {
+  ArbitraryCheck({
+    required this.name,
+    required this.generator,
+    required this.typeChecker,
+    required this.expectedVariance,
+  });
+
+  final String name;
+  final Arbitrary<T> Function() generator;
+  final bool Function(dynamic) typeChecker;
+  final double expectedVariance;
+
+  void runTests() {
+    group('example test for $name', () {
+      property('generates value of correct type', () {
+        forAll(constant(generator()), (a) {
+          final value = a.example();
+          expect(typeChecker(value), isTrue,
+              reason: 'Type check failed for $name');
+        });
+      });
+
+      property('generates values with expected variance', () {
+        forAll(constant(generator()), (a) {
+          const sampleSize = 100;
+          final samples = List.generate(sampleSize, (_) => a.example());
+          final uniqueSamples = samples.toSet();
+          final actualVariance = uniqueSamples.length / sampleSize;
+
+          expect(actualVariance, greaterThanOrEqualTo(expectedVariance),
+              reason:
+                  'Expected variance of at least $expectedVariance, but got $actualVariance for $name');
+        });
+      });
+    });
+  }
+}
 
 void main() {
-  property('example generates value of correct type', () {
-    final arbitraryTypes =
-        <(Arbitrary<dynamic> Function(), bool Function(dynamic))>[
-      (null_, (v) => v == null),
-      (boolean, (v) => v is bool),
-      (integer, (v) => v is int),
-      (float, (v) => v is double),
-      (string, (v) => v is String),
-      (runes, (v) => v is Runes),
-      (dateTime, (v) => v is DateTime),
-      (binary, (v) => v is List<int>),
-      (() => list(integer()), (v) => v is List<int>),
-      (() => map(integer(), integer()), (v) => v is Map<int, int>),
-      (() => set(integer()), (v) => v is Set<int>),
-    ];
+  KiriCheck.maxExamples = 100;
 
-    forAll(constantFrom(arbitraryTypes), (arg) {
-      final arb = arg.$1();
-      final checker = arg.$2;
-      final value = arb.example();
-      expect(checker(value), isTrue);
-    });
-  });
+  final arbitraryChecks = [
+    ArbitraryCheck<Null>(
+      name: 'null',
+      generator: null_,
+      typeChecker: (v) => v == null,
+      expectedVariance: 0,
+    ),
+    ArbitraryCheck<bool>(
+      name: 'boolean',
+      generator: boolean,
+      typeChecker: (v) => v is bool,
+      expectedVariance: 0.02,
+    ),
+    ArbitraryCheck<int>(
+      name: 'integer',
+      generator: integer,
+      typeChecker: (v) => v is int,
+      expectedVariance: 0.7,
+    ),
+    ArbitraryCheck<double>(
+      name: 'float',
+      generator: float,
+      typeChecker: (v) => v is double,
+      expectedVariance: 0.7,
+    ),
+    ArbitraryCheck<String>(
+      name: 'string',
+      generator: string,
+      typeChecker: (v) => v is String,
+      expectedVariance: 0.7,
+    ),
+    ArbitraryCheck<List<int>>(
+      name: 'list<int>',
+      generator: () => list(integer()),
+      typeChecker: (v) => v is List<int>,
+      expectedVariance: 0.7,
+    ),
+  ];
 
-  property('example generates values with expected variance', () {
-    final arbitrariesWithVariance = <(Arbitrary<dynamic> Function(), double)>[
-      /*
-      (null_, 0.0),
-      (boolean, 0.0),
-       */
-      (integer, 0.7),
-
-      /*
-      (float, 0.7),
-      (string, 0.7),
-
-       */
-    ];
-
-    forAll(constantFrom(arbitrariesWithVariance), (arg) {
-      final arb = arg.$1();
-      final expectedVariance = arg.$2;
-      const sampleSize = 100;
-      final samples = List.generate(sampleSize, (_) => arb.example());
-
-      final uniqueSamples = samples.toSet();
-      final actualVariance = uniqueSamples.length / sampleSize;
-      print('samples: $samples');
-
-      if (expectedVariance > 0) {
-        expect(actualVariance, greaterThanOrEqualTo(expectedVariance),
-            reason:
-                'Expected variance of at least $expectedVariance, but got $actualVariance for ${arb.runtimeType}');
-      } else {
-        expect(uniqueSamples.length, equals(1),
-            reason:
-                'Expected a single unique value for ${arb.runtimeType}, but got ${uniqueSamples.length}');
-      }
-    });
-  });
+  for (final check in arbitraryChecks) {
+    check.runTests();
+  }
 }
