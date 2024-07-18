@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:kiri_check/kiri_check.dart';
+import 'package:kiri_check/src/arbitrary.dart';
 import 'package:test/test.dart';
 
 class ArbitraryCheck<T> {
@@ -72,6 +73,20 @@ class ArbitraryCheck<T> {
               reason:
                   'Generated same value with different RandomState for $name',
             );
+          }
+        });
+      });
+
+      property('generates and validates edge cases', () {
+        forAll(constant(generator()), (a) {
+          final arb = a as ArbitraryInternal<T>;
+          final edgeCases = arb.edgeCases;
+          if (edgeCases != null && edgeCases.isNotEmpty) {
+            for (var i = 0; i < 100; i++) {
+              final value = arb.example(edgeCase: true);
+              expect(typeChecker(value), isTrue, reason: 'Type check failed');
+              expect(value, isIn(edgeCases), reason: 'Edge case not found');
+            }
           }
         });
       });
