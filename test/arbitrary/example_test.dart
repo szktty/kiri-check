@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:kiri_check/kiri_check.dart';
 import 'package:test/test.dart';
 
@@ -7,12 +8,16 @@ class ArbitraryCheck<T> {
     required this.generator,
     required this.typeChecker,
     required this.expectedVariance,
-  });
+    bool Function(T, T)? comparator,
+  }) {
+    this.comparator = comparator ?? (a, b) => a == b;
+  }
 
   final String name;
   final Arbitrary<T> Function() generator;
   final bool Function(dynamic) typeChecker;
   final double expectedVariance;
+  late final bool Function(T, T) comparator;
 
   void runTests() {
     group('example test for $name', () {
@@ -34,6 +39,27 @@ class ArbitraryCheck<T> {
           expect(actualVariance, greaterThanOrEqualTo(expectedVariance),
               reason:
                   'Expected variance of at least $expectedVariance, but got $actualVariance for $name');
+        });
+      });
+
+      property('reproduces values with the same RandomState', () {
+        forAll(constant(generator()), (a) {
+          final state1 = RandomState.fromSeed(42);
+          final state2 = RandomState.fromSeed(42);
+
+          final value1 = a.example(state: state1);
+          final value2 = a.example(state: state2);
+          expect(comparator(value1, value2), isTrue,
+              reason:
+                  'Failed to reproduce value with the same RandomState for $name');
+
+          if (T != Null && T != bool) {
+            final state3 = RandomState.fromSeed(24);
+            final value3 = a.example(state: state3);
+            expect(comparator(value1, value3), isFalse,
+                reason:
+                    'Generated same value with different RandomState for $name');
+          }
         });
       });
     });
@@ -76,9 +102,10 @@ void main() {
     ),
     ArbitraryCheck<List<int>>(
       name: 'list<int>',
-      generator: () => list(integer()),
+      generator: () => list(integer(), minLength: 1),
       typeChecker: (v) => v is List<int>,
       expectedVariance: 0.7,
+      comparator: (a, b) => const ListEquality<int>().equals(a, b),
     ),
   ];
 

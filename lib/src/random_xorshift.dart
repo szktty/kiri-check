@@ -5,6 +5,10 @@ import 'package:kiri_check/src/constants.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 abstract class RandomState {
+  static RandomState fromSeed([int? seed]) {
+    return RandomStateXorshift(seed: seed);
+  }
+
   static RandomState fromState(RandomState state) {
     return RandomStateXorshift.fromState(state as RandomStateXorshift);
   }
