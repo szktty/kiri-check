@@ -1,8 +1,3 @@
-// nextInt, 32/64bit
-// nextBool
-// nextDouble
-// seed
-
 import 'package:kiri_check/src/random.dart';
 import 'package:kiri_check/src/random_xorshift.dart';
 import 'package:test/test.dart';
@@ -63,7 +58,7 @@ void main() {
     group('random state', () {
       test('copy state', () {
         final r1 = RandomXorshift()..nextInt32();
-        final r2 = RandomXorshift.fromState(r1.state);
+        final r2 = RandomXorshift.fromState(r1.state, copy: true);
         expect(r2.state.seed, r1.state.seed, reason: 'seed');
         expect(r2.state.x, r1.state.x, reason: 'x');
 
@@ -75,7 +70,7 @@ void main() {
 
       test('rollback state', () {
         final r1 = RandomXorshift();
-        final s1 = RandomState.fromState(r1.state);
+        final s1 = RandomStateXorshift.fromState(r1.state);
         final values = <int>[];
         for (var i = 0; i < 100; i++) {
           values.add(r1.nextInt32());
@@ -93,8 +88,9 @@ void main() {
 
   group('default random', () {
     test('bool', () {
-      final random =
-          RandomContextImpl(DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF);
+      final random = RandomContextImpl.fromSeed(
+        DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF,
+      );
       const n = 1000;
       var trues = 0;
       for (var i = 0; i < n; i++) {
@@ -107,7 +103,7 @@ void main() {
 
     group('int', () {
       test('equality', () {
-        final random = RandomContextImpl(
+        final random = RandomContextImpl.fromSeed(
           DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF,
         );
         var lt100 = 0;
@@ -158,7 +154,7 @@ void main() {
       });
 
       test('edge cases (0, max)', () {
-        final random = RandomContextImpl(
+        final random = RandomContextImpl.fromSeed(
           DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF,
         );
         const max = 100;

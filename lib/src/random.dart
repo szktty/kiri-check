@@ -29,12 +29,20 @@ abstract class RandomContext implements Random {
 }
 
 final class RandomContextImpl extends RandomContext {
-  RandomContextImpl([this.seed]) {
-    xorshift = RandomXorshift(seed);
+  RandomContextImpl._();
+
+  factory RandomContextImpl.fromSeed(int? seed) {
+    return RandomContextImpl._()..xorshift = RandomXorshift(seed);
+  }
+
+  factory RandomContextImpl.fromState(RandomState state, {required bool copy}) {
+    final state0 = state as RandomStateXorshift;
+    return RandomContextImpl._()
+      ..xorshift = RandomXorshift.fromState(state0, copy: copy);
   }
 
   @override
-  final int? seed;
+  int? get seed => xorshift.state.seed;
 
   late final RandomXorshift xorshift;
 
@@ -50,6 +58,11 @@ final class RandomContextImpl extends RandomContext {
   @override
   Element nextElement<Element>(List<Element> elements) {
     return elements[xorshift.nextInt(elements.length)];
+  }
+
+  @override
+  String toString() {
+    return 'RandomContext(seed: ${xorshift.state.seed}, state: ${xorshift.state.x})';
   }
 }
 

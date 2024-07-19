@@ -1,41 +1,72 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/constants.dart';
 import 'package:universal_platform/universal_platform.dart';
 
-// xorshift32
-final class RandomState {
-  RandomState([this.seed]) {
+/// A random state for the random number generator.
+///
+/// The random state is used to ensure reproducibility of tests.
+///
+/// See also: [Arbitrary.example]
+abstract class RandomState {
+  /// Creates a new random state from a seed.
+  static RandomState fromSeed([int? seed]) {
+    return RandomStateXorshift(seed: seed);
+  }
+
+  /// Creates a new random state copied from an existing state.
+  static RandomState fromState(RandomState state) {
+    return RandomStateXorshift.fromState(state as RandomStateXorshift);
+  }
+
+  /// The seed value to use for the random number generator.
+  int get seed;
+}
+
+final class RandomStateXorshift extends RandomState {
+  RandomStateXorshift({int? seed, int? x}) {
     if (seed != null) {
       if (seed == 0) {
         throw ArgumentError('seed must be non-zero');
       }
-      RangeError.checkValueInInterval(seed!, 0, 0x7FFFFFFF);
-      x = seed!;
+      RangeError.checkValueInInterval(seed, 0, 0x7FFFFFFF);
     }
+    this.seed = seed ?? defaultSeed;
+    this.x = x ?? this.seed;
   }
 
-  factory RandomState.fromState(RandomState state) {
-    return RandomState(state.seed)..x = state.x;
+  factory RandomStateXorshift.fromState(RandomStateXorshift state) {
+    return RandomStateXorshift(seed: state.seed, x: state.x);
   }
 
-  // TODO: 他にいい値はある？
-  static const int defaultSeed = 88675123;
+  static const defaultSeed = 88675123;
 
-  int? seed;
-  int x = 123456789;
+  @override
+  late int seed;
+
+  late int x;
+
+  @override
+  String toString() {
+    return 'RandomStateXorshift(seed: $seed, x: $x)';
+  }
 }
 
 final class RandomXorshift implements Random {
   RandomXorshift([int? seed]) {
-    state = RandomState(seed);
+    state = RandomStateXorshift(seed: seed);
   }
 
-  factory RandomXorshift.fromState(RandomState state) =>
-      RandomXorshift()..state = RandomState.fromState(state);
+  factory RandomXorshift.fromState(
+    RandomStateXorshift state, {
+    required bool copy,
+  }) =>
+      RandomXorshift()
+        ..state = copy ? RandomStateXorshift.fromState(state) : state;
 
-  late RandomState state;
+  late RandomStateXorshift state;
 
   int nextInt32() {
     var x = state.x;

@@ -27,7 +27,8 @@ final class Traversal<State, System> {
   final List<Command<State, System>> actionCommands = [];
 
   Future<List<CommandContext<State, System>>> _generateCommands(
-      State state) async {
+    State state,
+  ) async {
     final generated = <CommandContext<State, System>>[];
     final finalizers = <CommandContext<State, System>>[];
     var tries = 0;

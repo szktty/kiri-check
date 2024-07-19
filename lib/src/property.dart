@@ -15,7 +15,7 @@ import 'package:test/test.dart';
 abstract class Property<T> {
   Property({required this.settings, this.setUp, this.tearDown}) {
     random = settings.random ??
-        RandomContextImpl(settings.seed ?? Settings.shared.seed);
+        RandomContextImpl.fromSeed(settings.seed ?? Settings.shared.seed);
     timeout = settings.timeout ?? Settings.shared.timeout;
     maxExamples = settings.maxExamples ?? Settings.shared.maxExamples;
     maxTries =
