@@ -1,4 +1,5 @@
 import 'package:kiri_check/src/arbitrary.dart';
+import 'package:kiri_check/src/arbitrary/combinator/build.dart';
 import 'package:kiri_check/src/arbitrary/combinator/combine.dart';
 import 'package:kiri_check/src/arbitrary/combinator/deck.dart';
 import 'package:kiri_check/src/arbitrary/combinator/frequency.dart';
@@ -225,6 +226,10 @@ Arbitrary<Set<T>> set<T>(
 
 /// Returns an arbitrary that generates a deck.
 Arbitrary<Deck> deck() => DeckArbitraries.deck();
+
+/// Returns an arbitrary that generates a value using the provided builder.
+Arbitrary<T> build<T>(T Function() builder) =>
+    BuildArbitraries.build<T>(builder);
 
 /// Returns an arbitrary that combines two arbitraries.
 ///

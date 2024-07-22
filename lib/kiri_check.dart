@@ -4,6 +4,7 @@ export 'src/arbitrary/top.dart'
     show
         binary,
         boolean,
+        build,
         combine2,
         combine3,
         combine4,
