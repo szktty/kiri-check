@@ -134,7 +134,7 @@ final class Action2<State, System, T1, T2, R>
     FutureOr<bool> Function(State, T1, T2, R)? postcondition,
   }) : super(
           description,
-          combine2(arbitrary1, arbitrary2, (a, b) => (a, b)),
+          combine2(arbitrary1, arbitrary2),
           nextState: (s, args) => nextState(s, args.$1, args.$2),
           run: (sys, args) => run(sys, args.$1, args.$2),
           precondition: (s, args) =>
@@ -170,7 +170,7 @@ final class Action3<State, System, T1, T2, T3, R>
     FutureOr<bool> Function(State, T1, T2, T3, R)? postcondition,
   }) : super(
           description,
-          combine3(arbitrary1, arbitrary2, arbitrary3, (a, b, c) => (a, b, c)),
+          combine3(arbitrary1, arbitrary2, arbitrary3),
           nextState: (s, args) => nextState(s, args.$1, args.$2, args.$3),
           run: (sys, args) => run(sys, args.$1, args.$2, args.$3),
           precondition: (s, args) => asyncCallOr(
@@ -215,7 +215,6 @@ final class Action4<State, System, T1, T2, T3, T4, R>
             arbitrary2,
             arbitrary3,
             arbitrary4,
-            (a, b, c, d) => (a, b, c, d),
           ),
           nextState: (s, args) =>
               nextState(s, args.$1, args.$2, args.$3, args.$4),
@@ -265,7 +264,6 @@ final class Action5<State, System, T1, T2, T3, T4, T5, R>
             arbitrary3,
             arbitrary4,
             arbitrary5,
-            (a, b, c, d, e) => (a, b, c, d, e),
           ),
           nextState: (s, args) =>
               nextState(s, args.$1, args.$2, args.$3, args.$4, args.$5),
@@ -334,7 +332,6 @@ final class Action6<State, System, T1, T2, T3, T4, T5, T6, R>
             arbitrary4,
             arbitrary5,
             arbitrary6,
-            (a, b, c, d, e, f) => (a, b, c, d, e, f),
           ),
           nextState: (s, args) => nextState(
             s,
@@ -417,7 +414,6 @@ final class Action7<State, System, T1, T2, T3, T4, T5, T6, T7, R>
             arbitrary5,
             arbitrary6,
             arbitrary7,
-            (a, b, c, d, e, f, g) => (a, b, c, d, e, f, g),
           ),
           nextState: (s, args) => nextState(
             s,
@@ -515,7 +511,6 @@ final class Action8<State, System, T1, T2, T3, T4, T5, T6, T7, T8, R>
             arbitrary6,
             arbitrary7,
             arbitrary8,
-            (a, b, c, d, e, f, g, h) => (a, b, c, d, e, f, g, h),
           ),
           nextState: (s, args) => nextState(
             s,
