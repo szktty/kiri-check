@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:kiri_check/kiri_check.dart';
-import 'package:kiri_check/src/arbitrary.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 import 'package:test/test.dart';
 
 class ArbitraryCheck<T> {

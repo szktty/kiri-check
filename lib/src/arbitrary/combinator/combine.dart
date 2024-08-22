@@ -1,7 +1,5 @@
 import 'package:collection/collection.dart';
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/exception.dart';
-import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 
 // ignore_for_file: null_check_on_nullable_type_parameter
 

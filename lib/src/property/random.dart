@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:math';
 
-import 'package:kiri_check/src/random_xorshift.dart';
+import 'package:kiri_check/src/property/random_xorshift.dart';
 
 abstract class RandomContext implements Random {
   int? get seed;

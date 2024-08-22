@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 
 abstract class ListArbitraries {
   static Arbitrary<List<T>> list<T>(

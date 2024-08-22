@@ -1,6 +1,4 @@
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/exception.dart';
-import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 
 abstract class BuildArbitraries {
   static Arbitrary<T> build<T>(T Function() builder) => BuildArbitrary(builder);

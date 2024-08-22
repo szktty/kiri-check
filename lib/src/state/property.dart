@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
-import 'package:kiri_check/src/exception.dart';
-import 'package:kiri_check/src/home.dart';
-import 'package:kiri_check/src/property.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 import 'package:kiri_check/src/state/behavior.dart';
 import 'package:kiri_check/src/state/command/command.dart';
 import 'package:kiri_check/src/state/command/context.dart';

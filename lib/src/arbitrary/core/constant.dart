@@ -1,5 +1,4 @@
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 
 final class ConstantArbitrary<T> extends ArbitraryBase<T> {
   ConstantArbitrary(this.value);

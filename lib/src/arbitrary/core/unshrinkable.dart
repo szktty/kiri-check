@@ -1,6 +1,6 @@
 // bool, etc
 
-import 'package:kiri_check/src/arbitrary.dart';
+import 'package:kiri_check/src/property/arbitrary.dart';
 
 abstract mixin class UnshrinkableArbitrary<T> implements ArbitraryInternal<T> {
   @override

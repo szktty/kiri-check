@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:kiri_check/kiri_check.dart';
+import 'package:kiri_check/src/helpers/helpers_internal.dart';
 import 'package:kiri_check/src/state/command/command.dart';
 import 'package:kiri_check/src/state/command/context.dart';
-import 'package:kiri_check/src/util/misc.dart';
 import 'package:meta/meta.dart';
 
 /// A command that performs actions with generated values.

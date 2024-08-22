@@ -1,4 +1,4 @@
-import 'package:kiri_check/src/constants.dart';
+import 'package:kiri_check/src/property/constants.dart';
 import 'package:test/test.dart';
 import 'package:universal_platform/universal_platform.dart';
 

@@ -3,13 +3,13 @@ import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:collection/collection.dart';
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/arbitrary/manipulation/filter.dart';
-import 'package:kiri_check/src/exception.dart';
-import 'package:kiri_check/src/home.dart';
-import 'package:kiri_check/src/property_settings.dart';
-import 'package:kiri_check/src/random.dart';
-import 'package:kiri_check/src/statistics.dart';
+import 'package:kiri_check/src/arbitrary/manipulation/manipulation.dart';
+import 'package:kiri_check/src/property/arbitrary.dart';
+import 'package:kiri_check/src/property/exception.dart';
+import 'package:kiri_check/src/property/home.dart';
+import 'package:kiri_check/src/property/property_settings.dart';
+import 'package:kiri_check/src/property/random.dart';
+import 'package:kiri_check/src/property/statistics.dart';
 import 'package:test/test.dart';
 
 abstract class Property<T> {

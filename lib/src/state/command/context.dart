@@ -1,8 +1,7 @@
 import 'dart:collection';
 
 import 'package:collection/collection.dart';
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 import 'package:kiri_check/src/state/command/action.dart';
 import 'package:kiri_check/src/state/command/command.dart';
 

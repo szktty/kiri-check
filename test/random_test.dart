@@ -1,5 +1,4 @@
-import 'package:kiri_check/src/random.dart';
-import 'package:kiri_check/src/random_xorshift.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 import 'package:test/test.dart';
 
 void main() {

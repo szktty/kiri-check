@@ -1,4 +1,4 @@
-import 'package:kiri_check/src/util/misc.dart';
+import 'package:kiri_check/src/helpers/helpers_internal.dart';
 import 'package:test/test.dart';
 
 void main() {

@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/constants.dart';
+import 'package:kiri_check/src/property/arbitrary.dart';
+import 'package:kiri_check/src/property/constants.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 /// A random state for the random number generator.

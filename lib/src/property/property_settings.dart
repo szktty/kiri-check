@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:kiri_check/src/home.dart';
-import 'package:kiri_check/src/random.dart';
-import 'package:kiri_check/src/top.dart';
+import 'package:kiri_check/src/property/home.dart';
+import 'package:kiri_check/src/property/random.dart';
+import 'package:kiri_check/src/property/top.dart';
 
 import 'package:test/test.dart';
 

@@ -1,5 +1,5 @@
 import 'package:kiri_check/kiri_check.dart';
-import 'package:kiri_check/src/util/character/unicode_data.dart';
+import 'package:kiri_check/src/helpers/helpers_internal.dart';
 import 'package:test/test.dart';
 
 import 'utils.dart';

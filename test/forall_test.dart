@@ -1,9 +1,5 @@
 import 'package:collection/collection.dart';
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/home.dart';
-import 'package:kiri_check/src/property_settings.dart';
-import 'package:kiri_check/src/random.dart';
-import 'package:kiri_check/src/top.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 import 'package:test/test.dart';
 
 final class _BasicArbitrary extends ArbitraryBase<int> {

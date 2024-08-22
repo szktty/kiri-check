@@ -1,11 +1,9 @@
 import 'dart:math' as math;
 
-import 'package:kiri_check/src/arbitrary/manipulation/filter.dart';
-import 'package:kiri_check/src/arbitrary/manipulation/flat_map.dart';
-import 'package:kiri_check/src/arbitrary/manipulation/map.dart';
-import 'package:kiri_check/src/home.dart';
-import 'package:kiri_check/src/random.dart';
-import 'package:kiri_check/src/random_xorshift.dart';
+import 'package:kiri_check/src/arbitrary/manipulation/manipulation.dart';
+import 'package:kiri_check/src/property/home.dart';
+import 'package:kiri_check/src/property/random.dart';
+import 'package:kiri_check/src/property/random_xorshift.dart';
 
 /// Components that generate data and perform shrinking,
 /// which are especially crucial elements in property-based testing.

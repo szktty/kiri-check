@@ -1,10 +1,11 @@
 import 'dart:async';
 
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/property.dart';
-import 'package:kiri_check/src/property_settings.dart';
-import 'package:kiri_check/src/random.dart';
-import 'package:kiri_check/src/statistics.dart';
+import 'package:kiri_check/src/property/arbitrary.dart';
+import 'package:kiri_check/src/property/property.dart';
+import 'package:kiri_check/src/property/property_base.dart';
+import 'package:kiri_check/src/property/property_settings.dart';
+import 'package:kiri_check/src/property/random.dart';
+import 'package:kiri_check/src/property/statistics.dart';
 import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 

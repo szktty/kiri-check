@@ -1,23 +1,7 @@
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/arbitrary/combinator/build.dart';
-import 'package:kiri_check/src/arbitrary/combinator/combine.dart';
-import 'package:kiri_check/src/arbitrary/combinator/deck.dart';
-import 'package:kiri_check/src/arbitrary/combinator/frequency.dart';
-import 'package:kiri_check/src/arbitrary/combinator/one_of.dart';
-import 'package:kiri_check/src/arbitrary/combinator/recursive.dart';
-import 'package:kiri_check/src/arbitrary/core/binary.dart';
-import 'package:kiri_check/src/arbitrary/core/constant.dart';
-import 'package:kiri_check/src/arbitrary/core/constant_from.dart';
-import 'package:kiri_check/src/arbitrary/core/datetime.dart';
-import 'package:kiri_check/src/arbitrary/core/float.dart';
-import 'package:kiri_check/src/arbitrary/core/integer.dart';
-import 'package:kiri_check/src/arbitrary/core/list.dart';
-import 'package:kiri_check/src/arbitrary/core/map.dart';
-import 'package:kiri_check/src/arbitrary/core/runes.dart';
-import 'package:kiri_check/src/arbitrary/core/set.dart';
-import 'package:kiri_check/src/arbitrary/core/string.dart';
-import 'package:kiri_check/src/util/character/character_set.dart';
-import 'package:kiri_check/src/util/datetime.dart';
+import 'package:kiri_check/src/arbitrary/combinator/combinator_internal.dart';
+import 'package:kiri_check/src/arbitrary/core/core.dart';
+import 'package:kiri_check/src/helpers/helpers.dart';
+import 'package:kiri_check/src/property/arbitrary.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 /// Returns an arbitrary that generates a boolean value.
@@ -231,7 +215,7 @@ Arbitrary<Deck> deck() => DeckArbitraries.deck();
 Arbitrary<T> build<T>(T Function() builder) =>
     BuildArbitraries.build<T>(builder);
 
-/// Returns an arbitrary that combines two arbitraries.
+/// Returns an arbitrary that combines arbitraries.
 ///
 /// Parameters:
 /// - `a1`: The first arbitrary to combine.
@@ -242,7 +226,7 @@ Arbitrary<(E1, E2)> combine2<E1, E2>(
 ) =>
     CombineArbitraries.combine2(a1, a2);
 
-/// Returns an arbitrary that combines two arbitraries.
+/// Returns an arbitrary that combines arbitraries.
 ///
 /// Parameters:
 /// - `a1`: The first arbitrary to combine.
@@ -255,7 +239,7 @@ Arbitrary<(E1, E2, E3)> combine3<E1, E2, E3>(
 ) =>
     CombineArbitraries.combine3(a1, a2, a3);
 
-/// Returns an arbitrary that combines two arbitraries.
+/// Returns an arbitrary that combines arbitraries.
 ///
 /// Parameters:
 /// - `a1`: The first arbitrary to combine.
@@ -270,7 +254,7 @@ Arbitrary<(E1, E2, E3, E4)> combine4<E1, E2, E3, E4>(
 ) =>
     CombineArbitraries.combine4(a1, a2, a3, a4);
 
-/// Returns an arbitrary that combines two arbitraries.
+/// Returns an arbitrary that combines arbitraries.
 ///
 /// Parameters:
 /// - `a1`: The first arbitrary to combine.
@@ -287,7 +271,7 @@ Arbitrary<(E1, E2, E3, E4, E5)> combine5<E1, E2, E3, E4, E5>(
 ) =>
     CombineArbitraries.combine5(a1, a2, a3, a4, a5);
 
-/// Returns an arbitrary that combines two arbitraries.
+/// Returns an arbitrary that combines arbitraries.
 ///
 /// Parameters:
 /// - `a1`: The first arbitrary to combine.
@@ -306,7 +290,7 @@ Arbitrary<(E1, E2, E3, E4, E5, E6)> combine6<E1, E2, E3, E4, E5, E6>(
 ) =>
     CombineArbitraries.combine6(a1, a2, a3, a4, a5, a6);
 
-/// Returns an arbitrary that combines two arbitraries.
+/// Returns an arbitrary that combines arbitraries.
 ///
 /// Parameters:
 /// - `a1`: The first arbitrary to combine.
@@ -327,7 +311,7 @@ Arbitrary<(E1, E2, E3, E4, E5, E6, E7)> combine7<E1, E2, E3, E4, E5, E6, E7>(
 ) =>
     CombineArbitraries.combine7(a1, a2, a3, a4, a5, a6, a7);
 
-/// Returns an arbitrary that combines two arbitraries.
+/// Returns an arbitrary that combines arbitraries.
 ///
 /// Parameters:
 /// - `a1`: The first arbitrary to combine.

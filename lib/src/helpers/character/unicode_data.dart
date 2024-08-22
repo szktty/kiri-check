@@ -1,6 +1,6 @@
 // This file is generated automatically. Do not edit it.
 
-import 'package:kiri_check/src/util/character/unicode.dart';
+import 'package:kiri_check/src/helpers/character/unicode.dart';
 
 enum UnicodeCategory {
   cc,
