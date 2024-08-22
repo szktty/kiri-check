@@ -7,6 +7,7 @@
 - [CHANGE] Support asynchronous for stateful testing
 - [CHANGE] Enable random value generation using arbitraries outside of tests (#18)
 - [CHANGE] Add `build` arbitrary that accepts callable objects (#20)
+- [CHANGE] Remove transformer argument from `combine` arbitraries (#22)
 - [UPDATE] Show the exception and stack trace of falsifying examples
 
 ### API
