@@ -236,13 +236,11 @@ Arbitrary<T> build<T>(T Function() builder) =>
 /// Parameters:
 /// - `a1`: The first arbitrary to combine.
 /// - `a2`: The second arbitrary to combine.
-/// - `combinator`: The function to combine the generated values.
-Arbitrary<R> combine2<R, E1, E2>(
+Arbitrary<(E1, E2)> combine2<E1, E2>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
-  R Function(E1, E2) combinator,
 ) =>
-    CombineArbitraries.combine2(a1, a2, combinator);
+    CombineArbitraries.combine2(a1, a2);
 
 /// Returns an arbitrary that combines two arbitraries.
 ///
@@ -250,14 +248,12 @@ Arbitrary<R> combine2<R, E1, E2>(
 /// - `a1`: The first arbitrary to combine.
 /// - `a2`: The second arbitrary to combine.
 /// - `a3`: The third arbitrary to combine.
-/// - `combinator`: The function to combine the generated values.
-Arbitrary<R> combine3<R, E1, E2, E3>(
+Arbitrary<(E1, E2, E3)> combine3<E1, E2, E3>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
   Arbitrary<E3> a3,
-  R Function(E1, E2, E3) combinator,
 ) =>
-    CombineArbitraries.combine3(a1, a2, a3, combinator);
+    CombineArbitraries.combine3(a1, a2, a3);
 
 /// Returns an arbitrary that combines two arbitraries.
 ///
@@ -266,15 +262,13 @@ Arbitrary<R> combine3<R, E1, E2, E3>(
 /// - `a2`: The second arbitrary to combine.
 /// - `a3`: The third arbitrary to combine.
 /// - `a4`: The fourth arbitrary to combine.
-/// - `combinator`: The function to combine the generated values.
-Arbitrary<R> combine4<R, E1, E2, E3, E4>(
+Arbitrary<(E1, E2, E3, E4)> combine4<E1, E2, E3, E4>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
   Arbitrary<E3> a3,
   Arbitrary<E4> a4,
-  R Function(E1, E2, E3, E4) combinator,
 ) =>
-    CombineArbitraries.combine4(a1, a2, a3, a4, combinator);
+    CombineArbitraries.combine4(a1, a2, a3, a4);
 
 /// Returns an arbitrary that combines two arbitraries.
 ///
@@ -284,16 +278,14 @@ Arbitrary<R> combine4<R, E1, E2, E3, E4>(
 /// - `a3`: The third arbitrary to combine.
 /// - `a4`: The fourth arbitrary to combine.
 /// - `a5`: The fifth arbitrary to combine.
-/// - `combinator`: The function to combine the generated values.
-Arbitrary<R> combine5<R, E1, E2, E3, E4, E5>(
+Arbitrary<(E1, E2, E3, E4, E5)> combine5<E1, E2, E3, E4, E5>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
   Arbitrary<E3> a3,
   Arbitrary<E4> a4,
   Arbitrary<E5> a5,
-  R Function(E1, E2, E3, E4, E5) combinator,
 ) =>
-    CombineArbitraries.combine5(a1, a2, a3, a4, a5, combinator);
+    CombineArbitraries.combine5(a1, a2, a3, a4, a5);
 
 /// Returns an arbitrary that combines two arbitraries.
 ///
@@ -304,17 +296,15 @@ Arbitrary<R> combine5<R, E1, E2, E3, E4, E5>(
 /// - `a4`: The fourth arbitrary to combine.
 /// - `a5`: The fifth arbitrary to combine.
 /// - `a6`: The sixth arbitrary to combine.
-/// - `combinator`: The function to combine the generated values.
-Arbitrary<R> combine6<R, E1, E2, E3, E4, E5, E6>(
+Arbitrary<(E1, E2, E3, E4, E5, E6)> combine6<E1, E2, E3, E4, E5, E6>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
   Arbitrary<E3> a3,
   Arbitrary<E4> a4,
   Arbitrary<E5> a5,
   Arbitrary<E6> a6,
-  R Function(E1, E2, E3, E4, E5, E6) combinator,
 ) =>
-    CombineArbitraries.combine6(a1, a2, a3, a4, a5, a6, combinator);
+    CombineArbitraries.combine6(a1, a2, a3, a4, a5, a6);
 
 /// Returns an arbitrary that combines two arbitraries.
 ///
@@ -326,8 +316,7 @@ Arbitrary<R> combine6<R, E1, E2, E3, E4, E5, E6>(
 /// - `a5`: The fifth arbitrary to combine.
 /// - `a6`: The sixth arbitrary to combine.
 /// - `a7`: The seventh arbitrary to combine.
-/// - `combinator`: The function to combine the generated values.
-Arbitrary<R> combine7<R, E1, E2, E3, E4, E5, E6, E7>(
+Arbitrary<(E1, E2, E3, E4, E5, E6, E7)> combine7<E1, E2, E3, E4, E5, E6, E7>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
   Arbitrary<E3> a3,
@@ -335,9 +324,8 @@ Arbitrary<R> combine7<R, E1, E2, E3, E4, E5, E6, E7>(
   Arbitrary<E5> a5,
   Arbitrary<E6> a6,
   Arbitrary<E7> a7,
-  R Function(E1, E2, E3, E4, E5, E6, E7) combinator,
 ) =>
-    CombineArbitraries.combine7(a1, a2, a3, a4, a5, a6, a7, combinator);
+    CombineArbitraries.combine7(a1, a2, a3, a4, a5, a6, a7);
 
 /// Returns an arbitrary that combines two arbitraries.
 ///
@@ -350,8 +338,8 @@ Arbitrary<R> combine7<R, E1, E2, E3, E4, E5, E6, E7>(
 /// - `a6`: The sixth arbitrary to combine.
 /// - `a7`: The seventh arbitrary to combine.
 /// - `a8`: The eighth arbitrary to combine.
-/// - `combinator`: The function to combine the generated values.
-Arbitrary<R> combine8<R, E1, E2, E3, E4, E5, E6, E7, E8>(
+Arbitrary<(E1, E2, E3, E4, E5, E6, E7, E8)>
+    combine8<E1, E2, E3, E4, E5, E6, E7, E8>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
   Arbitrary<E3> a3,
@@ -360,9 +348,8 @@ Arbitrary<R> combine8<R, E1, E2, E3, E4, E5, E6, E7, E8>(
   Arbitrary<E6> a6,
   Arbitrary<E7> a7,
   Arbitrary<E8> a8,
-  R Function(E1, E2, E3, E4, E5, E6, E7, E8) combinator,
 ) =>
-    CombineArbitraries.combine8(a1, a2, a3, a4, a5, a6, a7, a8, combinator);
+        CombineArbitraries.combine8(a1, a2, a3, a4, a5, a6, a7, a8);
 
 /// Returns an arbitrary that generates a value from
 /// one of the provided arbitraries.

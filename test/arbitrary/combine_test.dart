@@ -10,7 +10,6 @@ void main() {
         combine2(
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b) => (a, b),
         ),
         (value) {
           expect(value.$1, isA<int>());
@@ -24,7 +23,6 @@ void main() {
         combine2(
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b) => (a, b),
         ),
         (value) {
           expect(value.$1, lessThanOrEqualTo(1000));
@@ -45,7 +43,6 @@ void main() {
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b, c) => (a, b, c),
         ),
         (value) {
           expect(value.$1, isA<int>());
@@ -61,7 +58,6 @@ void main() {
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b, c) => (a, b, c),
         ),
         (value) {
           expect(value.$1, lessThanOrEqualTo(1000));
@@ -84,7 +80,6 @@ void main() {
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b, c, d) => (a, b, c, d),
         ),
         (value) {
           expect(value.$1, isA<int>());
@@ -102,7 +97,6 @@ void main() {
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b, c, d) => (a, b, c, d),
         ),
         (value) {
           expect(value.$1, lessThanOrEqualTo(1000));
@@ -127,7 +121,6 @@ void main() {
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b, c, d, e) => (a, b, c, d, e),
         ),
         (value) {
           expect(value.$1, isA<int>());
@@ -147,7 +140,6 @@ void main() {
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b, c, d, e) => (a, b, c, d, e),
         ),
         (value) {
           expect(value.$1, lessThanOrEqualTo(1000));
@@ -174,7 +166,6 @@ void main() {
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b, c, d, e, f) => (a, b, c, d, e, f),
         ),
         (value) {
           expect(value.$1, isA<int>());
@@ -196,7 +187,6 @@ void main() {
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b, c, d, e, f) => (a, b, c, d, e, f),
         ),
         (value) {
           expect(value.$1, lessThanOrEqualTo(1000));
@@ -225,7 +215,6 @@ void main() {
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b, c, d, e, f, g) => (a, b, c, d, e, f, g),
         ),
         (value) {
           expect(value.$1, isA<int>());
@@ -249,7 +238,6 @@ void main() {
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b, c, d, e, f, g) => (a, b, c, d, e, f, g),
         ),
         (value) {
           expect(value.$1, lessThanOrEqualTo(1000));
@@ -280,7 +268,6 @@ void main() {
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b, c, d, e, f, g, h) => (a, b, c, d, e, f, g, h),
         ),
         (value) {
           expect(value.$1, isA<int>());
@@ -306,7 +293,6 @@ void main() {
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
           integer(min: 0, max: 10000),
-          (a, b, c, d, e, f, g, h) => (a, b, c, d, e, f, g, h),
         ),
         (value) {
           expect(value.$1, lessThanOrEqualTo(1000));
