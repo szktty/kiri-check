@@ -12,16 +12,17 @@ void runBehavior<State, System>(
   int? seed,
   int? maxCycles,
   int? maxSteps,
+  int? maxCommandTries,
+  int? maxShrinkingTries,
+  int? maxShrinkingCycles,
   Timeout? cycleTimeout,
-  void Function()? setUp,
-  void Function()? tearDown,
-  void Function(Behavior<State, System>, System)? onDestroy,
-  void Function(StatefulFalsifyingExample<State, System>)? onFalsify,
+  FutureOr<void> Function()? setUp,
+  FutureOr<void> Function()? tearDown,
+  FutureOr<void> Function(Behavior<State, System>, System)? onDestroy,
+  FutureOr<void> Function(StatefulFalsifyingExample<State, System>)? onFalsify,
   bool? ignoreFalsify,
 })
 ```
-
-TODO
 
 ## Behavior
 

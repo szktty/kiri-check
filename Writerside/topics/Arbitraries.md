@@ -285,47 +285,42 @@ Arbitraries that can combine multiple arbitraries.
 ### `combine` {id="combine"}
 
 ```java
-combine2<R, E1, E2>(
+combine2<(E1, E2)>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
-  R Function(E1, E2) combinator,
 )
 
-combine3<R, E1, E2, E3>(
+combine3<(E1, E2, E3)>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
   Arbitrary<E3> a3,
-  R Function(E1, E2, E3) combinator,
 )
 
-combine4<R, E1, E2, E3, E4>(
+combine4<(E1, E2, E3, E4)>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
   Arbitrary<E3> a3,
   Arbitrary<E4> a4,
-  R Function(E1, E2, E3, E4) combinator,
 )
 
-combine5<R, E1, E2, E3, E4, E5>(
+combine5<(E1, E2, E3, E4, E5)>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
   Arbitrary<E3> a3,
   Arbitrary<E4> a4,
   Arbitrary<E5> a5,
-  R Function(E1, E2, E3, E4, E5) combinator,
 )
 
-combine6<R, E1, E2, E3, E4, E5, E6>(
+combine6<(E1, E2, E3, E4, E5, E6)>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
   Arbitrary<E3> a3,
   Arbitrary<E4> a4,
   Arbitrary<E5> a5,
   Arbitrary<E6> a6,
-  R Function(E1, E2, E3, E4, E5, E6) combinator,
 )
 
-combine7<R, E1, E2, E3, E4, E5, E6, E7>(
+combine7<(E1, E2, E3, E4, E5, E6, E7)>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
   Arbitrary<E3> a3,
@@ -333,10 +328,9 @@ combine7<R, E1, E2, E3, E4, E5, E6, E7>(
   Arbitrary<E5> a5,
   Arbitrary<E6> a6,
   Arbitrary<E7> a7,
-  R Function(E1, E2, E3, E4, E5, E6, E7) combinator,
 )
 
-combine8<R, E1, E2, E3, E4, E5, E6, E7, E8>(
+combine8<(E1, E2, E3, E4, E5, E6, E7, E8)>(
   Arbitrary<E1> a1,
   Arbitrary<E2> a2,
   Arbitrary<E3> a3,
@@ -345,19 +339,19 @@ combine8<R, E1, E2, E3, E4, E5, E6, E7, E8>(
   Arbitrary<E6> a6,
   Arbitrary<E7> a7,
   Arbitrary<E8> a8,
-  R Function(E1, E2, E3, E4, E5, E6, E7, E8) combinator,
 )
 ```
 
-Various `combine` functions generate values simultaneously from multiple arbitraries, and a `combinator` uses these
-values to create a new value passed to the test block. You can combine 2 to 8 arbitraries.
+Various `combine` functions generate values as record simultaneously from multiple arbitraries. You can combine 2 to 8 arbitraries.
+
+If you want to process the generated data before passing it to the test block, you should use `map`.
 
 Example: Generating a `Point` from two integers
 
 ```java
 property('generate point from integers', () {
   forAll(
-    combine2(integer(), integer(), (x, y) => Point(x, y)),
+    combine2(integer(), integer()).map((x, y) => Point(x, y)),
     (point) {
       expect(point, isA<Point>());
     },
@@ -455,6 +449,16 @@ See also [Interactive generation](#interactive-generation).
 
 Shrinking is performed on the value that caused an error. No other arbitraries that did not generate this value are used
 for shrinking.
+
+### `build` {id="build-arbitrary"}
+
+```java
+Arbitrary<T> build<T>(T Function() builder) 
+```
+
+Generates a value using the provided builder.
+
+Examples from this arbitrary will never be shrunk.
 
 ## Example manipulation {id="example-manipulation"}
 
@@ -583,3 +587,17 @@ If multiple data points are needed, it's effective to use [`combine`](#combine) 
 
 If there is a need to switch between arbitraries based on certain conditions during data generation,
 using [`deck`](#deck) is advisable.
+
+
+## Generate values outside of tests {id="generate-values-outside-of-tests"}
+
+To generate values outside of tests, use the `Arbitrary.example` method.
+
+```java
+T example({RandomState? state, bool edgeCase = false});
+```
+
+The arguments include `RandomState` and whether to include edge cases.
+`RandomState` is an object representing the state of the random number generator (including the seed), and duplicating it allows the same random numbers to be reproduced any number of times.
+
+Examples from this arbitrary will never be shrunk.
