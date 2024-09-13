@@ -33,6 +33,9 @@
             <a href="Arbitraries.md#composition" summary="Combine existing arbitraries to generate new ones."/>
             <a href="Arbitraries.md#custom-data-types"
                summary="Write new arbitraries to create values of custom data types."/>
+            <a href="Arbitraries.md#generate-values-outside-of-tests"
+               summary="Generate values outside of tests."/>
+
         </secondary>
 
         <misc>
