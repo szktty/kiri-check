@@ -1,5 +1,4 @@
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 
 abstract class OneOfArbitraries {
   static Arbitrary<dynamic> oneOf(List<Arbitrary<dynamic>> arbitraries) =>

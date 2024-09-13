@@ -1,6 +1,5 @@
-import 'package:kiri_check/src/arbitrary/top.dart';
-import 'package:kiri_check/src/statistics.dart';
-import 'package:kiri_check/src/top.dart';
+import 'package:kiri_check/src/arbitrary/arbitrary.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 import 'package:test/expect.dart';
 
 void main() {

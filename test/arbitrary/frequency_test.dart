@@ -27,7 +27,7 @@ void main() {
         (value) {
           expect(value, anyOf(isA<int>(), isA<double>(), isA<String>()));
         },
-        tearDown: (examples) {
+        tearDownAll: (examples) {
           expect(examples.whereType<int>().length, greaterThan(450));
           expect(examples.whereType<double>().length, greaterThan(200));
           expect(examples.whereType<String>().length, greaterThan(200));

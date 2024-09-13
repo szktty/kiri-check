@@ -1,8 +1,7 @@
 import 'dart:collection';
 
 import 'package:collection/collection.dart';
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 import 'package:kiri_check/src/state/command/action.dart';
 import 'package:kiri_check/src/state/command/command.dart';
 
@@ -58,19 +57,19 @@ final class CommandContext<State, System> {
     }
   }
 
-  void nextState(State state) {
-    command.nextState(this, state);
+  Future<void> nextState(State state) async {
+    await command.nextState(this, state);
   }
 
-  dynamic run(System system) {
+  Future<dynamic> run(System system) {
     return command.run(this, system);
   }
 
-  bool precondition(State state) {
+  Future<bool> precondition(State state) {
     return command.precondition(this, state);
   }
 
-  bool postcondition(State state, dynamic result) {
+  Future<bool> postcondition(State state, dynamic result) {
     return command.postcondition(this, state, result);
   }
 

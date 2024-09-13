@@ -1,5 +1,5 @@
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/property/arbitrary.dart';
+import 'package:kiri_check/src/property/random.dart';
 
 final class FlatMapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
   FlatMapArbitraryTransformer(

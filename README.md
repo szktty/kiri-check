@@ -30,7 +30,7 @@ Alternatively, add the library to your `pubspec.yaml` and run `dart pub get` or 
 
 ```yaml
 dev_dependencies:
-  kiri_check: ^1.1.0
+  kiri_check: ^1.2.0
 ```
 
 ## Documentation
@@ -196,6 +196,16 @@ void main() {
 
 For more detailed information on stateful testing, including advanced usage and customization options, please refer
 to [Stateful Testing](https://szktty.github.io/kiri-check/stateful-testing.html).
+
+## Known issues
+
+- [#13](https://github.com/szktty/kiri-check/issues/13) Test results in IntelliJ IDEA do not reflect `tearDownAll`
+
+## TODO
+
+- Example database
+- Replace the PRNG with xorshift to improve performance and remove dependency on current PRNG
+- Reimplement the cache mechanism with a reproducible PRNG using internal state
 
 ## Author
 

@@ -53,11 +53,12 @@ abstract class Gen {
         name(),
         birthday(),
         email(),
-        (id, name, birthday, email) => User(
-          id: id,
-          name: name,
-          birthday: birthday,
-          email: email,
+      ).map(
+        (args) => User(
+          id: args.$1,
+          name: args.$2,
+          birthday: args.$3,
+          email: args.$4,
         ),
       );
 }

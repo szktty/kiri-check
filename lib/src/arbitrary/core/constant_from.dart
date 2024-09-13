@@ -1,6 +1,5 @@
-import 'package:kiri_check/src/arbitrary.dart';
 import 'package:kiri_check/src/arbitrary/core/unshrinkable.dart';
-import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 
 final class ConstantFromArbitrary<T> extends ArbitraryBase<T>
     with UnshrinkableArbitrary<T> {

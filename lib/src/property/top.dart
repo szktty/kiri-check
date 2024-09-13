@@ -1,8 +1,11 @@
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/property.dart';
-import 'package:kiri_check/src/property_settings.dart';
-import 'package:kiri_check/src/random.dart';
-import 'package:kiri_check/src/statistics.dart';
+import 'dart:async';
+
+import 'package:kiri_check/src/property/arbitrary.dart';
+import 'package:kiri_check/src/property/property.dart';
+import 'package:kiri_check/src/property/property_base.dart';
+import 'package:kiri_check/src/property/property_settings.dart';
+import 'package:kiri_check/src/property/random.dart';
+import 'package:kiri_check/src/property/statistics.dart';
 import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 
@@ -32,7 +35,7 @@ import 'package:test/test.dart';
 @isTest
 void property(
   Object? description,
-  dynamic Function() body, {
+  FutureOr<void> Function() body, {
   String? testOn,
   Timeout? timeout,
   Object? skip,
@@ -72,6 +75,8 @@ void property(
 ///     generated examples.
 ///   - `setUp`: A function to run before each test case.
 ///   - `tearDown`: A function to run after each test case.
+///   - `setUpAll`: A function to run before all test cases.
+///   - `tearDownAll`: A function to run after all test cases.
 ///   - `onGenerate`: A callback function that is called after each example is generated,
 ///     allowing inspection of the generated input.
 ///   - `onShrink`: A callback function that is called after each shrink operation,
@@ -84,7 +89,7 @@ void property(
 ///     useful for logging or analysis purposes.
 void forAll<T>(
   Arbitrary<T> arbitrary,
-  void Function(T) block, {
+  FutureOr<void> Function(T) block, {
   int? maxExamples,
   int? maxTries,
   int? maxShrinkingTries,
@@ -93,11 +98,13 @@ void forAll<T>(
   GenerationPolicy? generationPolicy,
   ShrinkingPolicy? shrinkingPolicy,
   EdgeCasePolicy? edgeCasePolicy,
-  void Function()? setUp,
-  void Function()? tearDown,
-  void Function(T)? onGenerate,
-  void Function(T)? onShrink,
-  void Function(T)? onFalsify,
+  FutureOr<void> Function()? setUp,
+  FutureOr<void> Function()? tearDown,
+  FutureOr<void> Function()? setUpAll,
+  FutureOr<void> Function()? tearDownAll,
+  FutureOr<void> Function(T)? onGenerate,
+  FutureOr<void> Function(T)? onShrink,
+  FutureOr<void> Function(T)? onFalsify,
   bool? ignoreFalsify,
 }) {
   final property = StatelessProperty(
@@ -119,6 +126,8 @@ void forAll<T>(
     block: block,
     setUp: setUp,
     tearDown: tearDown,
+    setUpAll: setUpAll,
+    tearDownAll: tearDownAll,
   );
   PropertyTestManager.addProperty(property);
 }
@@ -148,4 +157,19 @@ void collect(
     if (value7 != null) value7,
     if (value8 != null) value8,
   ]);
+}
+
+/// Registers a function to be run before each test in `forAll`.
+void setUpForAll(FutureOr<void> Function() callback) {
+  PropertyTestManager.setSetUpForAll(callback);
+}
+
+/// Registers a function to be run after each test in `forAll`.
+void tearDownForAll(FutureOr<void> Function() callback) {
+  PropertyTestManager.setTearDownForAll(callback);
+}
+
+/// Registers a function to be run after the current test in `forAll`.
+void addTearDownCurrentForAll(FutureOr<void> Function() callback) {
+  PropertyTestManager.addTearDownCurrentForAll(callback);
 }

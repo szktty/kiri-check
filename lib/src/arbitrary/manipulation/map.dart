@@ -1,6 +1,4 @@
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/exception.dart';
-import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 
 final class MapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
   MapArbitraryTransformer(this.original, this.transformer);

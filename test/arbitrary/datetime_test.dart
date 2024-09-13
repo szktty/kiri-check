@@ -1,5 +1,4 @@
-import 'package:kiri_check/src/arbitrary/top.dart';
-import 'package:kiri_check/src/top.dart';
+import 'package:kiri_check/kiri_check.dart';
 import 'package:test/test.dart';
 import 'package:timezone/timezone.dart' as tz;
 

@@ -1,8 +1,7 @@
 import 'dart:math' as math;
 import 'dart:math';
 
-import 'package:kiri_check/src/constants.dart';
-import 'package:mt19937/mt19937.dart';
+import 'package:kiri_check/src/property/random_xorshift.dart';
 
 abstract class RandomContext implements Random {
   int? get seed;
@@ -30,37 +29,40 @@ abstract class RandomContext implements Random {
 }
 
 final class RandomContextImpl extends RandomContext {
-  RandomContextImpl([this.seed]) {
-    mt = RandomMt19937(seed: seed);
-    mt64 = RandomMt19937_64(seed: seed);
+  RandomContextImpl._();
+
+  factory RandomContextImpl.fromSeed(int? seed) {
+    return RandomContextImpl._()..xorshift = RandomXorshift(seed);
+  }
+
+  factory RandomContextImpl.fromState(RandomState state, {required bool copy}) {
+    final state0 = state as RandomStateXorshift;
+    return RandomContextImpl._()
+      ..xorshift = RandomXorshift.fromState(state0, copy: copy);
   }
 
   @override
-  final int? seed;
+  int? get seed => xorshift.state.seed;
 
-  late final RandomMt19937 mt;
-  late final RandomMt19937_64 mt64;
-
-  @override
-  int nextInt(int max) {
-    if (max <= 0) {
-      throw ArgumentError('max must be greater than or equal to 0: $max');
-    } else if (max <= Constants.int32Max) {
-      return mt.nextInt(max);
-    } else {
-      return mt64.nextInt(max);
-    }
-  }
+  late final RandomXorshift xorshift;
 
   @override
-  double nextDouble() => mt64.nextDouble();
+  int nextInt(int max) => xorshift.nextInt(max);
 
   @override
-  bool nextBool() => mt.nextBool();
+  double nextDouble() => xorshift.nextDouble();
+
+  @override
+  bool nextBool() => xorshift.nextBool();
 
   @override
   Element nextElement<Element>(List<Element> elements) {
-    return elements[mt.nextInt(elements.length)];
+    return elements[xorshift.nextInt(elements.length)];
+  }
+
+  @override
+  String toString() {
+    return 'RandomContext(seed: ${xorshift.state.seed}, state: ${xorshift.state.x})';
   }
 }
 

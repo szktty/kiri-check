@@ -1,5 +1,4 @@
-import 'package:kiri_check/src/arbitrary/top.dart';
-import 'package:kiri_check/src/top.dart';
+import 'package:kiri_check/kiri_check.dart';
 import 'package:test/test.dart';
 
 import 'utils.dart';
@@ -11,7 +10,7 @@ void main() {
         testForAll(
           boolean(),
           (value) {},
-          tearDown: (examples) {
+          tearDownAll: (examples) {
             expect(examples.contains(true), isTrue);
             expect(examples.contains(false), isTrue);
           },
@@ -25,7 +24,7 @@ void main() {
         testForAll(
           boolean(),
           (value) {},
-          tearDown: (examples) {
+          tearDownAll: (examples) {
             expect(examples.contains(true), isTrue);
             expect(examples.contains(false), isTrue);
           },
@@ -51,7 +50,7 @@ void main() {
           onShrink: (example) {
             shrink = true;
           },
-          tearDown: (_) {
+          tearDownAll: (_) {
             expect(failed, isTrue);
             expect(falsify, isTrue);
             expect(shrink, isFalse);

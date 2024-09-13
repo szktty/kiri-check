@@ -26,7 +26,9 @@ final class Traversal<State, System> {
   final List<Command<State, System>> finalizeCommands = [];
   final List<Command<State, System>> actionCommands = [];
 
-  List<CommandContext<State, System>> _generateCommands(State state) {
+  Future<List<CommandContext<State, System>>> _generateCommands(
+    State state,
+  ) async {
     final generated = <CommandContext<State, System>>[];
     final finalizers = <CommandContext<State, System>>[];
     var tries = 0;
@@ -35,53 +37,53 @@ final class Traversal<State, System> {
         tries < context.property.maxCommandTries &&
         finalizers.length + generated.length < context.property.maxSteps;
 
-    void addCommand(
+    Future<void> addCommand(
       List<CommandContext<State, System>> contexts,
       Command<State, System> command,
-    ) {
+    ) async {
       if (!hasNext()) {
         return;
       }
 
       if (command is Initialize<State, System>) {
-        addCommand(contexts, command.command);
+        await addCommand(contexts, command.command);
       } else if (command is Finalize<State, System>) {
-        addCommand(contexts, command.command);
+        await addCommand(contexts, command.command);
       } else if (command is Sequence<State, System>) {
         for (final c in command.commands) {
-          addCommand(contexts, c);
+          await addCommand(contexts, c);
         }
       } else {
         final commandContext =
             CommandContext(command, random: context.property.random)
               ..nextValue();
-        if (commandContext.precondition(state)) {
-          commandContext.nextState(state);
+        if (await commandContext.precondition(state)) {
+          await commandContext.nextState(state);
           contexts.add(commandContext);
           tries++;
         }
       }
     }
 
-    void addCommands(
+    Future<void> addCommands(
       List<CommandContext<State, System>> contexts,
       List<Command<State, System>> commands,
-    ) {
+    ) async {
       for (final command in commands) {
         if (!hasNext()) {
           break;
         }
-        addCommand(contexts, command);
+        await addCommand(contexts, command);
         tries++;
       }
     }
 
-    addCommands(generated, initializeCommands);
-    addCommands(finalizers, finalizeCommands);
+    await addCommands(generated, initializeCommands);
+    await addCommands(finalizers, finalizeCommands);
 
     while (hasNext()) {
       final n = context.property.random.nextInt(actionCommands.length);
-      addCommand(generated, actionCommands[n]);
+      await addCommand(generated, actionCommands[n]);
       tries++;
     }
 
@@ -89,8 +91,8 @@ final class Traversal<State, System> {
     return generated;
   }
 
-  TraversalSequence<State, System> generateSequence(State state) {
-    final contexts = _generateCommands(state);
+  Future<TraversalSequence<State, System>> generateSequence(State state) async {
+    final contexts = await _generateCommands(state);
     final sequence = TraversalSequence<State, System>();
     for (final context in contexts) {
       sequence.addStep(TraversalStep(context));

@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 
-import 'package:kiri_check/src/arbitrary/manipulation/filter.dart';
-import 'package:kiri_check/src/arbitrary/manipulation/flat_map.dart';
-import 'package:kiri_check/src/arbitrary/manipulation/map.dart';
-import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/arbitrary/manipulation/manipulation.dart';
+import 'package:kiri_check/src/property/home.dart';
+import 'package:kiri_check/src/property/random.dart';
+import 'package:kiri_check/src/property/random_xorshift.dart';
 
 /// Components that generate data and perform shrinking,
 /// which are especially crucial elements in property-based testing.
@@ -19,6 +19,14 @@ abstract class Arbitrary<T> {
   /// `predicate` returns true if each example is valid.
   /// If `predicate` returns false, the example is discarded.
   Arbitrary<T> filter(bool Function(T) predicate);
+
+  /// Generates an example of the data.
+  ///
+  /// Parameters:
+  ///
+  /// - `state`: The random state to use when generating data.
+  /// - `edgeCase`: If set to true, the edge cases is generated.
+  T example({RandomState? state, bool edgeCase = false});
 }
 
 abstract class ArbitraryInternal<T> extends Arbitrary<T> {
@@ -121,6 +129,20 @@ abstract class ArbitraryBase<T> implements ArbitraryInternal<T> {
   @override
   Arbitrary<U> flatMap<U>(Arbitrary<U> Function(T) f) =>
       FlatMapArbitraryTransformer<T, U>(this, f);
+
+  @override
+  T example({RandomState? state, bool edgeCase = false}) {
+    final random = RandomContextImpl.fromState(
+      state ?? Settings.shared.randomStateForExample,
+      copy: false,
+    );
+
+    if (edgeCase && edgeCases != null) {
+      return edgeCases![random.nextInt(edgeCases!.length)];
+    } else {
+      return generate(random);
+    }
+  }
 }
 
 // Distance to the target value.

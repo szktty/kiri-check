@@ -1,6 +1,8 @@
-import 'package:kiri_check/src/home.dart';
-import 'package:kiri_check/src/random.dart';
-import 'package:kiri_check/src/top.dart';
+import 'dart:async';
+
+import 'package:kiri_check/src/property/home.dart';
+import 'package:kiri_check/src/property/random.dart';
+import 'package:kiri_check/src/property/top.dart';
 
 import 'package:test/test.dart';
 
@@ -42,9 +44,9 @@ final class PropertySettings<T> {
   final int? maxStatefulCommandTries;
   final int? maxStatefulShrinkingCycles;
   final Timeout? statefulCycleTimeout;
-  final void Function(T)? onGenerate;
-  final void Function(T)? onShrink;
-  final void Function(T)? onFalsify;
+  final FutureOr<void> Function(T)? onGenerate;
+  final FutureOr<void> Function(T)? onShrink;
+  final FutureOr<void> Function(T)? onFalsify;
   late final bool ignoreFalsify;
 }
 

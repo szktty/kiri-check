@@ -1,6 +1,4 @@
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/home.dart';
-import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 
 abstract class RecursiveArbitraries {
   static Arbitrary<T> recursive<T>(

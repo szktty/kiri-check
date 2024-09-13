@@ -53,7 +53,7 @@ void main() {
           integer(),
           examples2.add,
           seed: seed,
-          tearDown: () {
+          tearDownAll: () {
             expect(
               const DeepCollectionEquality().equals(examples1, examples2),
               isTrue,
@@ -75,7 +75,7 @@ void main() {
           onFalsify: (example) {
             falsify = example;
           },
-          tearDown: (examples) {
+          tearDownAll: (examples) {
             expect(falsify, lessThanOrEqualTo(point + 10));
           },
           ignoreFalsify: true,
@@ -93,7 +93,7 @@ void main() {
           onFalsify: (example) {
             falsify = example;
           },
-          tearDown: (examples) {
+          tearDownAll: (examples) {
             expect(falsify, lessThanOrEqualTo(point));
           },
           ignoreFalsify: true,
@@ -112,7 +112,7 @@ void main() {
           onFalsify: (example) {
             falsify = example;
           },
-          tearDown: (examples) {
+          tearDownAll: (examples) {
             expect(falsify, isNotNull);
             expect(falsify, lessThanOrEqualTo(max));
             expect(falsify, greaterThanOrEqualTo(min));
@@ -153,7 +153,7 @@ void main() {
             }
           },
           edgeCasePolicy: EdgeCasePolicy.mixin,
-          tearDown: (_) {
+          tearDownAll: (_) {
             expect(found, greaterThanOrEqualTo(0));
           },
         );
@@ -172,7 +172,7 @@ void main() {
           },
           edgeCasePolicy: EdgeCasePolicy.first,
           maxExamples: 100,
-          tearDown: (_) {
+          tearDownAll: (_) {
             expect(found, greaterThanOrEqualTo(3));
           },
         );
@@ -205,7 +205,7 @@ void main() {
           onShrink: (_) {
             shrunk = true;
           },
-          tearDown: (examples) {
+          tearDownAll: (examples) {
             expect(shrunk, isFalse);
           },
           ignoreFalsify: true,
@@ -226,7 +226,7 @@ void main() {
           onShrink: (_) {
             tries++;
           },
-          tearDown: (examples) {
+          tearDownAll: (examples) {
             expect(tries, maxTries);
           },
           ignoreFalsify: true,

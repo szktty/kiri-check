@@ -1,6 +1,6 @@
 import 'package:kiri_check/kiri_check.dart';
-import 'package:kiri_check/src/util/character/unicode.dart';
-import 'package:kiri_check/src/util/character/unicode_data.dart';
+import 'package:kiri_check/src/helpers/character/unicode.dart';
+import 'package:kiri_check/src/helpers/character/unicode_data.dart';
 import 'package:meta/meta.dart';
 
 /// Character encoding types.

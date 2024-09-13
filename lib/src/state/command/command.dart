@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:kiri_check/src/state/command/context.dart';
 import 'package:meta/meta.dart';
 
@@ -11,16 +13,16 @@ abstract class Command<State, System> {
   final String description;
 
   /// Performs the command on the given system.
-  dynamic run(CommandContext<State, System> context, System system);
+  Future<dynamic> run(CommandContext<State, System> context, System system);
 
   /// Updates the state to the next state.
-  void nextState(CommandContext<State, System> context, State state);
+  Future<void> nextState(CommandContext<State, System> context, State state);
 
   /// Returns true if the command can be run on the given state.
-  bool precondition(CommandContext<State, System> context, State state);
+  Future<bool> precondition(CommandContext<State, System> context, State state);
 
   /// Returns true if postcondition of the command is satisfied.
-  bool postcondition(
+  Future<bool> postcondition(
     CommandContext<State, System> context,
     State state,
     dynamic result,
@@ -36,26 +38,29 @@ final class Initialize<State, System> extends Command<State, System> {
   final Command<State, System> command;
 
   @override
-  dynamic run(CommandContext<State, System> context, System system) {
+  Future<dynamic> run(CommandContext<State, System> context, System system) {
     throw UnsupportedError('Initialize does not support run');
   }
 
   @override
-  void nextState(CommandContext<State, System> context, State state) {
+  Future<void> nextState(CommandContext<State, System> context, State state) {
     throw UnsupportedError('Initialize does not support update');
   }
 
   @override
-  bool postcondition(
+  Future<bool> postcondition(
     CommandContext<State, System> context,
     State state,
     dynamic result,
-  ) {
+  ) async {
     throw UnsupportedError('Initialize does not support postcondition');
   }
 
   @override
-  bool precondition(CommandContext<State, System> context, State state) {
+  Future<bool> precondition(
+    CommandContext<State, System> context,
+    State state,
+  ) async {
     throw UnsupportedError('Initialize does not support precondition');
   }
 }
@@ -69,17 +74,17 @@ final class Finalize<State, System> extends Command<State, System> {
   final Command<State, System> command;
 
   @override
-  dynamic run(CommandContext<State, System> context, System system) {
+  Future<dynamic> run(CommandContext<State, System> context, System system) {
     throw UnsupportedError('Finalize does not support run');
   }
 
   @override
-  void nextState(CommandContext<State, System> context, State state) {
+  Future<void> nextState(CommandContext<State, System> context, State state) {
     throw UnsupportedError('Finalize does not support update');
   }
 
   @override
-  bool postcondition(
+  Future<bool> postcondition(
     CommandContext<State, System> context,
     State state,
     dynamic result,
@@ -88,7 +93,10 @@ final class Finalize<State, System> extends Command<State, System> {
   }
 
   @override
-  bool precondition(CommandContext<State, System> context, State state) {
+  Future<bool> precondition(
+    CommandContext<State, System> context,
+    State state,
+  ) {
     throw UnsupportedError('Finalize does not support precondition');
   }
 }

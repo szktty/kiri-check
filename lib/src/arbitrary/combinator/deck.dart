@@ -1,9 +1,6 @@
 import 'dart:collection';
 
-import 'package:kiri_check/src/arbitrary.dart';
-import 'package:kiri_check/src/arbitrary/top.dart';
-import 'package:kiri_check/src/exception.dart';
-import 'package:kiri_check/src/random.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 
 abstract class DeckArbitraries {
   static Arbitrary<Deck> deck() => DeckArbitrary();
