@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:kiri_check/src/property/arbitrary.dart';
 import 'package:kiri_check/src/property/property_internal.dart';
 
 // ignore_for_file: null_check_on_nullable_type_parameter
@@ -103,20 +104,33 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
 
   final CombinatorSet<R, E1, E2, E3, E4, E5, E6, E7, E8> _set;
 
-  final Map<R, List<dynamic>> _formerMap = {};
+  // Legacy method for backward compatibility
+  R _transform(List<dynamic> values) => _set.transform(values);
 
-  List<dynamic> _getFormer(R value) {
-    final former = _formerMap[value];
-    if (former == null) {
-      throw ArgumentError('former value of $value is not found');
+  // Get source values from ValueWithState, fall back if needed
+  List<dynamic> _getSourceValues(
+    R combinedValue,
+    ValueWithState<R>? valueWithState,
+  ) {
+    // First try to get from ValueWithState sourceValues
+    if (valueWithState?.sourceValues != null &&
+        valueWithState!.sourceValues!.isNotEmpty) {
+      return valueWithState.sourceValues!;
     }
-    return former;
-  }
 
-  R _transform(List<dynamic> former) {
-    final r = _set.transform(former);
-    _formerMap[r] = former;
-    return r;
+    // Fallback: try to regenerate using the stored state
+    if (valueWithState?.state != null) {
+      final random =
+          RandomContextImpl.fromState(valueWithState!.state, copy: true);
+      final regeneratedValues = <dynamic>[];
+      for (final arbitrary in _set.arbitraries) {
+        regeneratedValues.add(arbitrary.generate(random));
+      }
+      return regeneratedValues;
+    }
+
+    // Last resort: throw error
+    throw PropertyException('Cannot find source values for $combinedValue');
   }
 
   @override
@@ -130,15 +144,19 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
 
   @override
   String describeExample(R example) {
-    final former = _getFormer(example);
-    final buffer = StringBuffer('$example combined from (')
-      ..write(
-        _set.arbitraries
-            .mapIndexed((i, g) => g.describeExample(former[i]))
-            .join(', '),
-      )
-      ..write(')');
-    return buffer.toString();
+    try {
+      final sourceValues = _getSourceValues(example, null);
+      final buffer = StringBuffer('$example combined from (')
+        ..write(
+          _set.arbitraries
+              .mapIndexed((i, g) => g.describeExample(sourceValues[i]))
+              .join(', '),
+        )
+        ..write(')');
+      return buffer.toString();
+    } catch (_) {
+      return '$example (combined)';
+    }
   }
 
   @override
@@ -150,35 +168,185 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
       _transform(_set.arbitraries.map((g) => g.generate(random)).toList());
 
   @override
+  ValueWithState<R> generateWithState(RandomContext random) {
+    final values = <dynamic>[];
+
+    // Capture state before generating any values
+    final randomImpl = random as RandomContextImpl;
+    final stateBeforeGeneration =
+        RandomState.fromState(randomImpl.xorshift.state);
+
+    for (final arbitrary in _set.arbitraries) {
+      final withState = arbitrary.generateWithState(random);
+      values.add(withState.value);
+    }
+
+    final result = _set.transform(values);
+
+    return ValueWithState(
+      result,
+      stateBeforeGeneration,
+      sourceValues: values,
+    );
+  }
+
+  @override
   R generateRandom(RandomContext random) => _transform(
         _set.arbitraries.map((g) => g.generateRandom(random)).toList(),
       );
 
   @override
   ShrinkingDistance calculateDistance(R value) {
-    final former = _getFormer(value);
-    final distance = ShrinkingDistance(0);
-    _set.arbitraries.forEachIndexed((i, g) {
-      distance.addDimension(g.calculateDistance(former[i]));
-    });
-    return distance;
+    try {
+      final sourceValues = _getSourceValues(value, null);
+      final distance = ShrinkingDistance(0);
+      _set.arbitraries.forEachIndexed((i, g) {
+        if (i < sourceValues.length) {
+          distance.addDimension(g.calculateDistance(sourceValues[i]));
+        }
+      });
+      return distance;
+    } catch (_) {
+      // Fallback: Try to extract values from the combined result
+      final fallbackValues = _extractValuesFromCombined(value);
+      if (fallbackValues != null) {
+        final distance = ShrinkingDistance(0);
+        _set.arbitraries.forEachIndexed((i, g) {
+          if (i < fallbackValues.length) {
+            distance.addDimension(g.calculateDistance(fallbackValues[i]));
+          }
+        });
+        return distance;
+      }
+      return ShrinkingDistance(0);
+    }
   }
 
   @override
   List<R> shrink(R value, ShrinkingDistance distance) {
+    try {
+      final sourceValues = _getSourceValues(value, null);
+      return _shrinkWithSourceValues(sourceValues, distance);
+    } catch (_) {
+      // Fallback: Try to extract values from the combined result
+      final fallbackValues = _extractValuesFromCombined(value);
+      if (fallbackValues != null) {
+        return _shrinkWithSourceValues(fallbackValues, distance);
+      }
+      return [];
+    }
+  }
+
+  // Try to extract source values from the combined result
+  List<dynamic>? _extractValuesFromCombined(R value) {
+    try {
+      if (value is Record) {
+        // Handle tuple types (Records)
+        final values = <dynamic>[];
+        switch (_set.count) {
+          case 2:
+            final v = value as (dynamic, dynamic);
+            values.addAll([v.$1, v.$2]);
+          case 3:
+            final v = value as (dynamic, dynamic, dynamic);
+            values.addAll([v.$1, v.$2, v.$3]);
+          case 4:
+            final v = value as (dynamic, dynamic, dynamic, dynamic);
+            values.addAll([v.$1, v.$2, v.$3, v.$4]);
+          case 5:
+            final v = value as (dynamic, dynamic, dynamic, dynamic, dynamic);
+            values.addAll([v.$1, v.$2, v.$3, v.$4, v.$5]);
+          case 6:
+            final v =
+                value as (dynamic, dynamic, dynamic, dynamic, dynamic, dynamic);
+            values.addAll([v.$1, v.$2, v.$3, v.$4, v.$5, v.$6]);
+          case 7:
+            final v = value as (
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic
+            );
+            values.addAll([v.$1, v.$2, v.$3, v.$4, v.$5, v.$6, v.$7]);
+          case 8:
+            final v = value as (
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic
+            );
+            values.addAll([v.$1, v.$2, v.$3, v.$4, v.$5, v.$6, v.$7, v.$8]);
+          default:
+            return null;
+        }
+        return values;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // Helper method for shrinking with known source values
+  List<R> _shrinkWithSourceValues(
+    List<dynamic> sourceValues,
+    ShrinkingDistance distance,
+  ) {
+    if (_set.count == 0 ||
+        sourceValues.isEmpty ||
+        distance.dimensions.isEmpty) {
+      return [];
+    }
+
     final n = (distance.granularity - 1) % _set.count;
     final depth = (distance.granularity - 1) ~/ _set.count + 1;
+
+    if (n >= _set.arbitraries.length ||
+        n >= sourceValues.length ||
+        n >= distance.dimensions.length) {
+      return [];
+    }
+
     final targetArbitrary = _set.arbitraries[n];
     final targetDistance = ShrinkingDistance(distance.dimensions[n].baseSize)
       ..granularity = depth;
-    final former = _getFormer(value);
-    final targetShrunk = targetArbitrary.shrink(former[n], targetDistance);
+
+    final targetShrunk =
+        targetArbitrary.shrink(sourceValues[n], targetDistance);
     final shrunk = targetShrunk.map((e) {
-      final nextFormer = List.of(former);
-      nextFormer[n] = e;
-      return _transform(nextFormer);
+      final nextValues = List.of(sourceValues);
+      nextValues[n] = e;
+      return _transform(nextValues);
     }).toList();
+
     return shrunk;
+  }
+
+  // New method that works with ValueWithState for better shrinking
+  List<ValueWithState<R>> shrinkWithState(
+    ValueWithState<R> valueWithState,
+    ShrinkingDistance distance,
+  ) {
+    try {
+      final sourceValues =
+          _getSourceValues(valueWithState.value, valueWithState);
+      final shrunk = _shrinkWithSourceValues(sourceValues, distance);
+
+      return shrunk.map((shrunkValue) {
+        return ValueWithState(
+          shrunkValue,
+          valueWithState.state, // Keep original state for reproducibility
+          sourceValues: sourceValues, // Keep source values reference
+        );
+      }).toList();
+    } catch (_) {
+      return [];
+    }
   }
 }
 

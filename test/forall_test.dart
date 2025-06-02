@@ -361,6 +361,7 @@ void main() {
           expect(values, [100]);
         },
         shrinkingPolicy: ShrinkingPolicy.off,
+        ignoreFalsify: true,
       );
     });
 

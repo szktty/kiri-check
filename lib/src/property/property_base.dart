@@ -9,6 +9,7 @@ import 'package:kiri_check/src/property/exception.dart';
 import 'package:kiri_check/src/property/home.dart';
 import 'package:kiri_check/src/property/property_settings.dart';
 import 'package:kiri_check/src/property/random.dart';
+import 'package:kiri_check/src/property/random_xorshift.dart';
 import 'package:kiri_check/src/property/statistics.dart';
 import 'package:test/test.dart';
 
@@ -79,7 +80,7 @@ final class StatelessProperty<T> extends Property<T> {
 
     _generationContext!.generate();
 
-    T? falsified;
+    ValueWithState<T>? falsifiedWithState;
     Exception? lastException;
     StackTrace? lastStackTrace;
     for (var i = 0; i < _generationContext!.examples.length; i++) {
@@ -100,21 +101,37 @@ final class StatelessProperty<T> extends Property<T> {
       } on Exception catch (e, s) {
         printVerbose('Falsifying example: $description');
         await _callTearDownCallbacks();
+
+        // Create ValueWithState for the failing example using current random state
+        final randomImpl = random as RandomContextImpl;
+        final currentState = RandomState.fromState(randomImpl.xorshift.state);
+        final exampleWithState = ValueWithState(example, currentState);
+
         final context = ShrinkingContext(this);
-        falsified = context.shrink(example);
-        lastException = context.lastException ?? e;
-        lastStackTrace = context.lastStackTrace ?? s;
+        if (settings.shrinkingPolicy != ShrinkingPolicy.off) {
+          final shrunkValue = context.shrink(exampleWithState);
+          falsifiedWithState = shrunkValue != null
+              ? ValueWithState(shrunkValue, currentState)
+              : exampleWithState;
+          lastException = context.lastException ?? e;
+          lastStackTrace = context.lastStackTrace ?? s;
+        } else {
+          // No shrinking - use the original failing example
+          falsifiedWithState = exampleWithState;
+          lastException = e;
+          lastStackTrace = s;
+        }
         break;
       }
     }
 
     FalsifiedException<T>? exception;
-    if (falsified != null) {
-      await settings.onFalsify?.call(falsified);
-      final description = arbitrary.describeExample(falsified);
+    if (falsifiedWithState != null) {
+      await settings.onFalsify?.call(falsifiedWithState.value);
+      final description = arbitrary.describeExample(falsifiedWithState.value);
       if (settings.ignoreFalsify == false) {
         exception = FalsifiedException(
-          example: falsified,
+          example: falsifiedWithState.value,
           description: description,
           seed: random.seed,
           exception: lastException,
@@ -299,58 +316,63 @@ final class ShrinkingContext<T> {
 
   late final int? maxTries;
 
-  final List<T> tried = [];
+  final List<ValueWithState<T>> tried = [];
 
   bool get isFull => policy == ShrinkingPolicy.full;
 
   Exception? lastException;
   StackTrace? lastStackTrace;
 
-  T? shrink(T original) {
+  T? shrink(ValueWithState<T> originalWithState) {
     if (policy == ShrinkingPolicy.off) {
       return null;
     }
 
-    var counter = original;
-    final queue = Queue<T>();
+    var counterWithState = originalWithState;
+    final queue = Queue<ValueWithState<T>>();
     var previousShrunk = <T>[];
     steps = 1;
 
     for (var tries = 0; isFull || tries < maxTries!; tries++) {
       if (queue.isEmpty) {
-        final distance = arbitrary.calculateDistance(counter);
+        final distance = arbitrary.calculateDistance(counterWithState.value);
         if (distance.isEmpty) {
-          return counter;
+          return counterWithState.value;
         } else {
           printVerbose('Shrinking step $steps');
           distance.granularity = steps;
-          final values = arbitrary.shrink(counter, distance);
+          final values = arbitrary.shrink(counterWithState.value, distance);
           if (values.isEmpty ||
               const DeepCollectionEquality().equals(values, previousShrunk)) {
-            return counter;
+            return counterWithState.value;
           }
-          queue.addAll(values);
+
+          // Create ValueWithState instances for each shrunk value using the original state
+          final valuesWithState = values
+              .map((value) => ValueWithState<T>(value, counterWithState.state))
+              .toList();
+          queue.addAll(valuesWithState);
           previousShrunk = values;
           steps++;
         }
       }
 
-      final example = queue.removeFirst();
-      tried.add(example);
-      property.settings.onShrink?.call(example);
+      final exampleWithState = queue.removeFirst();
+      tried.add(exampleWithState);
+      property.settings.onShrink?.call(exampleWithState.value);
 
-      final description = arbitrary.describeExample(example);
+      final description = arbitrary.describeExample(exampleWithState.value);
       try {
         printVerbose('Shrunk example to: $description');
-        property.block(example);
+        property.block(exampleWithState.value);
       } on Exception catch (e, s) {
-        counter = example;
+        counterWithState = exampleWithState;
         lastException = e;
         lastStackTrace = s;
       }
     }
 
-    return counter;
+    return counterWithState.value;
   }
 }
 
