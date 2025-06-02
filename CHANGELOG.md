@@ -1,3 +1,7 @@
+## develop
+
+- [FIX] Unexpected error during shrinking with nested `combine` arbitraries ([#23](https://github.com/szktty/kiri-check/issues/23))
+
 ## 1.2.0
 
 - [CHANGE] Replace the PRNG with new implemented PRNG which enables to reproduce random values using internal state
