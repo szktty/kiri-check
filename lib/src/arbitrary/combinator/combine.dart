@@ -108,23 +108,25 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
   R _transform(List<dynamic> values) => _set.transform(values);
 
   // Get source values from ValueWithState, fall back if needed
-  List<dynamic> _getSourceValues(R combinedValue, ValueWithState<R>? valueWithState) {
+  List<dynamic> _getSourceValues(
+      R combinedValue, ValueWithState<R>? valueWithState) {
     // First try to get from ValueWithState sourceValues
-    if (valueWithState?.sourceValues != null && 
+    if (valueWithState?.sourceValues != null &&
         valueWithState!.sourceValues!.isNotEmpty) {
       return valueWithState.sourceValues!;
     }
-    
+
     // Fallback: try to regenerate using the stored state
     if (valueWithState?.state != null) {
-      final random = RandomContextImpl.fromState(valueWithState!.state, copy: true);
+      final random =
+          RandomContextImpl.fromState(valueWithState!.state, copy: true);
       final regeneratedValues = <dynamic>[];
       for (final arbitrary in _set.arbitraries) {
         regeneratedValues.add(arbitrary.generate(random));
       }
       return regeneratedValues;
     }
-    
+
     // Last resort: throw error
     throw PropertyException('Cannot find source values for $combinedValue');
   }
@@ -166,20 +168,21 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
   @override
   ValueWithState<R> generateWithState(RandomContext random) {
     final values = <dynamic>[];
-    
+
     // Capture state before generating any values
     final randomImpl = random as RandomContextImpl;
-    final stateBeforeGeneration = RandomState.fromState(randomImpl.xorshift.state);
-    
+    final stateBeforeGeneration =
+        RandomState.fromState(randomImpl.xorshift.state);
+
     for (final arbitrary in _set.arbitraries) {
       final withState = arbitrary.generateWithState(random);
       values.add(withState.value);
     }
-    
+
     final result = _set.transform(values);
-    
+
     return ValueWithState(
-      result, 
+      result,
       stateBeforeGeneration,
       sourceValues: values,
     );
@@ -231,7 +234,7 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
       return [];
     }
   }
-  
+
   // Try to extract source values from the combined result
   List<dynamic>? _extractValuesFromCombined(R value) {
     try {
@@ -256,15 +259,33 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
             values.addAll([v.$1, v.$2, v.$3, v.$4, v.$5]);
             break;
           case 6:
-            final v = value as (dynamic, dynamic, dynamic, dynamic, dynamic, dynamic);
+            final v =
+                value as (dynamic, dynamic, dynamic, dynamic, dynamic, dynamic);
             values.addAll([v.$1, v.$2, v.$3, v.$4, v.$5, v.$6]);
             break;
           case 7:
-            final v = value as (dynamic, dynamic, dynamic, dynamic, dynamic, dynamic, dynamic);
+            final v = value as (
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic
+            );
             values.addAll([v.$1, v.$2, v.$3, v.$4, v.$5, v.$6, v.$7]);
             break;
           case 8:
-            final v = value as (dynamic, dynamic, dynamic, dynamic, dynamic, dynamic, dynamic, dynamic);
+            final v = value as (
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic,
+              dynamic
+            );
             values.addAll([v.$1, v.$2, v.$3, v.$4, v.$5, v.$6, v.$7, v.$8]);
             break;
           default:
@@ -277,41 +298,48 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
   }
 
   // Helper method for shrinking with known source values
-  List<R> _shrinkWithSourceValues(List<dynamic> sourceValues, ShrinkingDistance distance) {
-    if (_set.count == 0 || sourceValues.isEmpty || distance.dimensions.isEmpty) {
+  List<R> _shrinkWithSourceValues(
+      List<dynamic> sourceValues, ShrinkingDistance distance) {
+    if (_set.count == 0 ||
+        sourceValues.isEmpty ||
+        distance.dimensions.isEmpty) {
       return [];
     }
-    
+
     final n = (distance.granularity - 1) % _set.count;
     final depth = (distance.granularity - 1) ~/ _set.count + 1;
-    
-    if (n >= _set.arbitraries.length || n >= sourceValues.length || n >= distance.dimensions.length) {
+
+    if (n >= _set.arbitraries.length ||
+        n >= sourceValues.length ||
+        n >= distance.dimensions.length) {
       return [];
     }
-    
+
     final targetArbitrary = _set.arbitraries[n];
     final targetDistance = ShrinkingDistance(distance.dimensions[n].baseSize)
       ..granularity = depth;
-    
-    final targetShrunk = targetArbitrary.shrink(sourceValues[n], targetDistance);
+
+    final targetShrunk =
+        targetArbitrary.shrink(sourceValues[n], targetDistance);
     final shrunk = targetShrunk.map((e) {
       final nextValues = List.of(sourceValues);
       nextValues[n] = e;
       return _transform(nextValues);
     }).toList();
-    
+
     return shrunk;
   }
 
   // New method that works with ValueWithState for better shrinking
   List<ValueWithState<R>> shrinkWithState(
-    ValueWithState<R> valueWithState, 
+    ValueWithState<R> valueWithState,
     ShrinkingDistance distance,
   ) {
     try {
-      final sourceValues = _getSourceValues(valueWithState.value, valueWithState);
+      final sourceValues =
+          _getSourceValues(valueWithState.value, valueWithState);
       final shrunk = _shrinkWithSourceValues(sourceValues, distance);
-      
+
       return shrunk.map((shrunkValue) {
         return ValueWithState(
           shrunkValue,

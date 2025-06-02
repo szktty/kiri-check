@@ -61,12 +61,12 @@ final class FilterArbitraryTransformer<T> extends ArbitraryBase<T> {
 
   // New method that works with ValueWithState for better shrinking
   List<ValueWithState<T>> shrinkWithState(
-    ValueWithState<T> valueWithState, 
+    ValueWithState<T> valueWithState,
     ShrinkingDistance distance,
   ) {
     final shrunk = original.shrink(valueWithState.value, distance);
     final filteredShrunk = shrunk.where(predicate).toList();
-    
+
     return filteredShrunk.map((shrunkValue) {
       return ValueWithState(
         shrunkValue,

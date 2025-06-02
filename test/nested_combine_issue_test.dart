@@ -19,7 +19,9 @@ void main() {
       );
     });
 
-    property('bad pattern 1 (multiply inner, add outer) - should work with new implementation', () {
+    property(
+        'bad pattern 1 (multiply inner, add outer) - should work with new implementation',
+        () {
       testForAll(
         combine2(
           combine2(integer(), integer()),
@@ -32,7 +34,9 @@ void main() {
       );
     });
 
-    property('bad pattern 2 (add inner, multiply outer) - should work with new implementation', () {
+    property(
+        'bad pattern 2 (add inner, multiply outer) - should work with new implementation',
+        () {
       testForAll(
         combine2(
           combine2(integer(), integer()),
@@ -66,7 +70,9 @@ void main() {
       );
     });
 
-    property('map with nested combine - should handle transformations correctly', () {
+    property(
+        'map with nested combine - should handle transformations correctly',
+        () {
       testForAll(
         combine2(
           integer(min: 1, max: 100),
@@ -82,7 +88,8 @@ void main() {
       );
     });
 
-    property('filter with nested combine - should maintain state consistency', () {
+    property('filter with nested combine - should maintain state consistency',
+        () {
       testForAll(
         combine2(
           integer(min: 1, max: 20),

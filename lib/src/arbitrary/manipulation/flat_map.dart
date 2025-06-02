@@ -48,7 +48,7 @@ final class FlatMapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
     final originalWithState = original.generateWithState(random);
     transformed = _transform(originalWithState.value);
     final transformedWithState = transformed!.generateWithState(random);
-    
+
     return ValueWithState(
       transformedWithState.value,
       originalWithState.state, // Use original state for reproducibility
@@ -73,13 +73,13 @@ final class FlatMapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
 
   // New method that works with ValueWithState for better shrinking
   List<ValueWithState<T>> shrinkWithState(
-    ValueWithState<T> valueWithState, 
+    ValueWithState<T> valueWithState,
     ShrinkingDistance distance,
   ) {
     if (transformed == null) {
       return [];
     }
-    
+
     final shrunk = transformed!.shrink(valueWithState.value, distance);
     return shrunk.map((shrunkValue) {
       return ValueWithState(

@@ -55,7 +55,8 @@ final class CommandContext<State, System> {
         // Restore the random state to the exact point when this value was generated
         final randomImpl = random as RandomContextImpl;
         final stateToRestore = _current!.state as RandomStateXorshift;
-        randomImpl.xorshift.state = RandomStateXorshift.fromState(stateToRestore);
+        randomImpl.xorshift.state =
+            RandomStateXorshift.fromState(stateToRestore);
       }
     } else if (!useCache) {
       _current = _arbitraryBase?.generateWithState(random);

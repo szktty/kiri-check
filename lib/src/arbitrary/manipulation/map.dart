@@ -13,17 +13,18 @@ final class MapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
   // Get source value from ValueWithState, fall back to cache if needed
   S _getSourceValue(T transformedValue, ValueWithState<T>? valueWithState) {
     // First try to get from ValueWithState sourceValues
-    if (valueWithState?.sourceValues != null && 
+    if (valueWithState?.sourceValues != null &&
         valueWithState!.sourceValues!.isNotEmpty) {
       return valueWithState.sourceValues!.first as S;
     }
-    
+
     // Fallback: try to regenerate using the stored state
     if (valueWithState?.state != null) {
-      final random = RandomContextImpl.fromState(valueWithState!.state, copy: true);
+      final random =
+          RandomContextImpl.fromState(valueWithState!.state, copy: true);
       return original.generate(random);
     }
-    
+
     // Last resort: throw error
     throw PropertyException('Cannot find source value for $transformedValue');
   }
@@ -62,7 +63,7 @@ final class MapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
     final originalWithState = original.generateWithState(random);
     final transformedValue = transformer(originalWithState.value);
     return ValueWithState(
-      transformedValue, 
+      transformedValue,
       originalWithState.state,
       sourceValues: [originalWithState.value],
     );
@@ -88,10 +89,7 @@ final class MapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
   List<T> shrink(T value, ShrinkingDistance distance) {
     try {
       final sourceValue = _getSourceValue(value, null);
-      return original
-          .shrink(sourceValue, distance)
-          .map(transformer)
-          .toList();
+      return original.shrink(sourceValue, distance).map(transformer).toList();
     } catch (_) {
       // If we can't shrink, return empty list
       return [];
@@ -100,13 +98,13 @@ final class MapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
 
   // New method that works with ValueWithState for better shrinking
   List<ValueWithState<T>> shrinkWithState(
-    ValueWithState<T> valueWithState, 
+    ValueWithState<T> valueWithState,
     ShrinkingDistance distance,
   ) {
     try {
       final sourceValue = _getSourceValue(valueWithState.value, valueWithState);
       final shrunkSources = original.shrink(sourceValue, distance);
-      
+
       return shrunkSources.map((shrunkSource) {
         final transformedShrunk = transformer(shrunkSource);
         return ValueWithState(

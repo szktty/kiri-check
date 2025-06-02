@@ -101,16 +101,18 @@ final class StatelessProperty<T> extends Property<T> {
       } on Exception catch (e, s) {
         printVerbose('Falsifying example: $description');
         await _callTearDownCallbacks();
-        
+
         // Create ValueWithState for the failing example using current random state
         final randomImpl = random as RandomContextImpl;
         final currentState = RandomState.fromState(randomImpl.xorshift.state);
         final exampleWithState = ValueWithState(example, currentState);
-        
+
         final context = ShrinkingContext(this);
         if (settings.shrinkingPolicy != ShrinkingPolicy.off) {
           final shrunkValue = context.shrink(exampleWithState);
-          falsifiedWithState = shrunkValue != null ? ValueWithState(shrunkValue, currentState) : exampleWithState;
+          falsifiedWithState = shrunkValue != null
+              ? ValueWithState(shrunkValue, currentState)
+              : exampleWithState;
           lastException = context.lastException ?? e;
           lastStackTrace = context.lastStackTrace ?? s;
         } else {
@@ -344,7 +346,7 @@ final class ShrinkingContext<T> {
               const DeepCollectionEquality().equals(values, previousShrunk)) {
             return counterWithState.value;
           }
-          
+
           // Create ValueWithState instances for each shrunk value using the original state
           final valuesWithState = values
               .map((value) => ValueWithState<T>(value, counterWithState.state))

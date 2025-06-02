@@ -9,20 +9,21 @@ import 'package:kiri_check/src/property/random_xorshift.dart';
 /// This allows for precise reproduction of values during shrinking.
 final class ValueWithState<T> {
   const ValueWithState(this.value, this.state, {this.sourceValues});
-  
+
   final T value;
   final RandomState state;
-  
+
   /// Source values used to generate this value (for transformations)
   final List<dynamic>? sourceValues;
-  
+
   @override
-  String toString() => 'ValueWithState(value: $value, state: $state, sources: $sourceValues)';
-  
+  String toString() =>
+      'ValueWithState(value: $value, state: $state, sources: $sourceValues)';
+
   /// Create a new ValueWithState with the same state but different value
-  ValueWithState<U> withValue<U>(U newValue) => 
+  ValueWithState<U> withValue<U>(U newValue) =>
       ValueWithState(newValue, state, sourceValues: sourceValues);
-  
+
   /// Create a new ValueWithState with source values
   ValueWithState<T> withSources(List<dynamic> sources) =>
       ValueWithState(value, state, sourceValues: sources);
@@ -149,11 +150,12 @@ abstract class ArbitraryBase<T> implements ArbitraryInternal<T> {
   ValueWithState<T> generateWithState(RandomContext random) {
     // Capture the random state before generation
     final randomImpl = random as RandomContextImpl;
-    final stateBeforeGeneration = RandomState.fromState(randomImpl.xorshift.state);
-    
+    final stateBeforeGeneration =
+        RandomState.fromState(randomImpl.xorshift.state);
+
     // Generate the value
     final value = generate(random);
-    
+
     // Return the value paired with the state that produced it
     return ValueWithState(value, stateBeforeGeneration);
   }
