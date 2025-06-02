@@ -1,4 +1,5 @@
 export 'combinator/combinator.dart';
+export 'manipulation/manipulation.dart';
 export 'top.dart'
     show
         binary,
@@ -15,6 +16,7 @@ export 'top.dart'
         constantFrom,
         dateTime,
         deck,
+        duration,
         float,
         frequency,
         integer,
@@ -26,4 +28,5 @@ export 'top.dart'
         recursive,
         runes,
         set,
-        string;
+        string,
+        uri;
