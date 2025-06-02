@@ -51,6 +51,20 @@ abstract class Arbitrary<T> {
   /// - `state`: The random state to use when generating data.
   /// - `edgeCase`: If set to true, the edge cases is generated.
   T example({RandomState? state, bool edgeCase = false});
+
+  /// Returns an arbitrary that casts the generated values to type [U].
+  ///
+  /// This is useful when working with dynamic arbitraries that need to be
+  /// treated as specific types.
+  ///
+  /// Example:
+  /// ```dart
+  /// final stringArb = frequency([
+  ///   (50, constant('hello')),
+  ///   (50, constant('world')),
+  /// ]).cast<String>();
+  /// ```
+  Arbitrary<U> cast<U>() => map((value) => value as U);
 }
 
 abstract class ArbitraryInternal<T> extends Arbitrary<T> {
@@ -171,6 +185,9 @@ abstract class ArbitraryBase<T> implements ArbitraryInternal<T> {
   @override
   Arbitrary<U> flatMap<U>(Arbitrary<U> Function(T) f) =>
       FlatMapArbitraryTransformer<T, U>(this, f);
+
+  @override
+  Arbitrary<U> cast<U>() => map((value) => value as U);
 
   @override
   T example({RandomState? state, bool edgeCase = false}) {

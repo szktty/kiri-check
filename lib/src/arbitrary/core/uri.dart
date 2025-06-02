@@ -48,17 +48,37 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
 
   // Generate a valid domain label (RFC 1035)
   static Arbitrary<String> _domainLabelArb() {
-    return combine2(
+    return combine3(
       string(
         minLength: 1,
         maxLength: 1,
         characterSet: CharacterSet.letter(CharacterEncoding.ascii),
       ),
       string(
-        maxLength: 62,
+        maxLength: 60,
         characterSet: _domainLabel,
       ),
-    ).map((parts) => parts.$1 + parts.$2);
+      string(
+        minLength: 0,
+        maxLength: 1,
+        characterSet: CharacterSet.alphanum(CharacterEncoding.ascii),
+      ),
+    ).map((parts) {
+      final start = parts.$1;
+      final middle = parts.$2;
+      final end = parts.$3;
+
+      // Remove trailing hyphens if they exist
+      final cleanMiddle = middle.replaceAll(RegExp(r'-+$'), '');
+
+      if (cleanMiddle.isEmpty && end.isEmpty) {
+        return start;
+      } else if (end.isEmpty) {
+        return start + cleanMiddle;
+      } else {
+        return start + cleanMiddle + end;
+      }
+    });
   }
 
   // Generate a domain name
@@ -84,7 +104,7 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
     return frequency([
       (80, _domainNameArb()),
       (20, _ipv4Arb()),
-    ]) as Arbitrary<String>;
+    ]).cast<String>();
   }
 
   // Generate a port number
@@ -93,7 +113,7 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
       (70, constant(null)),
       (10, constantFrom([80, 443, 8080, 8443, 3000])),
       (20, integer(min: 1024, max: 65535)),
-    ]) as Arbitrary<int?>;
+    ]).cast<int?>();
   }
 
   // Generate a path segment
@@ -114,7 +134,7 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
         list(_pathSegmentArb(), minLength: 1, maxLength: 4)
             .map((segments) => '/${segments.join('/')}')
       ),
-    ]) as Arbitrary<String>;
+    ]).cast<String>();
   }
 
   // Generate query parameters
@@ -134,7 +154,7 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
           maxLength: 5,
         )
       ),
-    ]) as Arbitrary<Map<String, String>>;
+    ]).cast<Map<String, String>>();
   }
 
   // Generate a fragment
@@ -142,13 +162,25 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
     return frequency([
       (70, constant(null)),
       (30, string(minLength: 1, maxLength: 20, characterSet: _unreserved)),
-    ]) as Arbitrary<String?>;
+    ]).cast<String?>();
   }
 
   @override
   Uri getFirst(RandomContext random) {
-    // Return a simple HTTP URI as the first example
-    return Uri.parse('http://example.com');
+    // Use the first scheme from the allowed schemes
+    final firstScheme = schemes.isNotEmpty ? schemes.first : 'http';
+
+    if (firstScheme == 'file' || (allowFile && schemes.contains('file'))) {
+      return Uri.file('/example/path');
+    } else if (firstScheme == 'mailto' ||
+        (allowMailto && schemes.contains('mailto'))) {
+      return Uri.parse('mailto:user@example.com');
+    } else if (firstScheme == 'data' ||
+        (allowDataUri && schemes.contains('data'))) {
+      return Uri.dataFromString('example', mimeType: 'text/plain');
+    } else {
+      return Uri.parse('$firstScheme://example.com');
+    }
   }
 
   @override
@@ -167,7 +199,8 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
     if (allowMailto) allSchemes.add('mailto');
     if (allowDataUri) allSchemes.add('data');
 
-    final schemeArb = constantFrom(allSchemes) as ArbitraryInternal<String>;
+    final schemeArb =
+        constantFrom(allSchemes).cast<String>() as ArbitraryInternal<String>;
     final scheme = schemeArb.generate(random);
 
     // Handle special schemes
@@ -195,7 +228,7 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
         'text/plain',
         'image/png',
         'application/json',
-      ]) as ArbitraryInternal<String>;
+      ]).cast<String>() as ArbitraryInternal<String>;
       final mimeType = mimeTypeArb.generate(random);
       final dataArb = string(
         minLength: 1,
