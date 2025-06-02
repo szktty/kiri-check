@@ -109,7 +109,9 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
 
   // Get source values from ValueWithState, fall back if needed
   List<dynamic> _getSourceValues(
-      R combinedValue, ValueWithState<R>? valueWithState) {
+    R combinedValue,
+    ValueWithState<R>? valueWithState,
+  ) {
     // First try to get from ValueWithState sourceValues
     if (valueWithState?.sourceValues != null &&
         valueWithState!.sourceValues!.isNotEmpty) {
@@ -245,24 +247,19 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
           case 2:
             final v = value as (dynamic, dynamic);
             values.addAll([v.$1, v.$2]);
-            break;
           case 3:
             final v = value as (dynamic, dynamic, dynamic);
             values.addAll([v.$1, v.$2, v.$3]);
-            break;
           case 4:
             final v = value as (dynamic, dynamic, dynamic, dynamic);
             values.addAll([v.$1, v.$2, v.$3, v.$4]);
-            break;
           case 5:
             final v = value as (dynamic, dynamic, dynamic, dynamic, dynamic);
             values.addAll([v.$1, v.$2, v.$3, v.$4, v.$5]);
-            break;
           case 6:
             final v =
                 value as (dynamic, dynamic, dynamic, dynamic, dynamic, dynamic);
             values.addAll([v.$1, v.$2, v.$3, v.$4, v.$5, v.$6]);
-            break;
           case 7:
             final v = value as (
               dynamic,
@@ -274,7 +271,6 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
               dynamic
             );
             values.addAll([v.$1, v.$2, v.$3, v.$4, v.$5, v.$6, v.$7]);
-            break;
           case 8:
             final v = value as (
               dynamic,
@@ -287,7 +283,6 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
               dynamic
             );
             values.addAll([v.$1, v.$2, v.$3, v.$4, v.$5, v.$6, v.$7, v.$8]);
-            break;
           default:
             return null;
         }
@@ -299,7 +294,9 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
 
   // Helper method for shrinking with known source values
   List<R> _shrinkWithSourceValues(
-      List<dynamic> sourceValues, ShrinkingDistance distance) {
+    List<dynamic> sourceValues,
+    ShrinkingDistance distance,
+  ) {
     if (_set.count == 0 ||
         sourceValues.isEmpty ||
         distance.dimensions.isEmpty) {

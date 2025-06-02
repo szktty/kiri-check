@@ -1,5 +1,4 @@
 import 'package:kiri_check/kiri_check.dart';
-import 'package:kiri_check/src/property/exception.dart';
 import 'package:test/test.dart';
 
 import 'arbitrary/utils.dart';
