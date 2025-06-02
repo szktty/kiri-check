@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:kiri_check/src/property/arbitrary.dart';
 import 'package:kiri_check/src/property/property_internal.dart';
 
 // ignore_for_file: null_check_on_nullable_type_parameter
@@ -148,6 +149,24 @@ final class CombineArbitrary<R, E1, E2, E3, E4, E5, E6, E7, E8>
   @override
   R generate(RandomContext random) =>
       _transform(_set.arbitraries.map((g) => g.generate(random)).toList());
+
+  @override
+  ValueWithState<R> generateWithState(RandomContext random) {
+    final originalStates = <RandomState>[];
+    final values = <dynamic>[];
+    
+    for (final arbitrary in _set.arbitraries) {
+      final withState = arbitrary.generateWithState(random);
+      values.add(withState.value);
+      originalStates.add(withState.state);
+    }
+    
+    final result = _set.transform(values);
+    _formerMap[result] = values;
+    
+    // Use the first arbitrary's state as the representative state
+    return ValueWithState(result, originalStates.first);
+  }
 
   @override
   R generateRandom(RandomContext random) => _transform(

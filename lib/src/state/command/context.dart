@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:collection/collection.dart';
+import 'package:kiri_check/src/property/arbitrary.dart';
 import 'package:kiri_check/src/property/property_internal.dart';
 import 'package:kiri_check/src/state/command/action.dart';
 import 'package:kiri_check/src/state/command/command.dart';
@@ -39,21 +40,25 @@ final class CommandContext<State, System> {
   ShrinkingDistance? _distance;
   int _shrinkGranularity = 1;
   List<dynamic>? _previousShrunk;
-  Queue<dynamic>? _shrunkQueue;
-  dynamic _minShrunk;
-  dynamic _current;
+  Queue<ValueWithState<dynamic>>? _shrunkQueue;
+  ValueWithState<dynamic>? _minShrunk;
+  ValueWithState<dynamic>? _current;
 
-  dynamic get currentValue => _current;
+  dynamic get currentValue => _current?.value;
 
-  dynamic get minValue => _minShrunk;
+  dynamic get minValue => _minShrunk?.value;
 
   void nextValue() {
     if (_shrinkState == CommandShrinkingState.running) {
       if (_shrunkQueue!.isNotEmpty) {
         _current = _shrunkQueue!.removeFirst();
+        // Restore the random state to the exact point when this value was generated
+        final randomImpl = random as RandomContextImpl;
+        final stateToRestore = _current!.state as RandomStateXorshift;
+        randomImpl.xorshift.state = RandomStateXorshift.fromState(stateToRestore);
       }
     } else if (!useCache) {
-      _current = _arbitraryBase?.generate(random);
+      _current = _arbitraryBase?.generateWithState(random);
     }
   }
 
@@ -74,18 +79,22 @@ final class CommandContext<State, System> {
   }
 
   bool tryShrink() {
-    if (arbitrary == null) {
+    if (arbitrary == null || _current == null) {
       return false;
     }
 
     switch (_shrinkState) {
       case CommandShrinkingState.notStarted:
         _shrinkState = CommandShrinkingState.running;
-        _distance = _arbitraryBase!.calculateDistance(_current)
+        _distance = _arbitraryBase!.calculateDistance(_current!.value)
           ..granularity = _shrinkGranularity;
-        final shrunk = _arbitraryBase!.shrink(_current, _distance!);
+        final shrunk = _arbitraryBase!.shrink(_current!.value, _distance!);
         _previousShrunk = shrunk;
-        _shrunkQueue = Queue.of(shrunk);
+        // Create ValueWithState instances for each shrunk value using the original state
+        final shrunkWithState = shrunk
+            .map((value) => ValueWithState<dynamic>(value, _current!.state))
+            .toList();
+        _shrunkQueue = Queue.of(shrunkWithState);
         _minShrunk = _current;
         return true;
       case CommandShrinkingState.running:
@@ -94,13 +103,17 @@ final class CommandContext<State, System> {
         } else {
           _shrinkGranularity++;
           _distance!.granularity = _shrinkGranularity;
-          final shrunk = _arbitraryBase!.shrink(_current, _distance!);
+          final shrunk = _arbitraryBase!.shrink(_current!.value, _distance!);
           if (const DeepCollectionEquality().equals(shrunk, _previousShrunk)) {
             _shrinkState = CommandShrinkingState.finished;
             return false;
           } else {
             _previousShrunk = shrunk;
-            _shrunkQueue = Queue.of(shrunk);
+            // Create ValueWithState instances for each shrunk value using the original state
+            final shrunkWithState = shrunk
+                .map((value) => ValueWithState<dynamic>(value, _current!.state))
+                .toList();
+            _shrunkQueue = Queue.of(shrunkWithState);
             return true;
           }
         }

@@ -1,3 +1,4 @@
+import 'package:kiri_check/src/property/arbitrary.dart';
 import 'package:kiri_check/src/property/property_internal.dart';
 
 final class MapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
@@ -46,6 +47,14 @@ final class MapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
 
   @override
   T generate(RandomContext random) => _transform(original.generate(random));
+
+  @override
+  ValueWithState<T> generateWithState(RandomContext random) {
+    final originalWithState = original.generateWithState(random);
+    final transformedValue = transformer(originalWithState.value);
+    transformed[transformedValue] = originalWithState.value;
+    return ValueWithState(transformedValue, originalWithState.state);
+  }
 
   @override
   List<T> generateExhaustive() =>

@@ -5,6 +5,18 @@ import 'package:kiri_check/src/property/home.dart';
 import 'package:kiri_check/src/property/random.dart';
 import 'package:kiri_check/src/property/random_xorshift.dart';
 
+/// A generated value paired with the random state that produced it.
+/// This allows for precise reproduction of values during shrinking.
+final class ValueWithState<T> {
+  const ValueWithState(this.value, this.state);
+  
+  final T value;
+  final RandomState state;
+  
+  @override
+  String toString() => 'ValueWithState(value: $value, state: $state)';
+}
+
 /// Components that generate data and perform shrinking,
 /// which are especially crucial elements in property-based testing.
 abstract class Arbitrary<T> {
@@ -50,6 +62,10 @@ abstract class ArbitraryInternal<T> extends Arbitrary<T> {
 
   /// Generates a data.
   T generate(RandomContext random);
+
+  /// Generates a data with the random state that produced it.
+  /// This allows for precise reproduction during shrinking.
+  ValueWithState<T> generateWithState(RandomContext random);
 
   /// Calculates the distance to the target value.
   ShrinkingDistance calculateDistance(T value);
@@ -116,6 +132,19 @@ abstract class ArbitraryBase<T> implements ArbitraryInternal<T> {
     throw UnsupportedError(
       '$runtimeType does not support exhaustive generation',
     );
+  }
+
+  @override
+  ValueWithState<T> generateWithState(RandomContext random) {
+    // Capture the random state before generation
+    final randomImpl = random as RandomContextImpl;
+    final stateBeforeGeneration = RandomState.fromState(randomImpl.xorshift.state);
+    
+    // Generate the value
+    final value = generate(random);
+    
+    // Return the value paired with the state that produced it
+    return ValueWithState(value, stateBeforeGeneration);
   }
 
   @override
