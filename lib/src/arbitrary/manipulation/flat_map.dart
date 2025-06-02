@@ -44,6 +44,19 @@ final class FlatMapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
   }
 
   @override
+  ValueWithState<T> generateWithState(RandomContext random) {
+    final originalWithState = original.generateWithState(random);
+    transformed = _transform(originalWithState.value);
+    final transformedWithState = transformed!.generateWithState(random);
+    
+    return ValueWithState(
+      transformedWithState.value,
+      originalWithState.state, // Use original state for reproducibility
+      sourceValues: [originalWithState.value],
+    );
+  }
+
+  @override
   List<T> generateExhaustive() {
     throw UnsupportedError('flatMap() does not support exhaustive generation');
   }
@@ -56,5 +69,24 @@ final class FlatMapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
   @override
   List<T> shrink(T value, ShrinkingDistance distance) {
     return transformed?.shrink(value, distance) ?? <T>[];
+  }
+
+  // New method that works with ValueWithState for better shrinking
+  List<ValueWithState<T>> shrinkWithState(
+    ValueWithState<T> valueWithState, 
+    ShrinkingDistance distance,
+  ) {
+    if (transformed == null) {
+      return [];
+    }
+    
+    final shrunk = transformed!.shrink(valueWithState.value, distance);
+    return shrunk.map((shrunkValue) {
+      return ValueWithState(
+        shrunkValue,
+        valueWithState.state,
+        sourceValues: valueWithState.sourceValues,
+      );
+    }).toList();
   }
 }

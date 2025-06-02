@@ -108,10 +108,17 @@ final class StatelessProperty<T> extends Property<T> {
         final exampleWithState = ValueWithState(example, currentState);
         
         final context = ShrinkingContext(this);
-        final shrunkValue = context.shrink(exampleWithState);
-        falsifiedWithState = shrunkValue != null ? ValueWithState(shrunkValue, currentState) : exampleWithState;
-        lastException = context.lastException ?? e;
-        lastStackTrace = context.lastStackTrace ?? s;
+        if (settings.shrinkingPolicy != ShrinkingPolicy.off) {
+          final shrunkValue = context.shrink(exampleWithState);
+          falsifiedWithState = shrunkValue != null ? ValueWithState(shrunkValue, currentState) : exampleWithState;
+          lastException = context.lastException ?? e;
+          lastStackTrace = context.lastStackTrace ?? s;
+        } else {
+          // No shrinking - use the original failing example
+          falsifiedWithState = exampleWithState;
+          lastException = e;
+          lastStackTrace = s;
+        }
         break;
       }
     }

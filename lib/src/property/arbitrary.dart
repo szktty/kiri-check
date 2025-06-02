@@ -8,13 +8,24 @@ import 'package:kiri_check/src/property/random_xorshift.dart';
 /// A generated value paired with the random state that produced it.
 /// This allows for precise reproduction of values during shrinking.
 final class ValueWithState<T> {
-  const ValueWithState(this.value, this.state);
+  const ValueWithState(this.value, this.state, {this.sourceValues});
   
   final T value;
   final RandomState state;
   
+  /// Source values used to generate this value (for transformations)
+  final List<dynamic>? sourceValues;
+  
   @override
-  String toString() => 'ValueWithState(value: $value, state: $state)';
+  String toString() => 'ValueWithState(value: $value, state: $state, sources: $sourceValues)';
+  
+  /// Create a new ValueWithState with the same state but different value
+  ValueWithState<U> withValue<U>(U newValue) => 
+      ValueWithState(newValue, state, sourceValues: sourceValues);
+  
+  /// Create a new ValueWithState with source values
+  ValueWithState<T> withSources(List<dynamic> sources) =>
+      ValueWithState(value, state, sourceValues: sources);
 }
 
 /// Components that generate data and perform shrinking,
