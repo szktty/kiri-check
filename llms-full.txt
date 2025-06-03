@@ -195,6 +195,8 @@ abstract class Arbitrary<T> {
   Arbitrary<U> map<U>(U Function(T) f);
   Arbitrary<U> flatMap<U>(Arbitrary<U> Function(T) f);
   Arbitrary<T> filter(bool Function(T) predicate);
+  Arbitrary<T> nonEmpty();
+  Arbitrary<U> cast<U>();
   T example({RandomState? state, bool edgeCase = false});
 }
 ```
@@ -398,9 +400,23 @@ Arbitrary<U> flatMap<U>(Arbitrary<U> Function(T) f);
 Arbitrary<T> filter(bool Function(T) predicate);
 
 // Ensure collections are not empty
-Arbitrary<List<T>> nonEmpty<T>(Arbitrary<List<T>> listArbitrary);
-Arbitrary<Set<T>> nonEmpty<T>(Arbitrary<Set<T>> setArbitrary);
-Arbitrary<Map<K, V>> nonEmpty<K, V>(Arbitrary<Map<K, V>> mapArbitrary);
+Arbitrary<T> nonEmpty();
+
+// Type casting for dynamic arbitraries
+Arbitrary<U> cast<U>();
+
+// Example: Using cast() with frequency combinator for type safety
+final stringArb = frequency([
+  (50, constant('hello')),
+  (50, constant('world')),
+]).cast<String>();  // Explicitly cast dynamic to String
+
+// Example: Using cast() with oneOf combinator
+final animalArb = oneOf([
+  constant('cat'),
+  constant('dog'), 
+  constant('bird'),
+]).cast<String>();
 
 // Example of transformation from deck
 Arbitrary<User> userArbitrary = deck().map((deck) {
