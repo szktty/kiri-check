@@ -1,5 +1,8 @@
 ## develop
 
+- [ADD] Add `duration` arbitrary for generating Duration values
+- [ADD] Add `uri` arbitrary for generating URI values  
+- [ADD] Add `nonEmpty` arbitrary manipulation for ensuring collections are not empty
 - [FIX] Unexpected error during shrinking with nested `combine` arbitraries ([#23](https://github.com/szktty/kiri-check/issues/23))
 
 ## 1.2.0

@@ -208,6 +208,46 @@ Arbitrary<Set<T>> set<T>(
       maxLength: maxLength,
     );
 
+/// Returns an arbitrary that generates [Uri] values.
+///
+/// By default, generates HTTP and HTTPS URIs with various components
+/// (host, port, path, query parameters, and fragments).
+///
+/// Additional URI schemes can be enabled:
+/// - [schemes]: List of URI schemes to use (default: ['http', 'https'])
+/// - [allowFile]: Include file:// URIs
+/// - [allowMailto]: Include mailto: URIs
+/// - [allowDataUri]: Include data: URIs
+///
+/// Example:
+/// ```dart
+/// property('URIs are valid', () {
+///   forAll(uri(), (u) {
+///     expect(u.toString(), isNotEmpty);
+///     expect(() => Uri.parse(u.toString()), returnsNormally);
+///   });
+/// });
+///
+/// property('HTTPS URIs use secure scheme', () {
+///   forAll(uri(schemes: ['https']), (u) {
+///     expect(u.scheme, equals('https'));
+///     expect(u.isScheme('https'), isTrue);
+///   });
+/// });
+/// ```
+Arbitrary<Uri> uri({
+  List<String> schemes = const ['http', 'https'],
+  bool allowFile = false,
+  bool allowMailto = false,
+  bool allowDataUri = false,
+}) =>
+    UriArbitrary(
+      schemes: schemes,
+      allowFile: allowFile,
+      allowMailto: allowMailto,
+      allowDataUri: allowDataUri,
+    );
+
 /// Returns an arbitrary that generates a deck.
 Arbitrary<Deck> deck() => DeckArbitraries.deck();
 
@@ -378,3 +418,30 @@ Arbitrary<T> recursive<T>(
       extend,
       maxDepth: maxDepth,
     );
+
+/// Returns an arbitrary that generates [Duration] values.
+///
+/// The generated durations will be between [min] and [max] (inclusive).
+///
+/// If [min] and [max] are not provided, durations will range from
+/// [Duration.zero] to approximately 365 days.
+///
+/// Example:
+/// ```dart
+/// property('durations are within bounds', () {
+///   forAll(duration(min: Duration(seconds: 1), max: Duration(hours: 1)), (d) {
+///     expect(d.inSeconds, greaterThanOrEqualTo(1));
+///     expect(d.inHours, lessThanOrEqualTo(1));
+///   });
+/// });
+/// ```
+Arbitrary<Duration> duration({
+  Duration min = Duration.zero,
+  Duration? max,
+}) {
+  final maxDuration = max ?? const Duration(days: 365);
+  return DurationArbitrary(
+    minMicroseconds: min.inMicroseconds,
+    maxMicroseconds: maxDuration.inMicroseconds,
+  );
+}
