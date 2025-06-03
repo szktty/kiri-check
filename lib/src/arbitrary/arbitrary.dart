@@ -1,5 +1,4 @@
 export 'combinator/combinator.dart';
-export 'manipulation/manipulation.dart';
 export 'top.dart'
     show
         binary,

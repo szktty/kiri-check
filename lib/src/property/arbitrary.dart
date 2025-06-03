@@ -44,6 +44,26 @@ abstract class Arbitrary<T> {
   /// If `predicate` returns false, the example is discarded.
   Arbitrary<T> filter(bool Function(T) predicate);
 
+  /// Returns an arbitrary that generates non-empty values.
+  ///
+  /// Works with String, List, Set, and Map types.
+  ///
+  /// Example:
+  /// ```dart
+  /// property('non-empty strings', () {
+  ///   forAll(string().nonEmpty(), (s) {
+  ///     expect(s, isNotEmpty);
+  ///   });
+  /// });
+  ///
+  /// property('non-empty lists have at least one element', () {
+  ///   forAll(list(integer()).nonEmpty(), (list) {
+  ///     expect(list.length, greaterThan(0));
+  ///   });
+  /// });
+  /// ```
+  Arbitrary<T> nonEmpty();
+
   /// Generates an example of the data.
   ///
   /// Parameters:
@@ -185,6 +205,9 @@ abstract class ArbitraryBase<T> implements ArbitraryInternal<T> {
   @override
   Arbitrary<U> flatMap<U>(Arbitrary<U> Function(T) f) =>
       FlatMapArbitraryTransformer<T, U>(this, f);
+
+  @override
+  Arbitrary<T> nonEmpty() => NonEmptyArbitrary<T>(this);
 
   @override
   Arbitrary<U> cast<U>() => map((value) => value as U);

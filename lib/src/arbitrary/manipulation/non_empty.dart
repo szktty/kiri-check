@@ -87,34 +87,3 @@ final class NonEmptyArbitrary<T> extends ArbitraryBase<T> {
   }
 }
 
-/// Extension methods to add nonEmpty support to existing arbitraries.
-extension NonEmptyArbitraryExtension<T> on Arbitrary<T> {
-  /// Returns an arbitrary that generates non-empty values.
-  ///
-  /// Works with String, List, Set, and Map types.
-  ///
-  /// Example:
-  /// ```dart
-  /// property('non-empty strings', () {
-  ///   forAll(string().nonEmpty(), (s) {
-  ///     expect(s, isNotEmpty);
-  ///   });
-  /// });
-  ///
-  /// property('non-empty lists have at least one element', () {
-  ///   forAll(list(integer()).nonEmpty(), (list) {
-  ///     expect(list.length, greaterThan(0));
-  ///   });
-  /// });
-  /// ```
-  Arbitrary<T> nonEmpty() {
-    if (this is ArbitraryInternal<T>) {
-      return NonEmptyArbitrary<T>(this as ArbitraryInternal<T>);
-    } else {
-      throw ArgumentError(
-        'nonEmpty() can only be applied to concrete arbitrary implementations. '
-        'The provided arbitrary does not implement ArbitraryInternal.',
-      );
-    }
-  }
-}
