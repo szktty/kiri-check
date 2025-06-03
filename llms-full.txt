@@ -312,6 +312,12 @@ Arbitrary<NominalDateTime> nominalDateTime({
   String? location, 
   bool? imaginary
 });
+
+// Duration values
+Arbitrary<Duration> duration({
+  Duration? min, 
+  Duration? max
+});
 ```
 
 #### Constants and selection
@@ -322,6 +328,20 @@ Arbitrary<T> constant<T>(T value);
 
 // Selection from a set of fixed values
 Arbitrary<T> constantFrom<T>(List<T> values);
+```
+
+#### URI and networking
+
+```dart
+// URI generation (supports various schemes)
+Arbitrary<Uri> uri({
+  List<String>? schemes,
+  bool? withUserInfo,
+  bool? withPort,
+  bool? withPath,
+  bool? withQuery,
+  bool? withFragment
+});
 ```
 
 ### Arbitrary composition
@@ -376,6 +396,11 @@ Arbitrary<U> flatMap<U>(Arbitrary<U> Function(T) f);
 
 // Value filtering
 Arbitrary<T> filter(bool Function(T) predicate);
+
+// Ensure collections are not empty
+Arbitrary<List<T>> nonEmpty<T>(Arbitrary<List<T>> listArbitrary);
+Arbitrary<Set<T>> nonEmpty<T>(Arbitrary<Set<T>> setArbitrary);
+Arbitrary<Map<K, V>> nonEmpty<K, V>(Arbitrary<Map<K, V>> mapArbitrary);
 
 // Example of transformation from deck
 Arbitrary<User> userArbitrary = deck().map((deck) {
