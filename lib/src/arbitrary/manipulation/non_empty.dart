@@ -86,4 +86,3 @@ final class NonEmptyArbitrary<T> extends ArbitraryBase<T> {
     return false;
   }
 }
-
