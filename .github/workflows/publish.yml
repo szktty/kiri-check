@@ -1,0 +1,68 @@
+name: Publish to pub.dev
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Dart SDK
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Print Dart version
+        run: dart --version
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze project source
+        run: dart analyze --fatal-infos
+
+      - name: Run tests
+        run: dart test
+
+      - name: Check publish warnings
+        run: dart pub publish --dry-run
+
+      - name: Setup Pub Credentials
+        shell: bash
+        env:
+          PUB_DEV_PUBLISH_ACCESS_TOKEN: ${{ secrets.PUB_DEV_PUBLISH_ACCESS_TOKEN }}
+          PUB_DEV_PUBLISH_REFRESH_TOKEN: ${{ secrets.PUB_DEV_PUBLISH_REFRESH_TOKEN }}
+          PUB_DEV_PUBLISH_TOKEN_ENDPOINT: ${{ secrets.PUB_DEV_PUBLISH_TOKEN_ENDPOINT }}
+          PUB_DEV_PUBLISH_EXPIRATION: ${{ secrets.PUB_DEV_PUBLISH_EXPIRATION }}
+        run: |
+          # Create credentials directory
+          mkdir -p ~/.config/dart
+
+          # Create credentials file with proper JSON formatting
+          cat > ~/.config/dart/pub-credentials.json << EOF
+          {
+            "accessToken": "$PUB_DEV_PUBLISH_ACCESS_TOKEN",
+            "refreshToken": "$PUB_DEV_PUBLISH_REFRESH_TOKEN",
+            "tokenEndpoint": "$PUB_DEV_PUBLISH_TOKEN_ENDPOINT",
+            "scopes": ["openid", "email"],
+            "expiration": $PUB_DEV_PUBLISH_EXPIRATION
+          }
+          EOF
+
+          # Verify credentials file was created
+          echo "Credentials file created successfully"
+
+      - name: Publish package
+        run: dart pub publish --force
