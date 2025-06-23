@@ -30,3 +30,4 @@ unicode_data/UnicodeData.txt
 *.out
 ref
 .claude/settings.local.json
+.vscode
