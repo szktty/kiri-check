@@ -63,14 +63,14 @@ void main() {
         if (u.hasAuthority && u.host.isNotEmpty) {
           // Should be either domain name or IP address
           final isDomain = RegExp(
-                  r'^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$')
+                  r'^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$',)
               .hasMatch(u.host);
           final isIPv4 = RegExp(
-                  r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$')
+                  r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$',)
               .hasMatch(u.host);
 
           expect(isDomain || isIPv4, isTrue,
-              reason: 'Host should be domain or IPv4: ${u.host}');
+              reason: 'Host should be domain or IPv4: ${u.host}',);
         }
       });
     });
