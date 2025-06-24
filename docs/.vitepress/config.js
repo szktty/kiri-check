@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from "vitepress-plugin-mermaid"
 
-export default defineConfig({
+export default withMermaid({
   title: 'kiri-check',
   description: 'Property-based testing library for Dart/Flutter',
   base: '/kiri-check/',
@@ -72,5 +73,10 @@ export default defineConfig({
         }
       }
     }
+  },
+
+  // Mermaid configuration
+  mermaid: {
+    // optional mermaid config
   }
 })
