@@ -104,8 +104,10 @@ void main() {
       final shrinkValues = shrinks.map((d) => d.inMicroseconds).toSet();
 
       // Should include common durations within range
-      expect(shrinkValues,
-          contains(const Duration(milliseconds: 1).inMicroseconds));
+      expect(
+        shrinkValues,
+        contains(const Duration(milliseconds: 1).inMicroseconds),
+      );
       expect(shrinkValues, contains(const Duration(seconds: 1).inMicroseconds));
       expect(shrinkValues, contains(const Duration(minutes: 1).inMicroseconds));
       expect(shrinkValues, contains(const Duration(hours: 1).inMicroseconds));

@@ -1,5 +1,7 @@
 ## develop
 
+## 1.3.0
+
 - [ADD] Add `duration` arbitrary for generating Duration values
 - [ADD] Add `uri` arbitrary for generating URI values  
 - [ADD] Add `nonEmpty` arbitrary manipulation for ensuring collections are not empty

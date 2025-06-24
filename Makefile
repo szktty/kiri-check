@@ -1,4 +1,4 @@
-.PHONY: fix format test test-web doc dhttpd pubpoint unicode
+.PHONY: fix format format-all test test-web doc dhttpd pubpoint unicode
 
 fix:
 	dart fix --apply lib
@@ -7,6 +7,9 @@ fix:
 
 format:
 	dart format lib test
+
+format-all:
+	dart format .
 
 test:
 	dart test

@@ -6,11 +6,13 @@ on:
       - main
       - develop
       - feature/*
+      - release/*
   push:
     branches:
       - main
       - develop
       - feature/*
+      - release/*
 
 jobs:
   build:
