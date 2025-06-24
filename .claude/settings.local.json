@@ -20,7 +20,8 @@
       "Bash(cp:*)",
       "Bash(npm run docs:build:*)",
       "Bash(timeout 10s npm run docs:dev)",
-      "Bash(npm run docs:dev:*)"
+      "Bash(npm run docs:dev:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }
