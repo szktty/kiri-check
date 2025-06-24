@@ -33,6 +33,17 @@ final class FilterArbitraryTransformer<T> extends ArbitraryBase<T> {
   T generate(RandomContext random) => _satisfy(original.generate(random));
 
   @override
+  ValueWithState<T> generateWithState(RandomContext random) {
+    final originalWithState = original.generateWithState(random);
+    final satisfiedValue = _satisfy(originalWithState.value);
+    return ValueWithState(
+      satisfiedValue,
+      originalWithState.state,
+      sourceValues: originalWithState.sourceValues,
+    );
+  }
+
+  @override
   T generateRandom(RandomContext random) =>
       _satisfy(original.generateRandom(random));
 
@@ -47,4 +58,21 @@ final class FilterArbitraryTransformer<T> extends ArbitraryBase<T> {
   @override
   List<T> shrink(T value, ShrinkingDistance distance) =>
       original.shrink(value, distance).where(predicate).toList();
+
+  // New method that works with ValueWithState for better shrinking
+  List<ValueWithState<T>> shrinkWithState(
+    ValueWithState<T> valueWithState,
+    ShrinkingDistance distance,
+  ) {
+    final shrunk = original.shrink(valueWithState.value, distance);
+    final filteredShrunk = shrunk.where(predicate).toList();
+
+    return filteredShrunk.map((shrunkValue) {
+      return ValueWithState(
+        shrunkValue,
+        valueWithState.state,
+        sourceValues: valueWithState.sourceValues,
+      );
+    }).toList();
+  }
 }

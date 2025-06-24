@@ -1,25 +1,32 @@
+import 'package:kiri_check/src/property/arbitrary.dart';
 import 'package:kiri_check/src/property/property_internal.dart';
 
 final class MapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
   MapArbitraryTransformer(this.original, this.transformer);
 
   final ArbitraryInternal<S> original;
-  final Map<T, S> transformed = {};
-
   final T Function(S) transformer;
 
-  T _transform(S value) {
-    final t = transformer(value);
-    transformed[t] = value;
-    return t;
-  }
+  // Legacy method for backward compatibility
+  T _transform(S value) => transformer(value);
 
-  S _getFormer(T value) {
-    final former = transformed[value];
-    if (former == null) {
-      throw PropertyException('former value of $value is not found');
+  // Get source value from ValueWithState, fall back to cache if needed
+  S _getSourceValue(T transformedValue, ValueWithState<T>? valueWithState) {
+    // First try to get from ValueWithState sourceValues
+    if (valueWithState?.sourceValues != null &&
+        valueWithState!.sourceValues!.isNotEmpty) {
+      return valueWithState.sourceValues!.first as S;
     }
-    return former;
+
+    // Fallback: try to regenerate using the stored state
+    if (valueWithState?.state != null) {
+      final random =
+          RandomContextImpl.fromState(valueWithState!.state, copy: true);
+      return original.generate(random);
+    }
+
+    // Last resort: throw error
+    throw PropertyException('Cannot find source value for $transformedValue');
   }
 
   @override
@@ -32,10 +39,14 @@ final class MapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
   bool get isExhaustive => original.isExhaustive;
 
   @override
-  String describeExample(T example) =>
-      '$example transformed from ${original.describeExample(
-        transformed[example] as S,
-      )}';
+  String describeExample(T example) {
+    try {
+      final sourceValue = _getSourceValue(example, null);
+      return '$example transformed from ${original.describeExample(sourceValue)}';
+    } catch (_) {
+      return '$example (transformed)';
+    }
+  }
 
   @override
   T getFirst(RandomContext random) => _transform(original.getFirst(random));
@@ -48,19 +59,62 @@ final class MapArbitraryTransformer<S, T> extends ArbitraryBase<T> {
   T generate(RandomContext random) => _transform(original.generate(random));
 
   @override
+  ValueWithState<T> generateWithState(RandomContext random) {
+    final originalWithState = original.generateWithState(random);
+    final transformedValue = transformer(originalWithState.value);
+    return ValueWithState(
+      transformedValue,
+      originalWithState.state,
+      sourceValues: [originalWithState.value],
+    );
+  }
+
+  @override
   List<T> generateExhaustive() =>
       original.generateExhaustive().map(_transform).toList();
 
   @override
   ShrinkingDistance calculateDistance(T value) {
-    return original.calculateDistance(_getFormer(value));
+    // Try multiple approaches to get the source value
+    try {
+      final sourceValue = _getSourceValue(value, null);
+      return original.calculateDistance(sourceValue);
+    } catch (_) {
+      // If we can't find the source, return minimal distance
+      return ShrinkingDistance(0);
+    }
   }
 
   @override
   List<T> shrink(T value, ShrinkingDistance distance) {
-    return original
-        .shrink(_getFormer(value), distance)
-        .map(transformer)
-        .toList();
+    try {
+      final sourceValue = _getSourceValue(value, null);
+      return original.shrink(sourceValue, distance).map(transformer).toList();
+    } catch (_) {
+      // If we can't shrink, return empty list
+      return [];
+    }
+  }
+
+  // New method that works with ValueWithState for better shrinking
+  List<ValueWithState<T>> shrinkWithState(
+    ValueWithState<T> valueWithState,
+    ShrinkingDistance distance,
+  ) {
+    try {
+      final sourceValue = _getSourceValue(valueWithState.value, valueWithState);
+      final shrunkSources = original.shrink(sourceValue, distance);
+
+      return shrunkSources.map((shrunkSource) {
+        final transformedShrunk = transformer(shrunkSource);
+        return ValueWithState(
+          transformedShrunk,
+          valueWithState.state, // Keep original state
+          sourceValues: [shrunkSource],
+        );
+      }).toList();
+    } catch (_) {
+      return [];
+    }
   }
 }

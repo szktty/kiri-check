@@ -5,6 +5,30 @@ import 'package:kiri_check/src/property/home.dart';
 import 'package:kiri_check/src/property/random.dart';
 import 'package:kiri_check/src/property/random_xorshift.dart';
 
+/// A generated value paired with the random state that produced it.
+/// This allows for precise reproduction of values during shrinking.
+final class ValueWithState<T> {
+  const ValueWithState(this.value, this.state, {this.sourceValues});
+
+  final T value;
+  final RandomState state;
+
+  /// Source values used to generate this value (for transformations)
+  final List<dynamic>? sourceValues;
+
+  @override
+  String toString() =>
+      'ValueWithState(value: $value, state: $state, sources: $sourceValues)';
+
+  /// Create a new ValueWithState with the same state but different value
+  ValueWithState<U> withValue<U>(U newValue) =>
+      ValueWithState(newValue, state, sourceValues: sourceValues);
+
+  /// Create a new ValueWithState with source values
+  ValueWithState<T> withSources(List<dynamic> sources) =>
+      ValueWithState(value, state, sourceValues: sources);
+}
+
 /// Components that generate data and perform shrinking,
 /// which are especially crucial elements in property-based testing.
 abstract class Arbitrary<T> {
@@ -20,6 +44,26 @@ abstract class Arbitrary<T> {
   /// If `predicate` returns false, the example is discarded.
   Arbitrary<T> filter(bool Function(T) predicate);
 
+  /// Returns an arbitrary that generates non-empty values.
+  ///
+  /// Works with String, List, Set, and Map types.
+  ///
+  /// Example:
+  /// ```dart
+  /// property('non-empty strings', () {
+  ///   forAll(string().nonEmpty(), (s) {
+  ///     expect(s, isNotEmpty);
+  ///   });
+  /// });
+  ///
+  /// property('non-empty lists have at least one element', () {
+  ///   forAll(list(integer()).nonEmpty(), (list) {
+  ///     expect(list.length, greaterThan(0));
+  ///   });
+  /// });
+  /// ```
+  Arbitrary<T> nonEmpty();
+
   /// Generates an example of the data.
   ///
   /// Parameters:
@@ -27,6 +71,20 @@ abstract class Arbitrary<T> {
   /// - `state`: The random state to use when generating data.
   /// - `edgeCase`: If set to true, the edge cases is generated.
   T example({RandomState? state, bool edgeCase = false});
+
+  /// Returns an arbitrary that casts the generated values to type [U].
+  ///
+  /// This is useful when working with dynamic arbitraries that need to be
+  /// treated as specific types.
+  ///
+  /// Example:
+  /// ```dart
+  /// final stringArb = frequency([
+  ///   (50, constant('hello')),
+  ///   (50, constant('world')),
+  /// ]).cast<String>();
+  /// ```
+  Arbitrary<U> cast<U>() => map((value) => value as U);
 }
 
 abstract class ArbitraryInternal<T> extends Arbitrary<T> {
@@ -50,6 +108,10 @@ abstract class ArbitraryInternal<T> extends Arbitrary<T> {
 
   /// Generates a data.
   T generate(RandomContext random);
+
+  /// Generates a data with the random state that produced it.
+  /// This allows for precise reproduction during shrinking.
+  ValueWithState<T> generateWithState(RandomContext random);
 
   /// Calculates the distance to the target value.
   ShrinkingDistance calculateDistance(T value);
@@ -119,6 +181,20 @@ abstract class ArbitraryBase<T> implements ArbitraryInternal<T> {
   }
 
   @override
+  ValueWithState<T> generateWithState(RandomContext random) {
+    // Capture the random state before generation
+    final randomImpl = random as RandomContextImpl;
+    final stateBeforeGeneration =
+        RandomState.fromState(randomImpl.xorshift.state);
+
+    // Generate the value
+    final value = generate(random);
+
+    // Return the value paired with the state that produced it
+    return ValueWithState(value, stateBeforeGeneration);
+  }
+
+  @override
   Arbitrary<U> map<U>(U Function(T) f) =>
       MapArbitraryTransformer<T, U>(this, f);
 
@@ -129,6 +205,12 @@ abstract class ArbitraryBase<T> implements ArbitraryInternal<T> {
   @override
   Arbitrary<U> flatMap<U>(Arbitrary<U> Function(T) f) =>
       FlatMapArbitraryTransformer<T, U>(this, f);
+
+  @override
+  Arbitrary<T> nonEmpty() => NonEmptyArbitrary<T>(this);
+
+  @override
+  Arbitrary<U> cast<U>() => map((value) => value as U);
 
   @override
   T example({RandomState? state, bool edgeCase = false}) {

@@ -27,6 +27,7 @@ doc/api/
 .flutter-plugins-dependencies
 .idea
 unicode_data/UnicodeData.txt
-xorshift.py
-xorshift.c
 *.out
+ref
+.claude/settings.local.json
+.vscode

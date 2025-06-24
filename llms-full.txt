@@ -1,0 +1,1571 @@
+# kiri-check Documentation for LLMs
+
+This document explains how to effectively use "kiri-check," a property-based testing library for Dart. It focuses on API usage, implementation patterns, and practical examples.
+
+## 1. Library overview
+
+kiri-check is a property-based testing library for Dart. Property-based testing is an approach to testing software based on properties (characteristics) rather than specific input values.
+
+### Key features
+
+1. **Integration with package:test**: Integrates with the regular Dart testing framework, allowing use without modifying existing test code.
+2. **Customizable exploration methods**: Flexible customization of test generation, including specifying data ranges, adjusting trial counts, and prioritizing edge cases.
+3. **Stateful testing**: Provides functionality for testing systems that change state.
+
+### Benefits of property-based testing
+
+- **Extensive testing**: Automatically tests numerous cases, including input patterns that developers might not have considered.
+- **Shrinking capability**: If a test fails, shrinking is performed to find the minimal counterexample, making debugging easier.
+- **Randomness**: Testing with random inputs increases the probability of finding bugs.
+- **Stateful testing**: Enables testing of systems that change state.
+
+## 2. Setup and basic usage
+
+### Installation
+
+Add the dependency to your pubspec.yaml:
+
+```yaml
+dev_dependencies:
+  kiri_check: ^1.2.0
+```
+
+Then install with the following command:
+
+```bash
+dart pub get
+```
+
+Or:
+
+```bash
+flutter pub get
+```
+
+### Basic usage
+
+To use kiri-check, first import `kiri_check.dart`:
+
+```dart
+import 'package:kiri_check/kiri_check.dart';
+import 'package:test/test.dart'; // Standard library for testing is also needed
+```
+
+The most basic property test looks like this:
+
+```dart
+void main() {
+  property('integer generation and validation', () {
+    forAll(
+      integer(min: 0, max: 100),
+      (value) {
+        expect(value >= 0, isTrue);
+        expect(value <= 100, isTrue);
+      },
+    );
+  });
+}
+```
+
+In this test:
+1. Define a test using the `property` function (instead of the `test` function)
+2. Specify the arbitrary (in this case, an integer) and a block to validate the generated values using the `forAll` function
+3. Use the `expect` function to test values within the validation block
+
+### Running tests
+
+Running tests is the same as with regular Dart tests:
+
+```bash
+dart test
+```
+
+## 3. API reference
+
+### Key functions
+
+#### `property` function
+
+```dart
+void property(
+  Object? description,
+  FutureOr<void> Function() body, {
+  String? testOn,
+  Timeout? timeout,
+  Object? skip,
+  Object? tags,
+  Map<String, dynamic>? onPlatform,
+})
+```
+
+Defines a property-based test. Essentially a wrapper for the `test` function from `package:test`, accepting the same parameters.
+
+#### `forAll` function
+
+```dart
+void forAll<T>(
+  Arbitrary<T> arbitrary,
+  FutureOr<void> Function(T) block, {
+  // Optional parameters
+  int? maxExamples,
+  int? maxTries,
+  int? maxShrinkingTries,
+  RandomContext? random,
+  int? seed,
+  GenerationPolicy? generationPolicy,
+  ShrinkingPolicy? shrinkingPolicy,
+  EdgeCasePolicy? edgeCasePolicy,
+  FutureOr<void> Function()? setUp,
+  FutureOr<void> Function()? tearDown,
+  FutureOr<void> Function()? setUpAll,
+  FutureOr<void> Function()? tearDownAll,
+  FutureOr<void> Function(T)? onGenerate,
+  FutureOr<void> Function(T)? onShrink,
+  FutureOr<void> Function(T)? onFalsify,
+  bool? ignoreFalsify,
+})
+```
+
+Runs a test block on values generated from the specified arbitrary.
+
+Key parameters:
+- `arbitrary`: The arbitrary that generates test cases
+- `block`: A function that receives generated values and runs tests
+- `maxExamples`: Maximum number of test cases to generate (default: 100)
+- `maxTries`: Maximum number of attempts to generate valid values
+- `maxShrinkingTries`: Maximum number of shrinking attempts
+- `seed`: Seed value for random generation
+- `shrinkingPolicy`: Shrinking policy (`ShrinkingPolicy.off`, `ShrinkingPolicy.bounded`, `ShrinkingPolicy.full`)
+- `edgeCasePolicy`: Edge case handling (`EdgeCasePolicy.first`, `EdgeCasePolicy.mixin`, `EdgeCasePolicy.none`)
+
+#### `collect` function
+
+```dart
+void collect(
+  Object value, [
+  Object? value1,
+  Object? value2,
+  Object? value3,
+  Object? value4,
+  Object? value5,
+  Object? value6,
+  Object? value7,
+  Object? value8,
+])
+```
+
+Collects statistical information about values generated during testing. At the end of the test, the number and percentage of collected values are displayed.
+
+#### `runBehavior` function (for stateful testing)
+
+```dart
+void runBehavior<State, System>(
+  Behavior<State, System> behavior, {
+  // Optional parameters
+  int? seed,
+  int? maxCycles,
+  int? maxSteps,
+  int? maxCommandTries,
+  int? maxShrinkingTries,
+  int? maxShrinkingCycles,
+  Timeout? cycleTimeout,
+  FutureOr<void> Function()? setUp,
+  FutureOr<void> Function()? tearDown,
+  FutureOr<void> Function(Behavior<State, System>, System)? onDestroy,
+  FutureOr<void> Function(StatefulFalsifyingExample<State, System>)? onFalsify,
+  bool? ignoreFalsify,
+})
+```
+
+Runs a stateful test. Executes random operations on the model and actual system defined by the `behavior` parameter.
+
+### Key classes and interfaces
+
+#### `Arbitrary<T>` interface
+
+Arbitraries are important elements for data generation and shrinking. Main functions:
+
+- Data generation (random or exhaustive)
+- Providing edge cases
+- Implementing shrinking
+- Transformation and filtering
+
+```dart
+abstract class Arbitrary<T> {
+  Arbitrary<U> map<U>(U Function(T) f);
+  Arbitrary<U> flatMap<U>(Arbitrary<U> Function(T) f);
+  Arbitrary<T> filter(bool Function(T) predicate);
+  Arbitrary<T> nonEmpty();
+  Arbitrary<U> cast<U>();
+  T example({RandomState? state, bool edgeCase = false});
+}
+```
+
+#### `Behavior<State, System>` abstract class
+
+Describes the behavior for stateful testing. Defines operations and comparisons for the model and the actual system.
+
+```dart
+abstract class Behavior<State, System> {
+  FutureOr<State> initialState();
+  FutureOr<bool> initialPrecondition(State state);
+  FutureOr<System> createSystem(State state);
+  FutureOr<List<Command<State, System>>> generateCommands(State state);
+  FutureOr<void> destroySystem(System system);
+  // Other lifecycle methods
+}
+```
+
+#### `Command<State, System>` interface
+
+Represents operations on the model and actual system in stateful testing.
+
+The main implementations are the `Action` class group:
+- `Action0` - Command taking no arguments
+- `Action1` - Command taking one argument
+- `Action2` to `Action8` - Commands taking multiple arguments
+
+## 4. Arbitraries
+
+Arbitraries are the central elements of property-based testing, responsible for generating test data.
+
+### Basic arbitraries
+
+#### Basic data types
+
+```dart
+// Integer (range can be specified)
+Arbitrary<int> integer({int? min, int? max});
+
+// Floating point (range and special value inclusion can be specified)
+Arbitrary<double> float({
+  double? min, 
+  double? max, 
+  bool? minExcluded, 
+  bool? maxExcluded, 
+  bool? nan, 
+  bool? infinity
+});
+
+// Boolean
+Arbitrary<bool> boolean();
+
+// Null value
+Arbitrary<Null> null_();
+
+// Binary data
+Arbitrary<List<int>> binary({int? min, int? max});
+```
+
+#### String related
+
+```dart
+// String
+Arbitrary<String> string({
+  int? minLength, 
+  int? maxLength, 
+  CharacterSet? characterSet
+});
+
+// Character (Unicode)
+Arbitrary<int> runes({CharacterSet? characterSet});
+```
+
+#### Collections
+
+```dart
+// List
+Arbitrary<List<T>> list<T>(
+  Arbitrary<T> arbitrary, {
+  int? minLength, 
+  int? maxLength
+});
+
+// Set
+Arbitrary<Set<T>> set<T>(
+  Arbitrary<T> elements, {
+  int? minLength, 
+  int? maxLength
+});
+
+// Map
+Arbitrary<Map<K, V>> map<K, V>(
+  Arbitrary<K> keys, 
+  Arbitrary<V> values, {
+  int? minLength, 
+  int? maxLength
+});
+```
+
+#### Date and time
+
+```dart
+// DateTime (timezone supported)
+Arbitrary<TZDateTime> dateTime({
+  DateTime? min, 
+  DateTime? max, 
+  String? location
+});
+
+// Nominal DateTime (may include non-existent dates/times)
+Arbitrary<NominalDateTime> nominalDateTime({
+  DateTime? min, 
+  DateTime? max, 
+  String? location, 
+  bool? imaginary
+});
+
+// Duration values
+Arbitrary<Duration> duration({
+  Duration? min, 
+  Duration? max
+});
+```
+
+#### Constants and selection
+
+```dart
+// Fixed value
+Arbitrary<T> constant<T>(T value);
+
+// Selection from a set of fixed values
+Arbitrary<T> constantFrom<T>(List<T> values);
+```
+
+#### URI and networking
+
+```dart
+// URI generation (supports various schemes)
+Arbitrary<Uri> uri({
+  List<String>? schemes,
+  bool? withUserInfo,
+  bool? withPort,
+  bool? withPath,
+  bool? withQuery,
+  bool? withFragment
+});
+```
+
+### Arbitrary composition
+
+#### Combining multiple arbitraries
+
+```dart
+// Combination of two arbitraries
+Arbitrary<(A, B)> combine2<A, B>(
+  Arbitrary<A> a, 
+  Arbitrary<B> b
+);
+
+// 3-8 arbitraries can also be combined similarly
+Arbitrary<(A, B, C)> combine3<A, B, C>(...);
+Arbitrary<(A, B, C, D)> combine4<A, B, C, D>(...);
+// ... and so on
+```
+
+#### Selection and frequency
+
+```dart
+// Select one from multiple arbitraries
+Arbitrary<T> oneOf<T>(List<Arbitrary<T>> arbitraries);
+
+// Select with specified frequency
+Arbitrary<T> frequency<T>(List<(int, Arbitrary<T>)> weighted);
+```
+
+#### Recursive arbitraries and value extraction
+
+```dart
+// Recursive data structures
+Arbitrary<T> recursive<T>(
+  Arbitrary<T> base, 
+  Arbitrary<T> Function(Arbitrary<T>) rec, {
+  int? maxDepth
+});
+
+// Extract values from multiple arbitraries
+Arbitrary<dynamic> deck();
+```
+
+### Arbitrary transformation and filtering
+
+```dart
+// Value transformation
+Arbitrary<U> map<U>(U Function(T) f);
+
+// Transformation to another arbitrary
+Arbitrary<U> flatMap<U>(Arbitrary<U> Function(T) f);
+
+// Value filtering
+Arbitrary<T> filter(bool Function(T) predicate);
+
+// Ensure collections are not empty
+Arbitrary<T> nonEmpty();
+
+// Type casting for dynamic arbitraries
+Arbitrary<U> cast<U>();
+
+// Example: Using cast() with frequency combinator for type safety
+final stringArb = frequency([
+  (50, constant('hello')),
+  (50, constant('world')),
+]).cast<String>();  // Explicitly cast dynamic to String
+
+// Example: Using cast() with oneOf combinator
+final animalArb = oneOf([
+  constant('cat'),
+  constant('dog'), 
+  constant('bird'),
+]).cast<String>();
+
+// Example of transformation from deck
+Arbitrary<User> userArbitrary = deck().map((deck) {
+  final id = deck.draw(integer());
+  final name = deck.draw(string());
+  return User(id: id, name: name);
+});
+```
+
+## 5. Implementation patterns
+
+### Basic property testing
+
+The most basic pattern is to verify that a target function or system satisfies specific properties.
+
+#### Example: Validating a FizzBuzz implementation
+
+```dart
+Object fizzbuzz(int n) {
+  if (n % 3 == 0 && n % 5 == 0) {
+    return 'FizzBuzz';
+  } else if (n % 3 == 0) {
+    return 'Fizz';
+  } else if (n % 5 == 0) {
+    return 'Buzz';
+  } else {
+    return n.toString();
+  }
+}
+
+void main() {
+  property('FizzBuzz', () {
+    forAll(
+      integer(min: 1, max: 100),
+      (n) {
+        final result = fizzbuzz(n);
+        if (n % 15 == 0) {
+          expect(result, 'FizzBuzz');
+        } else if (n % 3 == 0) {
+          expect(result, 'Fizz');
+        } else if (n % 5 == 0) {
+          expect(result, 'Buzz');
+        } else {
+          expect(result, n.toString());
+        }
+      },
+    );
+  });
+}
+```
+
+#### Example: Symmetry validation
+
+Validates that an API has a specific symmetry:
+
+```dart
+property('JSON serialize/deserialize symmetry', () {
+  forAll(
+    Gen.user(),  // Custom user arbitrary
+    (user) {
+      final json = jsonEncode(user.toJson());
+      final decoded = User.fromJson(jsonDecode(json));
+      expect(decoded, equals(user));  // Should be identical to the original user
+    },
+  );
+});
+```
+
+### Creating custom arbitraries
+
+#### Creation by mapping
+
+Create new arbitraries by mapping existing ones:
+
+```dart
+final class User {
+  User({required this.id, required this.name, required this.email});
+  
+  final int id;
+  final String name;
+  final String email;
+}
+
+// Custom arbitrary using map()
+Arbitrary<User> userArbitrary() => combine3(
+  integer(min: 1),
+  string(minLength: 1, maxLength: 50),
+  string(minLength: 5, maxLength: 100),
+).map(
+  (tuple) => User(
+    id: tuple.$1,
+    name: tuple.$2,
+    email: tuple.$3,
+  ),
+);
+```
+
+#### Builder approach
+
+Create flexible custom arbitraries using the `build` function:
+
+```dart
+Arbitrary<User> userArbitrary() => build<User>((property) {
+  final id = property('id', integer(min: 1));
+  final name = property('name', string(minLength: 1, maxLength: 50));
+  final email = property('email', string(minLength: 5, maxLength: 100));
+  
+  return User(id: id, name: name, email: email);
+});
+```
+
+#### deck() approach
+
+Draw values from multiple arbitraries using `deck()`:
+
+```dart
+abstract class Gen {
+  static User user(Deck deck) {
+    final id = deck.draw(integer(min: 1));
+    final name = deck.draw(string(minLength: 1, maxLength: 50));
+    final email = deck.draw(string(minLength: 5, maxLength: 100));
+    return User(id: id, name: name, email: email);
+  }
+}
+
+void main() {
+  property('User generation using deck()', () {
+    forAll(
+      deck(),
+      (deck) {
+        final user = Gen.user(deck);
+        // Test content
+      },
+    );
+  });
+}
+```
+
+### Stateful testing
+
+In stateful testing, random operations are performed on both a model system and the actual system, and the results are compared.
+
+#### Basic stateful testing
+
+1. Define the model and the actual system
+2. Extend the `Behavior` class to define test content
+3. Define and execute commands
+
+```dart
+// Model (reference implementation)
+final class CounterModel {
+  int count = 0;
+  
+  void reset() {
+    count = 0;
+  }
+  
+  void increment() {
+    count++;
+  }
+  
+  void decrement() {
+    count--;
+  }
+}
+
+// Actual system (subject under test)
+final class CounterSystem {
+  Map<String, int> data = {'count': 0};
+  
+  int get count => data['count']!;
+  
+  void reset() {
+    data['count'] = 0;
+  }
+  
+  void increment() {
+    data['count'] = data['count']! + 1;
+  }
+  
+  void decrement() {
+    data['count'] = data['count']! - 1;
+  }
+}
+
+// Test definition
+final class CounterBehavior extends Behavior<CounterModel, CounterSystem> {
+  @override
+  CounterModel initialState() {
+    return CounterModel();
+  }
+  
+  @override
+  CounterSystem createSystem(CounterModel s) {
+    return CounterSystem();
+  }
+  
+  @override
+  List<Command<CounterModel, CounterSystem>> generateCommands(CounterModel s) {
+    return [
+      Action0(
+        'reset',
+        nextState: (s) => s.reset(),
+        run: (system) {
+          system.reset();
+          return system.count;
+        },
+        postcondition: (s, count) => count == 0,
+      ),
+      Action0(
+        'increment',
+        nextState: (s) => s.increment(),
+        run: (system) {
+          system.increment();
+          return system.count;
+        },
+        postcondition: (s, count) => s.count + 1 == count,
+      ),
+      Action0(
+        'decrement',
+        nextState: (s) => s.decrement(),
+        run: (system) {
+          system.decrement();
+          return system.count;
+        },
+        postcondition: (s, count) => s.count - 1 == count,
+      ),
+    ];
+  }
+  
+  @override
+  void destroySystem(CounterSystem system) {}
+}
+
+// Test execution
+void main() {
+  property('Counter', () {
+    runBehavior(CounterBehavior());
+  });
+}
+```
+
+#### Actions with parameters
+
+When operations need parameters:
+
+```dart
+Action1(
+  'setValue',
+  arbitrary: integer(min: 0, max: 100),
+  nextState: (s, value) => s.setValue(value),
+  run: (system, value) {
+    system.setValue(value);
+    return system.value;
+  },
+  postcondition: (s, result, value) => result == value,
+),
+```
+
+#### Complex command chains
+
+Use `Sequence` to create complex command sequences:
+
+```dart
+Sequence<CounterModel, CounterSystem>(
+  'incrementTwice',
+  commands: [
+    Action0(...),  // First increment
+    Action0(...),  // Second increment
+  ],
+)
+```
+
+### Collecting and analyzing statistics
+
+#### Collecting statistics
+
+Use the `collect` function to collect statistical information about values generated during testing:
+
+```dart
+property('Integer distribution', () {
+  forAll(
+    integer(min: -100, max: 100),
+    (n) {
+      // Collect sign of values
+      if (n > 0) {
+        collect('positive');
+      } else if (n < 0) {
+        collect('negative');
+      } else {
+        collect('zero');
+      }
+      
+      // Collect even/odd
+      collect(n % 2 == 0 ? 'even' : 'odd');
+    },
+  );
+});
+```
+
+#### Custom validation
+
+Add custom checks to validate the distribution of generated values:
+
+```dart
+property('Integer distribution validation', () {
+  final positives = <int>[];
+  final negatives = <int>[];
+  
+  forAll(
+    integer(min: -100, max: 100),
+    (n) {
+      if (n > 0) positives.add(n);
+      if (n < 0) negatives.add(n);
+    },
+    tearDownAll: () {
+      // Verify that positive and negative numbers are generated roughly equally
+      expect(positives.length, greaterThan(0));
+      expect(negatives.length, greaterThan(0));
+      
+      final ratio = positives.length / negatives.length;
+      expect(ratio, closeTo(1.0, 0.3)); // Allow 30% error
+    },
+  );
+});
+```
+
+## 6. Practical examples
+
+Here are examples of actually using kiri-check.
+
+### Testing data structures
+
+#### Binary search tree implementation validation
+
+```dart
+final class BinarySearchTree {
+  TreeNode? root;
+  
+  void insert(int value) {
+    // Insert implementation
+  }
+  
+  bool contains(int value) {
+    // Search implementation
+  }
+  
+  void remove(int value) {
+    // Removal implementation
+  }
+  
+  List<int> inOrderTraversal() {
+    // In-order traversal implementation
+  }
+}
+
+void main() {
+  property('Binary search tree: insertion and search', () {
+    forAll(
+      list(integer(min: -100, max: 100), minLength: 1, maxLength: 50),
+      (values) {
+        final tree = BinarySearchTree();
+        
+        // Insertion
+        for (final value in values) {
+          tree.insert(value);
+        }
+        
+        // Search (all values should be found)
+        for (final value in values) {
+          expect(tree.contains(value), isTrue);
+        }
+        
+        // In-order traversal result should be sorted
+        final traversal = tree.inOrderTraversal();
+        expect(
+          const DeepCollectionEquality().equals(
+            traversal, 
+            Set<int>.from(values).toList()..sort()
+          ),
+          isTrue
+        );
+      },
+    );
+  });
+}
+```
+
+#### Custom collection operation validation
+
+```dart
+property('LRU cache behavior validation', () {
+  // Maximum size of LRU cache and number of test operations
+  const maxSize = 10;
+  const operationCount = 100;
+  
+  forAll(
+    list(integer(min: 0, max: 1000), minLength: operationCount, maxLength: operationCount),
+    (operations) {
+      final cache = LRUCache<int, String>(maxSize);
+      final referenceMap = <int, String>{};
+      final accessOrder = <int>[];
+      
+      // Execute random operations
+      for (final key in operations) {
+        final value = key.toString();
+        cache.put(key, value);
+        referenceMap[key] = value;
+        
+        // Record access order
+        accessOrder.remove(key);
+        accessOrder.add(key);
+        
+        // Verify cache size does not exceed maximum
+        expect(cache.size(), lessThanOrEqualTo(maxSize));
+        
+        // If cache has reached maximum size, check that the oldest item has been removed
+        if (referenceMap.length > maxSize) {
+          final expectedEvicted = accessOrder[0];
+          accessOrder.removeAt(0);
+          expect(cache.contains(expectedEvicted), isFalse);
+        }
+        
+        // Verify all items can be retrieved correctly
+        for (final k in accessOrder) {
+          expect(cache.get(k), equals(k.toString()));
+        }
+      }
+    },
+  );
+});
+```
+
+### Testing algorithms
+
+#### Sorting algorithm validation
+
+```dart
+List<int> quickSort(List<int> list) {
+  // Quicksort implementation
+}
+
+void main() {
+  property('Quicksort: correctness and algorithm characteristics', () {
+    forAll(
+      list(integer(), minLength: 0, maxLength: 100),
+      (values) {
+        final sorted = quickSort(List.from(values));
+        
+        // Verify sorted result has same number of elements
+        expect(sorted.length, equals(values.length));
+        
+        // Verify sorted result is correctly sorted
+        for (var i = 0; i < sorted.length - 1; i++) {
+          expect(sorted[i] <= sorted[i + 1], isTrue);
+        }
+        
+        // Verify all elements from original list are included
+        final valuesCopy = List.from(values);
+        for (final item in sorted) {
+          expect(valuesCopy.remove(item), isTrue);
+        }
+        expect(valuesCopy.isEmpty, isTrue);
+      },
+    );
+  });
+}
+```
+
+#### Pathfinding algorithm testing
+
+```dart
+final class Graph {
+  // Graph implementation
+  List<int> findShortestPath(int start, int end) {
+    // Shortest path algorithm implementation
+  }
+}
+
+void main() {
+  property('Shortest path algorithm', () {
+    // Limit list length to generate directed graph
+    const maxNodes = 20;
+    
+    forAll(
+      combine2(
+        integer(min: 5, max: maxNodes),  // Number of nodes
+        float(min: 0.1, max: 0.5),       // Edge density
+      ),
+      (args) {
+        final (nodeCount, density) = args;
+        final graph = generateRandomGraph(nodeCount, density);
+        
+        // Select random start and end points
+        final start = 0;
+        final end = nodeCount - 1;
+        
+        // Calculate shortest path
+        final path = graph.findShortestPath(start, end);
+        
+        // Validation when path exists
+        if (path.isNotEmpty) {
+          // Verify path connects from start to end
+          expect(path.first, equals(start));
+          expect(path.last, equals(end));
+          
+          // Verify adjacent points are connected by edges
+          for (var i = 0; i < path.length - 1; i++) {
+            expect(graph.hasEdge(path[i], path[i + 1]), isTrue);
+          }
+          
+          // Validate it's the shortest path
+          // (Compare with path length from other algorithms, etc.)
+        }
+      },
+    );
+  });
+}
+```
+
+### Testing business logic
+
+#### Product discount logic testing
+
+```dart
+double calculateDiscount(
+  double price, 
+  int quantity, 
+  String customerType, 
+  bool isSpecialOffer
+) {
+  // Complex discount logic implementation
+}
+
+void main() {
+  property('Discount logic: consistency and constraints', () {
+    final customerTypes = ['standard', 'premium', 'vip'];
+    
+    forAll(
+      combine4(
+        float(min: 10.0, max: 1000.0),               // Price
+        integer(min: 1, max: 100),                    // Quantity
+        constantFrom(customerTypes),                  // Customer type
+        boolean(),                                    // Special offer
+      ),
+      (args) {
+        final (price, quantity, customerType, isSpecialOffer) = args;
+        final discount = calculateDiscount(price, quantity, customerType, isSpecialOffer);
+        
+        // Verify discount is within 0-100% range
+        expect(discount, greaterThanOrEqualTo(0.0));
+        expect(discount, lessThanOrEqualTo(price));
+        
+        // Monotonicity verification: discount increases or stays the same as quantity increases
+        if (quantity < 100) {
+          final discountHigherQuantity = calculateDiscount(
+            price, 
+            quantity + 1, 
+            customerType, 
+            isSpecialOffer
+          );
+          expect(discountHigherQuantity, greaterThanOrEqualTo(discount));
+        }
+        
+        // Verify customer type benefits
+        if (customerTypes.indexOf(customerType) > 0) {  // Premium or higher
+          final discountLowerTier = calculateDiscount(
+            price, 
+            quantity, 
+            customerTypes[customerTypes.indexOf(customerType) - 1], 
+            isSpecialOffer
+          );
+          expect(discount, greaterThanOrEqualTo(discountLowerTier));
+        }
+      },
+    );
+  });
+}
+```
+
+#### Complex reservation system testing
+
+```dart
+property('Reservation system: consistency validation', () {
+  forAll(
+    combine3(
+      list(dateTime(min: DateTime(2023), max: DateTime(2024)), minLength: 5, maxLength: 20),  // Reservation request dates
+      integer(min: 3, max: 10),   // Maximum concurrent reservations
+      integer(min: 30, max: 120), // Reservation interval (minutes)
+    ),
+    (args) {
+      final (requestDates, maxConcurrent, minInterval) = args;
+      final reservationSystem = ReservationSystem(
+        maxConcurrentBookings: maxConcurrent,
+        minimumIntervalMinutes: minInterval,
+      );
+      
+      // Try reservation requests
+      final acceptedReservations = <DateTime>[];
+      final rejectedReservations = <DateTime>[];
+      
+      for (final date in requestDates) {
+        if (reservationSystem.tryReserve(date)) {
+          acceptedReservations.add(date);
+        } else {
+          rejectedReservations.add(date);
+        }
+      }
+      
+      // Validate constraints
+      
+      // 1. Not exceeding concurrent reservation limit
+      final activeReservationsByTime = <DateTime, int>{};
+      for (final date in acceptedReservations) {
+        final timeSlot = DateTime(date.year, date.month, date.day, date.hour);
+        activeReservationsByTime[timeSlot] = (activeReservationsByTime[timeSlot] ?? 0) + 1;
+      }
+      
+      for (final count in activeReservationsByTime.values) {
+        expect(count, lessThanOrEqualTo(maxConcurrent));
+      }
+      
+      // 2. Minimum interval is respected
+      for (var i = 0; i < acceptedReservations.length; i++) {
+        for (var j = i + 1; j < acceptedReservations.length; j++) {
+          final interval = acceptedReservations[i].difference(acceptedReservations[j]).inMinutes.abs();
+          if (interval < minInterval) {
+            expect(
+              acceptedReservations[i].day != acceptedReservations[j].day || 
+              acceptedReservations[i].hour != acceptedReservations[j].hour,
+              isTrue
+            );
+          }
+        }
+      }
+    },
+  );
+});
+```
+
+### Stateful testing of UI components
+
+Example of stateful testing for a Flutter UI component:
+
+```dart
+// UI component model
+final class CounterWidgetModel {
+  int count = 0;
+  bool isEnabled = true;
+  
+  void increment() {
+    if (isEnabled) count++;
+  }
+  
+  void decrement() {
+    if (isEnabled && count > 0) count--;
+  }
+  
+  void toggleEnabled() {
+    isEnabled = !isEnabled;
+  }
+}
+
+// Actual Widget system
+final class CounterWidgetSystem {
+  late final WidgetTester tester;
+  final testWidget = MaterialApp(
+    home: Scaffold(
+      body: CounterWidget(),
+    ),
+  );
+  
+  Future<void> setUp() async {
+    tester = WidgetTester();
+    await tester.pumpWidget(testWidget);
+  }
+  
+  Future<void> increment() async {
+    await tester.tap(find.byKey(Key('increment_button')));
+    await tester.pump();
+  }
+  
+  Future<void> decrement() async {
+    await tester.tap(find.byKey(Key('decrement_button')));
+    await tester.pump();
+  }
+  
+  Future<void> toggleEnabled() async {
+    await tester.tap(find.byKey(Key('toggle_button')));
+    await tester.pump();
+  }
+  
+  int getCount() {
+    final countText = find.byKey(Key('count_text')).evaluate().single.widget as Text;
+    return int.parse(countText.data!);
+  }
+  
+  bool isEnabled() {
+    final incrementButton = find.byKey(Key('increment_button')).evaluate().single.widget as ElevatedButton;
+    return incrementButton.enabled;
+  }
+}
+
+// Test definition
+final class CounterWidgetBehavior extends Behavior<CounterWidgetModel, CounterWidgetSystem> {
+  @override
+  Future<CounterWidgetModel> initialState() async {
+    return CounterWidgetModel();
+  }
+  
+  @override
+  Future<CounterWidgetSystem> createSystem(CounterWidgetModel s) async {
+    final system = CounterWidgetSystem();
+    await system.setUp();
+    return system;
+  }
+  
+  @override
+  Future<List<Command<CounterWidgetModel, CounterWidgetSystem>>> generateCommands(CounterWidgetModel s) async {
+    return [
+      Action0(
+        'increment',
+        nextState: (s) => s.increment(),
+        run: (system) async {
+          await system.increment();
+          return system.getCount();
+        },
+        postcondition: (s, count) => s.isEnabled ? (s.count + 1 == count) : (s.count == count),
+      ),
+      Action0(
+        'decrement',
+        nextState: (s) => s.decrement(),
+        run: (system) async {
+          await system.decrement();
+          return system.getCount();
+        },
+        postcondition: (s, count) => s.isEnabled && s.count > 0 
+          ? (s.count - 1 == count) 
+          : (s.count == count),
+      ),
+      Action0(
+        'toggleEnabled',
+        nextState: (s) => s.toggleEnabled(),
+        run: (system) async {
+          await system.toggleEnabled();
+          return system.isEnabled();
+        },
+        postcondition: (s, enabled) => !s.isEnabled == enabled,
+      ),
+    ];
+  }
+  
+  @override
+  Future<void> destroySystem(CounterWidgetSystem system) async {
+    // Nothing to do
+  }
+}
+
+void main() {
+  testWidgets('Counter widget state validation', (tester) async {
+    property('Counter widget stateful test', () {
+      runBehavior(CounterWidgetBehavior());
+    });
+  });
+}
+```
+
+## 7. Common problems and solutions
+
+### Generated value range and quality
+
+#### Problem: Inappropriate range of generated values
+
+```dart
+property('angle normalization', () {
+  forAll(
+    float(), // No range specified - very large values or special values may be generated
+    (angle) {
+      final normalized = normalizeAngle(angle);
+      expect(normalized >= 0 && normalized < 360, isTrue);
+    },
+  );
+});
+```
+
+**Solution**: Specify an appropriate range
+
+```dart
+property('angle normalization', () {
+  forAll(
+    float(min: -10000, max: 10000, nan: false, infinity: false),
+    (angle) {
+      final normalized = normalizeAngle(angle);
+      expect(normalized >= 0 && normalized < 360, isTrue);
+    },
+  );
+});
+```
+
+#### Problem: Few cases meeting specific conditions
+
+```dart
+property('prime number test', () {
+  forAll(
+    integer(min: 1, max: 1000),
+    (n) {
+      if (isPrime(n)) {
+        // Test for prime numbers (may run few times)
+      }
+    },
+  );
+});
+```
+
+**Solution**: Use filter or custom arbitrary
+
+```dart
+// Filter approach
+property('prime number test', () {
+  forAll(
+    integer(min: 1, max: 1000).filter(isPrime),
+    (n) {
+      // All values are prime
+    },
+  );
+});
+
+// Custom arbitrary approach
+Arbitrary<int> primes() {
+  final knownPrimes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, /* ... */];
+  return constantFrom(knownPrimes);
+}
+```
+
+### Complex dependencies
+
+#### Problem: Generating complex object graphs
+
+```dart
+property('complex user graph', () {
+  forAll(
+    user(),  // Generating only users is insufficient
+    (user) {
+      // Need dependencies like friend relationships, messages, etc.
+    },
+  );
+});
+```
+
+**Solution**: Use composite arbitraries or flatMap
+
+```dart
+Arbitrary<UserGraph> userGraph() {
+  return combine2(
+    list(user(), minLength: 5, maxLength: 20),         // User list
+    float(min: 0.1, max: 0.5)                          // Connection density
+  ).flatMap((tuple) {
+    final (users, density) = tuple;
+    return build<UserGraph>((property) {
+      final connections = property(
+        'connections',
+        list(
+          combine2(
+            integer(min: 0, max: users.length - 1),    // User index 1
+            integer(min: 0, max: users.length - 1)     // User index 2
+          ).filter((pair) => pair.$1 != pair.$2),       // Prevent self-connections
+          minLength: (users.length * density).floor(),
+          maxLength: (users.length * (users.length - 1) * density).floor()
+        )
+      );
+      
+      final graph = UserGraph();
+      for (final user in users) {
+        graph.addUser(user);
+      }
+      
+      for (final connection in connections) {
+        graph.connect(users[connection.$1], users[connection.$2]);
+      }
+      
+      return graph;
+    });
+  });
+}
+```
+
+### Performance issues
+
+#### Problem: Tests are very slow
+
+**Solutions**:
+
+1. **Reduce sample count**: Set the `maxExamples` parameter
+   ```dart
+   forAll(
+     complexArbitrary(),
+     (value) { /* ... */ },
+     maxExamples: 50,  // Reduced from default of 100
+   );
+   ```
+
+2. **Shrink the range**: Make the search space smaller
+   ```dart
+   // Original code
+   integer(min: -1000000, max: 1000000)
+   
+   // Modified
+   integer(min: -1000, max: 1000)
+   ```
+
+3. **Optimize conditions**: Improve arbitrary design instead of filtering
+   ```dart
+   // Inefficient (many values are discarded)
+   integer().filter(n => n % 100 == 0)
+   
+   // Efficient
+   integer().map(n => n * 100)
+   ```
+
+### Reproducibility and stability
+
+#### Problem: Test failures cannot be reproduced
+
+**Solution**: Fix the seed
+
+```dart
+property('reproducible test', () {
+  forAll(
+    complexArbitrary(),
+    (value) { /* ... */ },
+    seed: 12345,  // Fixed seed
+  );
+});
+```
+
+Or log the seed at test failure for reuse:
+
+```dart
+property('record failure seed', () {
+  final seedValue = DateTime.now().millisecondsSinceEpoch;
+  forAll(
+    complexArbitrary(),
+    (value) {
+      try {
+        // Test code
+      } catch (e) {
+        print('Test failed - Seed value: $seedValue');
+        rethrow;
+      }
+    },
+    seed: seedValue,
+  );
+});
+```
+
+## 8. Best practices
+
+### Structuring test cases
+
+1. **Test small, independent properties**:
+   ```dart
+   // Good example - clearly separated properties
+   property('array length increases after addition', () { /* ... */ });
+   property('array elements are accessible after addition', () { /* ... */ });
+   
+   // Example to avoid - mixing multiple properties
+   property('array operations', () { /* ... many assertions ... */ });
+   ```
+
+2. **Make test names clear**: Since property tests use random values, make it clear what is being tested from the test name
+   ```dart
+   // Good example
+   property('parseDate: correctly converts ISO format string to DateTime', () { /* ... */ });
+   
+   // Example to avoid
+   property('test parseDate', () { /* ... */ });
+   ```
+
+3. **Separate preconditions from assertions**:
+   ```dart
+   // Good example - set preconditions with filter
+   forAll(
+     integer().filter((n) => n > 0),
+     (positiveNumber) {
+       // positiveNumber is always positive
+       expect(logarithm(positiveNumber), isNotNull);
+     },
+   );
+   
+   // Example to avoid - conditional branches in test
+   forAll(
+     integer(),
+     (n) {
+       if (n > 0) {
+         expect(logarithm(n), isNotNull);
+       }
+     },
+   );
+   ```
+
+### Defining effective properties
+
+1. **Validate inverse transformations**: Verify round-trip transformations
+   ```dart
+   property('JSON serialization reversibility', () {
+     forAll(
+       Gen.user(),
+       (user) {
+         final json = jsonEncode(user.toJson());
+         final decoded = User.fromJson(jsonDecode(json));
+         expect(decoded, equals(user));
+       },
+     );
+   });
+   ```
+
+2. **Compare with known equivalent implementations**: Compare with another implementation
+   ```dart
+   property('custom sort equals standard library', () {
+     forAll(
+       list(integer()),
+       (values) {
+         final expected = List.from(values)..sort();
+         final actual = myCustomSort(List.from(values));
+         expect(actual, equals(expected));
+       },
+     );
+   });
+   ```
+
+3. **Validate invariants**: Test properties that are preserved before and after operations
+   ```dart
+   property('collection element count is preserved', () {
+     forAll(
+       list(integer()),
+       (values) {
+         final originalCount = values.length;
+         final rotated = rotateList(values);
+         expect(rotated.length, equals(originalCount));
+       },
+     );
+   });
+   ```
+
+4. **Test logical constraints**: Test results derived mathematically or logically
+   ```dart
+   property('sum of triangle interior angles is 180 degrees', () {
+     forAll(
+       combine3(
+         float(min: 0.1, max: 179.9),
+         float(min: 0.1, max: 179.9),
+         float(min: 0.1, max: 179.9),
+       ).filter((angles) => angles.$1 + angles.$2 + angles.$3 == 180.0),
+       (angles) {
+         final triangle = Triangle(angles.$1, angles.$2, angles.$3);
+         expect(triangle.isValid(), isTrue);
+       },
+     );
+   });
+   ```
+
+### How to combine different types of arbitraries
+
+1. **Hierarchical object construction**:
+   ```dart
+   // Address arbitrary
+   Arbitrary<Address> addressArbitrary() => combine3(
+     string(),         // Street
+     string(),         // City
+     string(minLength: 2, maxLength: 2) // State code
+   ).map((tuple) => Address(
+     street: tuple.$1,
+     city: tuple.$2,
+     stateCode: tuple.$3
+   ));
+   
+   // User arbitrary (including address)
+   Arbitrary<User> userWithAddressArbitrary() => combine2(
+     string(),          // Name
+     addressArbitrary() // Address
+   ).map((tuple) => User(
+     name: tuple.$1,
+     address: tuple.$2
+   ));
+   ```
+
+2. **Values with interdependencies**:
+   ```dart
+   // Ensure the upper and lower bounds of the range have an appropriate relationship
+   Arbitrary<Range> rangeArbitrary() => combine2(
+     integer(min: 0, max: 100),
+     integer(min: 0, max: 100)
+   ).map((tuple) {
+     final min = math.min(tuple.$1, tuple.$2);
+     final max = math.max(tuple.$1, tuple.$2);
+     return Range(min: min, max: max);
+   });
+   ```
+
+3. **Conditional combinations**:
+   ```dart
+   // Select different arbitraries based on specific conditions
+   Arbitrary<Vehicle> vehicleArbitrary() => boolean().flatMap((isCar) {
+     if (isCar) {
+       return combine2(
+         string(),            // Manufacturer
+         integer(min: 2, max: 8) // Number of seats
+       ).map((t) => Car(manufacturer: t.$1, seats: t.$2));
+     } else {
+       return combine2(
+         string(),            // Manufacturer
+         integer(min: 50, max: 250) // Top speed
+       ).map((t) => Motorcycle(manufacturer: t.$1, topSpeed: t.$2));
+     }
+   });
+   ```
+
+### Design principles for stateful testing
+
+1. **Keep the model concise**: The model should be a concise implementation representing the ideal behavior of the actual system
+
+2. **Make commands independent**: Each command should operate independently and not depend on other commands
+
+3. **Clearly define preconditions and postconditions**:
+   ```dart
+   Action0(
+     'withdraw',
+     precondition: (s) => s.balance > 0, // Condition before withdrawal
+     nextState: (s) => s.balance -= 10,
+     run: (system) {
+       system.withdraw(10);
+       return system.getBalance();
+     },
+     postcondition: (s, balance) => balance == s.balance + 10, // Condition after withdrawal
+   )
+   ```
+
+4. **Cover edge cases**: Include commands that cover edge cases such as zero, maximum values, minimum values, etc.
+
+5. **Cover state transitions**: Include combinations of commands that cover all possible state transitions
+
+## 9. Summary
+
+kiri-check is a powerful property-based testing library for the Dart programming language, supporting random data generation, shrinking capability, and stateful testing.
+
+Main advantages:
+- Can discover bugs that are difficult to find with conventional tests
+- Integrated with package:test and can coexist with existing test code
+- Flexible customization options and rich arbitraries
+- Supports testing of stateful systems
+
+By effectively using kiri-check, you can develop more robust and reliable code. This library addresses a wide range of testing needs, from simple unit tests to complex stateful tests.

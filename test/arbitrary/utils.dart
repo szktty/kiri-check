@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:kiri_check/kiri_check.dart';
+import 'package:kiri_check/src/property/property_internal.dart';
 import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 
@@ -71,4 +71,21 @@ void testForAll<T>(
     onFalsify: onFalsify,
     ignoreFalsify: ignoreFalsify,
   );
+}
+
+/// Helper function to get edge cases from an arbitrary for testing purposes.
+List<T>? getEdgeCases<T>(Arbitrary<T> arbitrary) {
+  if (arbitrary is ArbitraryInternal<T>) {
+    return arbitrary.edgeCases;
+  }
+  return null;
+}
+
+/// Helper function to get shrinks from an arbitrary for testing purposes.
+List<T> getShrinks<T>(Arbitrary<T> arbitrary, T value) {
+  if (arbitrary is ArbitraryInternal<T>) {
+    final distance = arbitrary.calculateDistance(value);
+    return arbitrary.shrink(value, distance);
+  }
+  return [];
 }

@@ -1,3 +1,11 @@
+## 1.3.0
+
+- [ADD] Add `duration` arbitrary for generating Duration values
+- [ADD] Add `uri` arbitrary for generating URI values  
+- [ADD] Add `nonEmpty` arbitrary manipulation for ensuring collections are not empty
+- [ADD] Add `cast()` method to Arbitrary interface for type casting dynamic arbitraries
+- [FIX] Unexpected error during shrinking with nested `combine` arbitraries ([#23](https://github.com/szktty/kiri-check/issues/23))
+
 ## 1.2.0
 
 - [CHANGE] Replace the PRNG with new implemented PRNG which enables to reproduce random values using internal state

@@ -81,8 +81,6 @@ void main() {
         }
       });
     });
-
-    // TODO: bool, int, double
   });
 
   group('default random', () {
