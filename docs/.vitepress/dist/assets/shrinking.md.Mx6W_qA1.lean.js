@@ -1,0 +1,1 @@
+import{_ as i,c as n,o as r,ae as t}from"./chunks/framework.XMIap9gs.js";const p=JSON.parse('{"title":"Shrinking","description":"","frontmatter":{},"headers":[],"relativePath":"shrinking.md","filePath":"shrinking.md"}'),a={name:"shrinking.md"};function s(o,e,h,l,c,d){return r(),n("div",null,e[0]||(e[0]=[t("",8)]))}const g=i(a,[["render",s]]);export{p as __pageData,g as default};

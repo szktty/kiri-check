@@ -28,3 +28,4 @@ doc/api/
 *.swp
 Writerside/.idea
 .idea
+node_modules
