@@ -2,7 +2,7 @@ name: Deploy VitePress Documentation
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ gh-pages ]
   workflow_dispatch:
 
 jobs:
