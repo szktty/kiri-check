@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(rg:*)",
+      "Bash(npx create-docusaurus:*)",
+      "Bash(mv:*)",
+      "Bash(true)",
+      "Bash(rmdir:*)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run build:*)",
+      "Bash(for anchor in character-set combine create-new-arbitraries-from-examples datetime deck interactive-generation runes string transform-examples)",
+      "Bash(do echo \"Checking #$anchor:\")",
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(cp:*)",
+      "Bash(npm run docs:build:*)",
+      "Bash(timeout 10s npm run docs:dev)",
+      "Bash(npm run docs:dev:*)"
+    ],
+    "deny": []
+  }
+}
