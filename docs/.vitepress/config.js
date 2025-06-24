@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'kiri-check',
   description: 'Property-based testing library for Dart/Flutter',
-  base: '/kiri-check-doc/',
+  base: '/kiri-check/',
   
   themeConfig: {
     nav: [
