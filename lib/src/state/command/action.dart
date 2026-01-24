@@ -45,7 +45,7 @@ final class Action<State, System, T, R> extends Command<State, System> {
     CommandContext<State, System> context,
     State state,
   ) async {
-    _nextState(state, context.currentValue as T);
+    await _nextState(state, context.currentValue as T);
   }
 
   @override
