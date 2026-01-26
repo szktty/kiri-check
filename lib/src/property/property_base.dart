@@ -76,7 +76,7 @@ final class StatelessProperty<T> extends Property<T> {
     printVerbose('Edge case policy: ${_generationContext!.edgeCasePolicy}');
     printVerbose('Shrinking policy: ${settings.shrinkingPolicy}');
 
-    await this.setUpAll?.call();
+    await setUpAll?.call();
 
     _generationContext!.generate();
 
@@ -145,7 +145,7 @@ final class StatelessProperty<T> extends Property<T> {
       );
     }
 
-    await this.tearDownAll?.call();
+    await tearDownAll?.call();
 
     if (exception != null) {
       throw exception;
@@ -294,9 +294,9 @@ final class GenerationContextImpl<T> extends GenerationContext<T> {
 
 final class ShrinkingContext<T> {
   ShrinkingContext(this.property) {
-    this.policy = property.settings.shrinkingPolicy ?? defaultPolicy;
-    this.maxTries = property.settings.maxShrinkingTries ??
-        (this.policy == ShrinkingPolicy.bounded
+    policy = property.settings.shrinkingPolicy ?? defaultPolicy;
+    maxTries = property.settings.maxShrinkingTries ??
+        (policy == ShrinkingPolicy.bounded
             ? ShrinkingContext.defaultMaxTries
             : null);
   }

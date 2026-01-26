@@ -1,3 +1,9 @@
+## develop
+
+## 1.3.1
+
+- [FIX] Ensure `Action.nextState` correctly awaits asynchronous operations, preventing race conditions in state model updates.
+
 ## 1.3.0
 
 - [ADD] Add `duration` arbitrary for generating Duration values

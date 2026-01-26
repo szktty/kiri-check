@@ -39,7 +39,7 @@ final class AsyncCounterBehavior extends Behavior<CounterState, CounterSystem> {
         },
         postcondition: (s, value, result) async {
           await Future<void>.delayed(const Duration(milliseconds: 1));
-          return (s.count = value) == result;
+          return value == result;
         },
       ),
       Action0(
@@ -174,5 +174,89 @@ void main() {
         },
       );
     });
+
+    property('async nextState await bug reproduction', () async {
+      runBehavior(
+        AsyncNextStateProblemBehavior(),
+        maxCycles: 10,
+        maxSteps: 5,
+      );
+    });
   });
+}
+
+final class TestState {
+  int count = 0;
+  bool isUpdating = false;
+}
+
+final class TestSystem {
+  int count = 0;
+}
+
+final class AsyncNextStateProblemBehavior
+    extends Behavior<TestState, TestSystem> {
+  @override
+  Future<TestState> initialState() async {
+    return TestState();
+  }
+
+  @override
+  Future<TestSystem> createSystem(TestState s) async {
+    return TestSystem();
+  }
+
+  @override
+  Future<List<Command<TestState, TestSystem>>> generateCommands(
+    TestState s,
+  ) async {
+    return [
+      Action(
+        'Update count asynchronously',
+        integer(),
+        nextState: (s, value) async {
+          s.isUpdating = true;
+          // Simulate async operation that takes time
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+          s.count = value;
+          s.isUpdating = false;
+        },
+        run: (system, value) async {
+          await Future<void>.delayed(const Duration(milliseconds: 1));
+          system.count = value;
+          return null;
+        },
+        postcondition: (s, value, result) async {
+          // Postcondition is checked *before* nextState is called
+          // So, s.count should still be the old value, and isUpdating should be false initially
+          // This postcondition doesn't directly expose the bug in Action.nextState
+          return true;
+        },
+      ),
+      Action0(
+        'Assert not updating',
+        nextState: (s) async {},
+        run: (system) async {
+          await Future<void>.delayed(const Duration(milliseconds: 1));
+          // System side also does nothing here, just for modeling check
+          return null;
+        },
+        precondition: (s) async {
+          // This is the key: if nextState (from previous command) isn't awaited,
+          // s.isUpdating might still be true here, causing this precondition to fail.
+          // Expect true if nextState is properly awaited.
+          expect(
+            s.isUpdating,
+            isFalse,
+            reason:
+                'nextState should be completed before the next precondition is checked.',
+          );
+          return !s.isUpdating;
+        },
+      ),
+    ];
+  }
+
+  @override
+  Future<void> destroySystem(TestSystem system) async {}
 }

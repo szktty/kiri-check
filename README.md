@@ -30,7 +30,7 @@ Alternatively, add the library to your `pubspec.yaml` and run `dart pub get` or 
 
 ```yaml
 dev_dependencies:
-  kiri_check: ^1.3.0
+  kiri_check: ^1.3.1
 ```
 
 ## Documentation
