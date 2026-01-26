@@ -24,8 +24,8 @@ final class MapArbitrary<K, V> extends ArbitraryBase<Map<K, V>> {
     int? min,
     int? max,
   }) {
-    this.minLength = min ?? 0;
-    this.maxLength = math.max(this.minLength, max ?? 10);
+    minLength = min ?? 0;
+    maxLength = math.max(minLength, max ?? 10);
   }
 
   final ArbitraryInternal<K> key;
