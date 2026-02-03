@@ -2,7 +2,7 @@
 
 ## 1.3.1
 
-- [FIX] Ensure `Action.nextState` correctly awaits asynchronous operations, preventing race conditions in state model updates. ([#29](https://github.com/szktty/kiri-check/issues/29))
+- [FIX] Ensure `Action.nextState` correctly awaits asynchronous operations, preventing race conditions in state model updates. (@ryanhanks-bestow, [#29](https://github.com/szktty/kiri-check/issues/29))
 
 ## 1.3.0
 
