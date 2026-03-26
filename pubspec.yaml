@@ -15,5 +15,5 @@ dependencies:
   universal_platform: ^1.1.0
 
 dev_dependencies:
-  lints: ^4.0.0
-  very_good_analysis: ^5.1.0
+  lints: ^6.1.0
+  very_good_analysis: ^10.2.0

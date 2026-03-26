@@ -1,4 +1,4 @@
 /// Writing stateful tests.
-library stateful_test;
+library;
 
 export 'src/state/state.dart';
