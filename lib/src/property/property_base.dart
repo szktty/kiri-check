@@ -129,7 +129,7 @@ final class StatelessProperty<T> extends Property<T> {
     if (falsifiedWithState != null) {
       await settings.onFalsify?.call(falsifiedWithState.value);
       final description = arbitrary.describeExample(falsifiedWithState.value);
-      if (settings.ignoreFalsify == false) {
+      if (!settings.ignoreFalsify) {
         exception = FalsifiedException(
           example: falsifiedWithState.value,
           description: description,
@@ -161,8 +161,8 @@ final class StatelessProperty<T> extends Property<T> {
 }
 
 abstract class GenerationContext<T> {
-  static const defaultGenerationPolicy = GenerationPolicy.auto;
-  static const defaultEdgeCasePolicy = EdgeCasePolicy.mixin;
+  static const GenerationPolicy defaultGenerationPolicy = GenerationPolicy.auto;
+  static const EdgeCasePolicy defaultEdgeCasePolicy = EdgeCasePolicy.mixin;
 
   RandomContext get random;
 
@@ -301,7 +301,7 @@ final class ShrinkingContext<T> {
             : null);
   }
 
-  static const defaultPolicy = ShrinkingPolicy.bounded;
+  static const ShrinkingPolicy defaultPolicy = ShrinkingPolicy.bounded;
   static const defaultMaxTries = 100;
 
   final StatelessProperty<T> property;

@@ -2,8 +2,6 @@ import 'package:collection/collection.dart';
 import 'package:kiri_check/src/property/arbitrary.dart';
 import 'package:kiri_check/src/property/property_internal.dart';
 
-// ignore_for_file: null_check_on_nullable_type_parameter
-
 final class CombinatorSet<R, E1, E2, E3, E4, E5, E6, E7, E8> {
   CombinatorSet(
     this.count,

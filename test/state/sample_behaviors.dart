@@ -32,7 +32,7 @@ class BankAccountBehavior
         return system.frozen;
       },
       postcondition: (s, frozen) {
-        return frozen == false;
+        return !frozen;
       },
     );
   }
@@ -47,7 +47,7 @@ class BankAccountBehavior
           return system.frozen;
         },
         postcondition: (s, frozen) {
-          return frozen == true;
+          return frozen;
         },
       ),
       Action0(
@@ -58,7 +58,7 @@ class BankAccountBehavior
           return system.frozen;
         },
         postcondition: (s, frozen) {
-          return frozen == false;
+          return !frozen;
         },
       ),
     ];

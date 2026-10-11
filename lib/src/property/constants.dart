@@ -7,12 +7,12 @@ abstract class Constants {
 
   static int get safeIntMin => UniversalPlatform.isWeb ? int53Min : int64Min;
 
-  static const int8Max = (1 << 7) - 1;
-  static const int8Min = -(1 << 7);
-  static const int16Max = (1 << 15) - 1;
-  static const int16Min = -(1 << 15);
-  static const int32Max = (1 << 31) - 1;
-  static const int32Min = -(1 << 31);
+  static const int int8Max = (1 << 7) - 1;
+  static const int int8Min = -(1 << 7);
+  static const int int16Max = (1 << 15) - 1;
+  static const int int16Min = -(1 << 15);
+  static const int int32Max = (1 << 31) - 1;
+  static const int int32Min = -(1 << 31);
 
   static int get int53Max => (math.pow(2, 53) - 1).toInt();
 

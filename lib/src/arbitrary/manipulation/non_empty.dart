@@ -16,7 +16,7 @@ final class NonEmptyArbitrary<T> extends ArbitraryBase<T> {
   List<T>? get edgeCases {
     final baseEdgeCases = _base.edgeCases;
     if (baseEdgeCases == null) return null;
-    return baseEdgeCases.where((T value) => !_isEmpty(value)).toList();
+    return baseEdgeCases.where((value) => !_isEmpty(value)).toList();
   }
 
   @override
@@ -75,7 +75,7 @@ final class NonEmptyArbitrary<T> extends ArbitraryBase<T> {
   @override
   List<T> shrink(T value, ShrinkingDistance distance) {
     final baseShrinks = _base.shrink(value, distance);
-    return baseShrinks.where((T shrink) => !_isEmpty(shrink)).toList();
+    return baseShrinks.where((shrink) => !_isEmpty(shrink)).toList();
   }
 
   bool _isEmpty(T value) {
