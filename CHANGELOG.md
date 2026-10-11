@@ -1,5 +1,10 @@
 ## develop
 
+## 1.3.2
+
+- [CHANGE] Update `timezone` dependency to `^0.11.0` ([#30](https://github.com/szktty/kiri-check/pull/30))
+- [CHANGE] Update dev dependencies (`lints`, `very_good_analysis`)
+
 ## 1.3.1
 
 - [FIX] Ensure `Action.nextState` correctly awaits asynchronous operations, preventing race conditions in state model updates. (@ryanhanks-bestow, [#29](https://github.com/szktty/kiri-check/issues/29))
