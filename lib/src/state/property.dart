@@ -17,14 +17,26 @@ final class StatefulFalsifiedException<State, System> implements Exception {
 
   @override
   String toString() {
+    final falsifyingSequence = result.falsifyingSequence;
+    final falsifyingValues = falsifyingSequence.steps
+        .map((step) => step.commandContext.minValue)
+        .toList();
     final buffer = StringBuffer()..writeln('Falsifying example sequence:');
-    final sequence = result.falsifyingSequence;
-    for (var i = 0; i < sequence.steps.length; i++) {
-      final step = sequence.steps[i];
-      buffer.writeln('Step ${i + 1}: ${step.command.description}');
-      if (step.commandContext.arbitrary != null) {
-        buffer.writeln('  Shrunk value: ${step.commandContext.minValue}');
-      }
+    _writeSteps(buffer, falsifyingSequence, falsifyingValues, 'Shrunk value');
+    final shrunk = !const ListEquality<Command<dynamic, dynamic>>().equals(
+          result.originalSequence.steps.map((step) => step.command).toList(),
+          falsifyingSequence.steps.map((step) => step.command).toList(),
+        ) ||
+        !const DeepCollectionEquality()
+            .equals(result.originalValues, falsifyingValues);
+    if (shrunk) {
+      buffer.writeln('Original example sequence:');
+      _writeSteps(
+        buffer,
+        result.originalSequence,
+        result.originalValues,
+        'Value',
+      );
     }
     if (result.exception != null) {
       buffer.writeln('Exception: ${result.exception}');
@@ -35,6 +47,21 @@ final class StatefulFalsifiedException<State, System> implements Exception {
         ..writeln(result.stackTrace);
     }
     return buffer.toString();
+  }
+
+  static void _writeSteps<State, System>(
+    StringBuffer buffer,
+    TraversalSequence<State, System> sequence,
+    List<dynamic> values,
+    String valueLabel,
+  ) {
+    for (var i = 0; i < sequence.steps.length; i++) {
+      final step = sequence.steps[i];
+      buffer.writeln('Step ${i + 1}: ${step.command.description}');
+      if (step.commandContext.arbitrary != null) {
+        buffer.writeln('  $valueLabel: ${values[i]}');
+      }
+    }
   }
 }
 
@@ -115,7 +142,10 @@ final class StatefulProperty<State, System> extends Property<State> {
         final example = StatefulFalsifyingExample(
           result.originalState,
           result.originalSystem,
-          StatefulExampleStep.fromSequence(result.originalSequence),
+          StatefulExampleStep.fromSequence(
+            result.originalSequence,
+            result.originalValues,
+          ),
           result.falsifyingState,
           result.falsifyingSystem,
           StatefulExampleStep.fromSequence(result.falsifyingSequence),
@@ -256,12 +286,18 @@ final class _StatefulPropertyShrinker<State, System> {
     this.originalState,
     this.originalSystem,
     this.originalSequence,
-  );
+  ) : originalValues = originalSequence.steps
+            .map((step) => step.commandContext.currentValue)
+            .toList();
 
   final StatefulPropertyContext<State, System> propertyContext;
   final State originalState;
   final System originalSystem;
   final TraversalSequence<State, System> originalSequence;
+
+  // The values the original failure ran with. Shrinking changes the values
+  // held by the steps, which the original sequence shares.
+  final List<dynamic> originalValues;
   Exception? lastException;
   StackTrace? lastStackTrace;
 
@@ -277,6 +313,7 @@ final class _StatefulPropertyShrinker<State, System> {
       originalState,
       originalSystem,
       originalSequence,
+      originalValues,
       shrunk?.state ?? originalState,
       shrunk?.system ?? originalSystem,
       reduced,
@@ -442,6 +479,7 @@ final class StatefulShrinkingResult<State, System> {
     this.originalState,
     this.originalSystem,
     this.originalSequence,
+    this.originalValues,
     this.falsifyingState,
     this.falsifyingSystem,
     this.falsifyingSequence,
@@ -452,6 +490,7 @@ final class StatefulShrinkingResult<State, System> {
   final State originalState;
   final System originalSystem;
   final TraversalSequence<State, System> originalSequence;
+  final List<dynamic> originalValues;
   final State falsifyingState;
   final System falsifyingSystem;
   final TraversalSequence<State, System> falsifyingSequence;
@@ -516,14 +555,15 @@ final class StatefulExampleStep<State, System> {
   @protected
   @internal
   static List<StatefulExampleStep<State, System>> fromSequence<State, System>(
-    TraversalSequence<State, System> sequence,
-  ) {
+    TraversalSequence<State, System> sequence, [
+    List<dynamic>? values,
+  ]) {
     return sequence.steps
         .mapIndexed(
           (i, step) => StatefulExampleStep(
             i,
             step.command,
-            step.commandContext.minValue,
+            values != null ? values[i] : step.commandContext.minValue,
           ),
         )
         .toList();

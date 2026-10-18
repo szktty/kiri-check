@@ -24,6 +24,8 @@ final class FalsifiedException<T> implements Exception {
   FalsifiedException({
     required this.example,
     this.description,
+    this.originalExample,
+    this.originalDescription,
     this.seed,
     this.exception,
     this.stackTrace,
@@ -31,6 +33,8 @@ final class FalsifiedException<T> implements Exception {
 
   final T example;
   final String? description;
+  final T? originalExample;
+  final String? originalDescription;
   final int? seed;
   final Exception? exception;
   final StackTrace? stackTrace;
@@ -41,6 +45,11 @@ final class FalsifiedException<T> implements Exception {
       ..writeln(
         'Falsifying example: ${description ?? example}${seed != null ? ' (seed $seed)' : ''}',
       );
+
+    final original = originalDescription ?? originalExample?.toString();
+    if (original != null && original != (description ?? example.toString())) {
+      buffer.writeln('Original example: $original');
+    }
 
     if (exception != null) {
       buffer.writeln('Exception: $exception');

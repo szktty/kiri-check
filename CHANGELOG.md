@@ -1,5 +1,9 @@
 ## develop
 
+- [ADD] Show the original falsifying example (or sequence in stateful tests) alongside the shrunk one in the failure report
+- [FIX] `StatefulFalsifyingExample.originalSteps` now holds the values of the original failure, not the values changed by shrinking
+- [FIX] Correct the documentation of `onFalsify` in `forAll`: it is called after shrinking, with the shrunk example
+
 ## 1.3.2
 
 - [CHANGE] Update `timezone` dependency to `^0.11.0` (@0rzech, [#30](https://github.com/szktty/kiri-check/pull/30))

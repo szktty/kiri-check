@@ -81,6 +81,8 @@ final class StatelessProperty<T> extends Property<T> {
     _generationContext!.generate();
 
     ValueWithState<T>? falsifiedWithState;
+    T? originalExample;
+    String? originalDescription;
     Exception? lastException;
     StackTrace? lastStackTrace;
     for (var i = 0; i < _generationContext!.examples.length; i++) {
@@ -106,6 +108,8 @@ final class StatelessProperty<T> extends Property<T> {
         final randomImpl = random as RandomContextImpl;
         final currentState = RandomState.fromState(randomImpl.xorshift.state);
         final exampleWithState = ValueWithState(example, currentState);
+        originalExample = example;
+        originalDescription = description;
 
         final context = ShrinkingContext(this);
         if (settings.shrinkingPolicy != ShrinkingPolicy.off) {
@@ -133,6 +137,8 @@ final class StatelessProperty<T> extends Property<T> {
         exception = FalsifiedException(
           example: falsifiedWithState.value,
           description: description,
+          originalExample: originalExample,
+          originalDescription: originalDescription,
           seed: random.seed,
           exception: lastException,
           stackTrace: lastStackTrace,
