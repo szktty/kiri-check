@@ -134,6 +134,52 @@ final class TillBehavior extends Behavior<Till, Till> {
   }
 }
 
+/// A till opened, closed and opened again before the failing sale.
+final class ReopenTillBehavior extends Behavior<Till, Till> {
+  @override
+  Till initialState() => Till();
+
+  @override
+  Till createSystem(Till state) => Till();
+
+  @override
+  void destroySystem(Till system) {}
+
+  Command<Till, Till> _open() => Action0<Till, Till, bool>(
+        'open',
+        precondition: (state) => !state.open,
+        run: (system) => system.open = true,
+        nextState: (state) => state.open = true,
+      );
+
+  Command<Till, Till> _sell(int value) => Action<Till, Till, int, int>(
+        'sell',
+        integer(min: value, max: value),
+        precondition: (state, value) => state.open,
+        run: (system, value) => value,
+        postcondition: (state, value, result) => result < 6,
+        nextState: (state, value) {},
+      );
+
+  @override
+  List<Command<Till, Till>> generateCommands(Till state) {
+    return [
+      Sequence('reopen', [
+        _open(),
+        _sell(2),
+        Action0<Till, Till, bool>(
+          'close',
+          precondition: (state) => state.open,
+          run: (system) => system.open = false,
+          nextState: (state) => state.open = false,
+        ),
+        _open(),
+        _sell(6),
+      ]),
+    ];
+  }
+}
+
 List<String> _descriptions<State, System>(
   StatefulFalsifyingExample<State, System> example,
 ) {
@@ -272,6 +318,31 @@ void main() {
           expect(total, lessThan(10));
         }
         expect(total + values.last, greaterThanOrEqualTo(10));
+      });
+    });
+
+    property('drops steps whose precondition is no longer satisfied', () {
+      StatefulFalsifyingExample<Till, Till>? falsified;
+      runBehavior(
+        ReopenTillBehavior(),
+        seed: _seed,
+        maxCycles: 1,
+        maxSteps: 5,
+        onFalsify: (example) => falsified = example,
+        ignoreFalsify: true,
+      );
+      addTearDown(() {
+        expect(falsified, isNotNull);
+        expect(
+          falsified!.originalSteps.map((s) => s.command.description),
+          ['open', 'sell', 'close', 'open', 'sell'],
+        );
+        expect(_descriptions(falsified!), ['open', 'sell']);
+        expect(falsified!.falsifyingSteps.last.value, 6);
+        expect(
+          falsified!.exception.toString(),
+          'postcondition is not satisfied',
+        );
       });
     });
   });

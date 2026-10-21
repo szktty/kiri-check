@@ -2,6 +2,11 @@
 
 - [ADD] Show the original falsifying example (or sequence in stateful tests) alongside the shrunk one in the failure report
 - [FIX] `StatefulFalsifyingExample.originalSteps` now holds the values of the original failure, not the values changed by shrinking
+- [FIX] Stateful shrinking no longer counts a step whose precondition is not satisfied as a failure, which reported sequences that could never fail. Such a step is dropped from the candidate sequence
+- [FIX] Stateful shrinking now shrinks the value of one step at a time, from the smallest failing value, so values are actually made smaller
+- [FIX] Stateful shrinking can now drop a single step from the middle of a sequence
+- [FIX] The stateful failure report keeps the exception of the original failure when no smaller failing sequence is found
+- [FIX] Stateful shrinking calls `Behavior.setUp` and `Behavior.tearDown` exactly once for each run
 - [FIX] Correct the documentation of `onFalsify` in `forAll`: it is called after shrinking, with the shrunk example
 
 ## 1.3.2

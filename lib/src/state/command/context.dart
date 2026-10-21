@@ -23,7 +23,6 @@ final class CommandContext<State, System> {
     } else {
       this.arbitrary = arbitrary;
     }
-    _distance = null;
     _shrunkQueue = null;
   }
 
@@ -37,7 +36,6 @@ final class CommandContext<State, System> {
   bool useCache = false;
 
   CommandShrinkingState _shrinkState = CommandShrinkingState.notStarted;
-  ShrinkingDistance? _distance;
   int _shrinkGranularity = 1;
   List<dynamic>? _previousShrunk;
   Queue<ValueWithState<dynamic>>? _shrunkQueue;
@@ -87,43 +85,59 @@ final class CommandContext<State, System> {
     switch (_shrinkState) {
       case CommandShrinkingState.notStarted:
         _shrinkState = CommandShrinkingState.running;
-        _distance = _arbitraryBase!.calculateDistance(_current!.value)
-          ..granularity = _shrinkGranularity;
-        final shrunk = _arbitraryBase!.shrink(_current!.value, _distance!);
-        _previousShrunk = shrunk;
-        // Create ValueWithState instances for each shrunk value using the original state
-        final shrunkWithState = shrunk
-            .map((value) => ValueWithState<dynamic>(value, _current!.state))
-            .toList();
-        _shrunkQueue = Queue.of(shrunkWithState);
-        _minShrunk = _current;
-        return true;
+        _minShrunk ??= _current;
+        return _refillShrunkQueue();
       case CommandShrinkingState.running:
         if (_shrunkQueue!.isNotEmpty) {
           return true;
         } else {
           _shrinkGranularity++;
-          _distance!.granularity = _shrinkGranularity;
-          final shrunk = _arbitraryBase!.shrink(_current!.value, _distance!);
-          if (const DeepCollectionEquality().equals(shrunk, _previousShrunk)) {
-            _shrinkState = CommandShrinkingState.finished;
-            return false;
-          } else {
-            _previousShrunk = shrunk;
-            // Create ValueWithState instances for each shrunk value using the original state
-            final shrunkWithState = shrunk
-                .map((value) => ValueWithState<dynamic>(value, _current!.state))
-                .toList();
-            _shrunkQueue = Queue.of(shrunkWithState);
-            return true;
-          }
+          return _refillShrunkQueue();
         }
       case CommandShrinkingState.finished:
         return false;
     }
   }
 
+  // Cuts the next candidates from the smallest failing value, never from a
+  // candidate that passed.
+  bool _refillShrunkQueue() {
+    final minShrunk = _minShrunk!;
+    final distance = _arbitraryBase!.calculateDistance(minShrunk.value)
+      ..granularity = _shrinkGranularity;
+    final shrunk = distance.isEmpty
+        ? <dynamic>[]
+        : _arbitraryBase!.shrink(minShrunk.value, distance);
+    if (shrunk.isEmpty ||
+        const DeepCollectionEquality().equals(shrunk, _previousShrunk)) {
+      _shrinkState = CommandShrinkingState.finished;
+      return false;
+    }
+    _previousShrunk = shrunk;
+    // Create ValueWithState instances for each shrunk value using the original state
+    _shrunkQueue = Queue.of(
+      shrunk.map((value) => ValueWithState<dynamic>(value, minShrunk.state)),
+    );
+    return true;
+  }
+
   void failShrink() {
     _minShrunk = _current;
+  }
+
+  /// Holds the smallest failing value, or the current value if no failing
+  /// value has been recorded.
+  void holdMin() {
+    _minShrunk ??= _current;
+    _current = _minShrunk;
+  }
+
+  /// Starts shrinking again from the smallest failing value.
+  void restartShrink() {
+    holdMin();
+    _shrinkState = CommandShrinkingState.notStarted;
+    _shrinkGranularity = 1;
+    _previousShrunk = null;
+    _shrunkQueue = null;
   }
 }

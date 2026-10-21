@@ -230,7 +230,7 @@ final class StatefulProperty<State, System> extends Property<State> {
           if (!result) {
             i--;
           }
-        } on Exception catch (e) {
+        } on Exception catch (e, s) {
           printVerbose('  Error: $e');
           await _destroyBehavior(behavior, system);
 
@@ -239,6 +239,8 @@ final class StatefulProperty<State, System> extends Property<State> {
             stateContext.state,
             stateContext.system,
             TraversalSequence(sequence.steps.sublist(0, i + 1)),
+            lastException: e,
+            lastStackTrace: s,
           );
           printVerbose('--------------------------------------------');
           return shrinker.shrink();
@@ -265,17 +267,25 @@ final class StatefulProperty<State, System> extends Property<State> {
     StateContext<State, System> context,
     CommandContext<State, System> commandContext,
   ) async {
-    final state = context.state;
-    if (await commandContext.precondition(state)) {
-      final result = await commandContext.run(context.system);
-      if (await commandContext.postcondition(state, result)) {
-        await commandContext.nextState(state);
-        return true;
-      } else {
-        throw PropertyException('postcondition is not satisfied');
-      }
+    if (await commandContext.precondition(context.state)) {
+      await _executeCommand(context, commandContext);
+      return true;
     } else {
       throw PropertyException('precondition is not satisfied');
+    }
+  }
+
+  // Runs a command whose precondition is satisfied.
+  Future<void> _executeCommand(
+    StateContext<State, System> context,
+    CommandContext<State, System> commandContext,
+  ) async {
+    final state = context.state;
+    final result = await commandContext.run(context.system);
+    if (await commandContext.postcondition(state, result)) {
+      await commandContext.nextState(state);
+    } else {
+      throw PropertyException('postcondition is not satisfied');
     }
   }
 }
@@ -285,8 +295,10 @@ final class _StatefulPropertyShrinker<State, System> {
     this.propertyContext,
     this.originalState,
     this.originalSystem,
-    this.originalSequence,
-  ) : originalValues = originalSequence.steps
+    this.originalSequence, {
+    this.lastException,
+    this.lastStackTrace,
+  }) : originalValues = originalSequence.steps
             .map((step) => step.commandContext.currentValue)
             .toList();
 
@@ -298,25 +310,39 @@ final class _StatefulPropertyShrinker<State, System> {
   // The values the original failure ran with. Shrinking changes the values
   // held by the steps, which the original sequence shares.
   final List<dynamic> originalValues;
+
+  // The failure of the smallest failing sequence found so far, initially the
+  // original failure.
   Exception? lastException;
   StackTrace? lastStackTrace;
+  StateContext<State, System>? _falsifyingContext;
 
   StatefulProperty<State, System> get property => propertyContext.property;
 
   Behavior<State, System> get behavior => propertyContext.behavior;
 
   Future<StatefulShrinkingResult<State, System>> shrink() async {
+    propertyContext.shrinkCycle = 0;
+    for (final step in originalSequence.steps) {
+      step.commandContext.useCache = true;
+    }
+
     final partial = await _checkPartialSequences(originalSequence);
     final reduced = await _checkReducedSequences(partial);
-    final shrunk = await _checkValues(reduced);
+    final single = await _checkSingleRemovals(reduced);
+    final shrunk = await _checkValues(single);
+    for (final step in shrunk.steps) {
+      step.commandContext.holdMin();
+    }
+
     return StatefulShrinkingResult(
       originalState,
       originalSystem,
       originalSequence,
       originalValues,
-      shrunk?.state ?? originalState,
-      shrunk?.system ?? originalSystem,
-      reduced,
+      _falsifyingContext?.state ?? originalState,
+      _falsifyingContext?.system ?? originalSystem,
+      shrunk,
       lastException,
       lastStackTrace,
     );
@@ -327,41 +353,45 @@ final class _StatefulPropertyShrinker<State, System> {
   bool get _hasShrinkCycle =>
       _shrinkCycle < propertyContext.property.maxShrinkingCycles;
 
+  // Records the failure as the smallest one found so far and returns its
+  // sequence.
+  TraversalSequence<State, System> _adopt(_ShrinkFailure<State, System> f) {
+    lastException = f.exception;
+    lastStackTrace = f.stackTrace;
+    _falsifyingContext = f.context;
+    return f.sequence;
+  }
+
   Future<TraversalSequence<State, System>> _checkPartialSequences(
     TraversalSequence<State, System> baseSequence,
   ) async {
-    propertyContext.shrinkCycle = 0;
+    var current = baseSequence;
     var previousSequences = <TraversalSequence<State, System>>[];
-    var minShrunkSequence = baseSequence;
-    var minShrunkNum = baseSequence.steps.length;
     while (_hasShrinkCycle) {
-      final shrunkSequences = minShrunkSequence.shrink();
+      final shrunkSequences = current.shrink();
       if (TraversalSequence.equals(previousSequences, shrunkSequences)) {
         break;
       }
       previousSequences = shrunkSequences;
 
-      for (var i = 0; i < shrunkSequences.length; i++) {
-        final shrunkSequence = shrunkSequences[i];
+      for (final shrunkSequence in shrunkSequences) {
         printVerbose(
           'Shrink cycle ${_shrinkCycle + 1}: '
           '${shrunkSequence.steps.length} steps',
         );
-        await behavior.setUp();
-        if (!await _checkShrunkSequence(shrunkSequence, stepType: 'partial')) {
-          if (i < minShrunkNum) {
-            minShrunkSequence = shrunkSequence;
-            minShrunkNum = i;
-          }
-        }
-        behavior.tearDown();
+        final failure =
+            await _runCandidate(shrunkSequence, stepType: 'partial');
         propertyContext.shrinkCycle++;
+        if (failure != null &&
+            failure.sequence.steps.length < current.steps.length) {
+          current = _adopt(failure);
+        }
         if (!_hasShrinkCycle) {
           break;
         }
       }
     }
-    return minShrunkSequence;
+    return current;
   }
 
   Future<TraversalSequence<State, System>> _checkReducedSequences(
@@ -372,106 +402,158 @@ final class _StatefulPropertyShrinker<State, System> {
       commandTypeSet.add(step.command.description);
     }
 
-    var minShrunkSequence = baseSequence;
+    var current = baseSequence;
     for (final target in commandTypeSet) {
       if (!_hasShrinkCycle) {
         break;
       }
 
       final shrunkSequence = TraversalSequence<State, System>();
-      for (var i = 0; i < minShrunkSequence.steps.length; i++) {
-        final step = minShrunkSequence.steps[i];
+      for (final step in current.steps) {
         if (step.command.description != target) {
           shrunkSequence.addStep(step);
         }
       }
+      if (shrunkSequence.steps.isEmpty) {
+        continue;
+      }
 
-      if (shrunkSequence.steps.isNotEmpty &&
-          !await _checkShrunkSequence(shrunkSequence, stepType: 'reduced')) {
-        if (shrunkSequence.steps.length < minShrunkSequence.steps.length) {
-          minShrunkSequence = shrunkSequence;
-        }
+      final failure = await _runCandidate(shrunkSequence, stepType: 'reduced');
+      if (failure != null &&
+          failure.sequence.steps.length < current.steps.length) {
+        current = _adopt(failure);
       }
     }
-
-    return minShrunkSequence;
+    return current;
   }
 
-  Future<bool> _checkShrunkSequence(
+  // Drops one step at a time, from the last back to the first. A candidate
+  // that still fails replaces the sequence and the pass starts again from its
+  // end. The partial and reduced passes cannot drop a single step from the
+  // middle of a sequence.
+  Future<TraversalSequence<State, System>> _checkSingleRemovals(
+    TraversalSequence<State, System> baseSequence,
+  ) async {
+    var current = baseSequence;
+    var i = current.steps.length - 1;
+    while (i >= 0 && current.steps.length > 1 && _hasShrinkCycle) {
+      final shrunkSequence = TraversalSequence<State, System>();
+      for (var j = 0; j < current.steps.length; j++) {
+        if (j != i) {
+          shrunkSequence.addStep(current.steps[j]);
+        }
+      }
+      printVerbose('Shrink cycle ${_shrinkCycle + 1}: without step ${i + 1}');
+      final failure = await _runCandidate(shrunkSequence, stepType: 'single');
+      propertyContext.shrinkCycle++;
+      if (failure != null) {
+        current = _adopt(failure);
+        i = current.steps.length - 1;
+      } else {
+        i--;
+      }
+    }
+    return current;
+  }
+
+  // Shrinks the value of one step at a time, holding the other steps at their
+  // smallest failing values. The rounds over the steps repeat until a round
+  // shrinks no value, since a smaller value of one step can let another
+  // shrink further.
+  Future<TraversalSequence<State, System>> _checkValues(
+    TraversalSequence<State, System> baseSequence,
+  ) async {
+    var current = baseSequence;
+    var shrunk = true;
+    while (shrunk && _hasShrinkCycle) {
+      shrunk = false;
+      var restart = false;
+      for (var target = 0;
+          target < current.steps.length && _hasShrinkCycle && !restart;
+          target++) {
+        final context = current.steps[target].commandContext..restartShrink();
+        while (_hasShrinkCycle && context.tryShrink()) {
+          context.nextValue();
+          printVerbose(
+            'Shrink cycle ${_shrinkCycle + 1}: the value of step ${target + 1}',
+          );
+          final failure = await _runCandidate(current, stepType: 'value');
+          propertyContext.shrinkCycle++;
+          if (failure == null) {
+            context.holdMin();
+            continue;
+          }
+
+          // A failure anywhere in the sequence is caused by the target value.
+          context.failShrink();
+          shrunk = true;
+          final length = current.steps.length;
+          current = _adopt(failure);
+          if (current.steps.length < length) {
+            // Steps were dropped, so the targets have moved.
+            restart = true;
+            break;
+          }
+        }
+        context.holdMin();
+      }
+    }
+    return current;
+  }
+
+  // Runs a candidate sequence against a new system. Returns the failure with
+  // the steps executed up to the failing one, or null if the candidate passes.
+  //
+  // A step whose precondition is not satisfied is skipped, so a failing
+  // candidate is reported as the steps actually executed.
+  Future<_ShrinkFailure<State, System>?> _runCandidate(
     TraversalSequence<State, System> sequence, {
     required String stepType,
   }) async {
     await behavior.setUp();
     final (initPrecond, state) = await property._initialState();
     if (!initPrecond) {
-      return false;
+      printVerbose('  Error: initial precondition is not satisfied');
+      await behavior.tearDown();
+      return null;
     }
+
     final system = await behavior.createSystem(state);
     final stateContext =
         StateContext(state, system, property, propertyContext.test);
-    for (var i = 0; i < sequence.steps.length; i++) {
-      final step = sequence.steps[i];
-      printVerbose('Shrink $stepType step ${i + 1}: '
-          '${step.command.description}');
-      try {
-        step.commandContext.useCache = true;
-        step.commandContext.nextValue();
-        await stateContext.runCommand(step.commandContext);
-      } on Exception catch (e, s) {
-        printVerbose('  Error: $e');
-        if (i + 1 < sequence.steps.length) {
-          sequence.truncateSteps(i + 1);
-        }
-        lastException = e;
-        lastStackTrace = s;
-
-        await property._destroyBehavior(behavior, system);
-        return false;
-      }
-    }
-    await property._destroyBehavior(behavior, system);
-    return true;
-  }
-
-  Future<StateContext<State, System>?> _checkValues(
-    TraversalSequence<State, System> sequence,
-  ) async {
-    var allShrinkDone = false;
-    StateContext<State, System>? shrunkContext;
-    while (_hasShrinkCycle && !allShrinkDone) {
-      printVerbose('Shrink cycle ${_shrinkCycle + 1}');
-      final (initPrecond, state) = await property._initialState();
-      if (!initPrecond) {
-        printVerbose('  Error: initial precondition is not satisfied');
-        return shrunkContext;
-      }
-
-      final system = await propertyContext.behavior.createSystem(state);
-      final stateContext =
-          StateContext(state, system, property, propertyContext.test);
-      allShrinkDone = true;
+    final executed = TraversalSequence<State, System>();
+    try {
       for (var i = 0; i < sequence.steps.length; i++) {
         final step = sequence.steps[i];
-        printVerbose('Shrink value step ${i + 1}: ${step.command.description}');
+        printVerbose('Shrink $stepType step ${i + 1}: '
+            '${step.command.description}');
+        executed.addStep(step);
         try {
-          if (step.commandContext.tryShrink()) {
-            step.commandContext.nextValue();
-            allShrinkDone = false;
+          if (!await step.commandContext.precondition(state)) {
+            printVerbose('  Skipped: precondition is not satisfied');
+            executed.steps.removeLast();
+            continue;
           }
-          await stateContext.runCommand(step.commandContext);
-        } on Exception catch (e) {
+          await property._executeCommand(stateContext, step.commandContext);
+        } on Exception catch (e, s) {
           printVerbose('  Error: $e');
-          lastException = e;
-          step.commandContext.failShrink();
-          shrunkContext = stateContext;
-          break;
+          return _ShrinkFailure(executed, stateContext, e, s);
         }
       }
+      return null;
+    } finally {
       await property._destroyBehavior(behavior, system);
-      propertyContext.shrinkCycle++;
     }
-    return shrunkContext;
   }
+}
+
+final class _ShrinkFailure<State, System> {
+  _ShrinkFailure(this.sequence, this.context, this.exception, this.stackTrace);
+
+  final TraversalSequence<State, System> sequence;
+  final StateContext<State, System> context;
+  final Exception exception;
+  final StackTrace stackTrace;
 }
 
 final class StatefulShrinkingResult<State, System> {
