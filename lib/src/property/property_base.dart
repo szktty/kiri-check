@@ -97,7 +97,7 @@ final class StatelessProperty<T> extends Property<T> {
         }
         await PropertyTestManager.callSetUpForAll();
         await this.setUp?.call();
-        settings.onGenerate?.call(example);
+        await settings.onGenerate?.call(example);
         await block(example);
         await _callTearDownCallbacks();
       } on Exception catch (e, s) {
@@ -113,7 +113,7 @@ final class StatelessProperty<T> extends Property<T> {
 
         final context = ShrinkingContext(this);
         if (settings.shrinkingPolicy != ShrinkingPolicy.off) {
-          final shrunkValue = context.shrink(exampleWithState);
+          final shrunkValue = await context.shrink(exampleWithState);
           falsifiedWithState = shrunkValue != null
               ? ValueWithState(shrunkValue, currentState)
               : exampleWithState;
@@ -329,7 +329,7 @@ final class ShrinkingContext<T> {
   Exception? lastException;
   StackTrace? lastStackTrace;
 
-  T? shrink(ValueWithState<T> originalWithState) {
+  Future<T?> shrink(ValueWithState<T> originalWithState) async {
     if (policy == ShrinkingPolicy.off) {
       return null;
     }
@@ -365,13 +365,18 @@ final class ShrinkingContext<T> {
 
       final exampleWithState = queue.removeFirst();
       tried.add(exampleWithState);
-      property.settings.onShrink?.call(exampleWithState.value);
+      await property.settings.onShrink?.call(exampleWithState.value);
 
       final description = arbitrary.describeExample(exampleWithState.value);
       try {
         printVerbose('Shrunk example to: $description');
-        property.block(exampleWithState.value);
+        // Each shrunk example runs as a test case of its own.
+        await PropertyTestManager.callSetUpForAll();
+        await property.setUp?.call();
+        await property.block(exampleWithState.value);
+        await property._callTearDownCallbacks();
       } on Exception catch (e, s) {
+        await property._callTearDownCallbacks();
         counterWithState = exampleWithState;
         lastException = e;
         lastStackTrace = s;

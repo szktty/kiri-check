@@ -7,6 +7,9 @@
 - [FIX] Stateful shrinking can now drop a single step from the middle of a sequence
 - [FIX] The stateful failure report keeps the exception of the original failure when no smaller failing sequence is found
 - [FIX] Stateful shrinking calls `Behavior.setUp` and `Behavior.tearDown` exactly once for each run
+- [FIX] An async property block is now awaited while shrinking, so its failures are shrunk instead of being reported unshrunk with a separate error for each shrunk example
+- [FIX] `setUp`, `tearDown` and the `forAll` callbacks are now called for each shrunk example, as for each generated example
+- [FIX] `onGenerate` and `onShrink` callbacks returning a `Future` are now awaited
 - [FIX] Correct the documentation of `onFalsify` in `forAll`: it is called after shrinking, with the shrunk example
 
 ## 1.3.2
