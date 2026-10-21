@@ -129,10 +129,10 @@ final class StatefulProperty<State, System> extends Property<State> {
 
   @override
   Future<void> check(PropertyTest test) async {
-    final (result, exception) = await _check(test);
+    final (result, exception, stackTrace) = await _check(test);
 
     if (exception != null) {
-      throw exception;
+      Error.throwWithStackTrace(exception, stackTrace!);
     } else if (result != null) {
       final description = result.toString();
       printVerbose('');
@@ -161,7 +161,8 @@ final class StatefulProperty<State, System> extends Property<State> {
     }
   }
 
-  Future<(StatefulShrinkingResult<State, System>?, Exception?)> _check(
+  Future<(StatefulShrinkingResult<State, System>?, Object?, StackTrace?)>
+      _check(
     PropertyTest test,
   ) async {
     printVerbose('Check behavior: ${behavior.runtimeType}');
@@ -169,15 +170,22 @@ final class StatefulProperty<State, System> extends Property<State> {
     await behavior.setUpAll();
 
     StatefulShrinkingResult<State, System>? result;
-    Exception? exception;
+    Object? exception;
+    StackTrace? stackTrace;
     try {
       result = await _checkSequences(test);
-    } on Exception catch (e) {
+    } catch (e, s) {
+      // A failing property may throw an Error too, but after an
+      // OutOfMemoryError too little memory may be left to shrink.
+      if (e is OutOfMemoryError) {
+        rethrow;
+      }
       exception = e;
+      stackTrace = s;
     }
     await behavior.tearDownAll();
     await this.tearDown?.call();
-    return (result, exception);
+    return (result, exception, stackTrace);
   }
 
   Future<(bool, State)> _initialState() async {
@@ -224,13 +232,20 @@ final class StatefulProperty<State, System> extends Property<State> {
       for (var i = 0; i < sequence.steps.length; i++) {
         final step = sequence.steps[i];
         printVerbose('Step ${i + 1}: ${step.command.description}');
+        // Generate the value outside the try, so an error of a generator
+        // is not taken as a failure of the property.
+        step.commandContext.nextValue();
         try {
-          step.commandContext.nextValue();
           final result = await stateContext.runCommand(step.commandContext);
           if (!result) {
             i--;
           }
-        } on Exception catch (e, s) {
+        } catch (e, s) {
+          // A failing property may throw an Error too, but after an
+          // OutOfMemoryError too little memory may be left to shrink.
+          if (e is OutOfMemoryError) {
+            rethrow;
+          }
           printVerbose('  Error: $e');
           await _destroyBehavior(behavior, system);
 
@@ -313,7 +328,7 @@ final class _StatefulPropertyShrinker<State, System> {
 
   // The failure of the smallest failing sequence found so far, initially the
   // original failure.
-  Exception? lastException;
+  Object? lastException;
   StackTrace? lastStackTrace;
   StateContext<State, System>? _falsifyingContext;
 
@@ -535,7 +550,12 @@ final class _StatefulPropertyShrinker<State, System> {
             continue;
           }
           await property._executeCommand(stateContext, step.commandContext);
-        } on Exception catch (e, s) {
+        } catch (e, s) {
+          // A failing property may throw an Error too, but after an
+          // OutOfMemoryError too little memory may be left to shrink.
+          if (e is OutOfMemoryError) {
+            rethrow;
+          }
           printVerbose('  Error: $e');
           return _ShrinkFailure(executed, stateContext, e, s);
         }
@@ -552,7 +572,7 @@ final class _ShrinkFailure<State, System> {
 
   final TraversalSequence<State, System> sequence;
   final StateContext<State, System> context;
-  final Exception exception;
+  final Object exception;
   final StackTrace stackTrace;
 }
 
@@ -576,7 +596,7 @@ final class StatefulShrinkingResult<State, System> {
   final State falsifyingState;
   final System falsifyingSystem;
   final TraversalSequence<State, System> falsifyingSequence;
-  final Exception? exception;
+  final Object? exception;
   final StackTrace? stackTrace;
 }
 
@@ -618,7 +638,7 @@ final class StatefulFalsifyingExample<State, System> {
   final List<StatefulExampleStep<State, System>> falsifyingSteps;
 
   /// The exception that occurred during the initial failure or shrinking.
-  final Exception? exception;
+  final Object? exception;
 
   /// The stack trace that occurred during the initial failure or shrinking.
   final StackTrace? stackTrace;

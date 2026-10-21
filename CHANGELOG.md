@@ -1,5 +1,8 @@
 ## develop
 
+- [CHANGE] **Breaking:** `StatefulFalsifyingExample.exception` is now `Object?` instead of `Exception?`, so that it can hold an `Error`
+- [FIX] A property failing with an `Error` (a `RangeError`, a `StateError`, a failed `assert`, a `StackOverflowError` and so on) is now shrunk like one failing with an `Exception`, and its tear-down callbacks run. An `OutOfMemoryError` is rethrown without shrinking
+- [FIX] In stateful tests, an error thrown while generating a command's value is no longer taken as a failure of the property
 - [ADD] Show the original falsifying example (or sequence in stateful tests) alongside the shrunk one in the failure report
 - [FIX] `StatefulFalsifyingExample.originalSteps` now holds the values of the original failure, not the values changed by shrinking
 - [FIX] Stateful shrinking no longer counts a step whose precondition is not satisfied as a failure, which reported sequences that could never fail. Such a step is dropped from the candidate sequence

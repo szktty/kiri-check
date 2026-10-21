@@ -36,7 +36,7 @@ final class FalsifiedException<T> implements Exception {
   final T? originalExample;
   final String? originalDescription;
   final int? seed;
-  final Exception? exception;
+  final Object? exception;
   final StackTrace? stackTrace;
 
   @override

@@ -83,7 +83,7 @@ final class StatelessProperty<T> extends Property<T> {
     ValueWithState<T>? falsifiedWithState;
     T? originalExample;
     String? originalDescription;
-    Exception? lastException;
+    Object? lastException;
     StackTrace? lastStackTrace;
     for (var i = 0; i < _generationContext!.examples.length; i++) {
       final example = _generationContext!.examples[i];
@@ -100,7 +100,12 @@ final class StatelessProperty<T> extends Property<T> {
         await settings.onGenerate?.call(example);
         await block(example);
         await _callTearDownCallbacks();
-      } on Exception catch (e, s) {
+      } catch (e, s) {
+        // A failing property may throw an Error too, but after an
+        // OutOfMemoryError too little memory may be left to shrink.
+        if (e is OutOfMemoryError) {
+          rethrow;
+        }
         printVerbose('Falsifying example: $description');
         await _callTearDownCallbacks();
 
@@ -326,7 +331,7 @@ final class ShrinkingContext<T> {
 
   bool get isFull => policy == ShrinkingPolicy.full;
 
-  Exception? lastException;
+  Object? lastException;
   StackTrace? lastStackTrace;
 
   Future<T?> shrink(ValueWithState<T> originalWithState) async {
@@ -375,7 +380,12 @@ final class ShrinkingContext<T> {
         await property.setUp?.call();
         await property.block(exampleWithState.value);
         await property._callTearDownCallbacks();
-      } on Exception catch (e, s) {
+      } catch (e, s) {
+        // A failing property may throw an Error too, but after an
+        // OutOfMemoryError too little memory may be left to shrink.
+        if (e is OutOfMemoryError) {
+          rethrow;
+        }
         await property._callTearDownCallbacks();
         counterWithState = exampleWithState;
         lastException = e;
