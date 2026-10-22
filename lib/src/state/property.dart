@@ -232,9 +232,8 @@ final class StatefulProperty<State, System> extends Property<State> {
       for (var i = 0; i < sequence.steps.length; i++) {
         final step = sequence.steps[i];
         printVerbose('Step ${i + 1}: ${step.command.description}');
-        // Generate the value outside the try, so an error of a generator
-        // is not taken as a failure of the property.
-        step.commandContext.nextValue();
+        // Run the value generated with the sequence, which its precondition
+        // was checked with.
         try {
           final result = await stateContext.runCommand(step.commandContext);
           if (!result) {

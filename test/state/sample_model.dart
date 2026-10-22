@@ -159,7 +159,7 @@ final class BankAccountModel {
       return result;
     } else {
       final charged = _charge(amount);
-      withdrawPerDay += charged;
+      withdrawPerDay += amount;
       balance -= charged;
       addHistory(BankAccountOperation.withdraw);
       return balance;
