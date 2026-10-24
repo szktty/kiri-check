@@ -41,6 +41,24 @@ void main() {
       });
     });
 
+    property('generates file URIs from POSIX paths by default', () {
+      forAll(uri(schemes: ['file'], allowFile: true), (u) {
+        expect(u.scheme, 'file');
+        expect(u.path, startsWith('/'));
+        expect(u.path, isNot(matches(RegExp('^/[A-Z]:/'))));
+        expect(u.toFilePath(windows: false), startsWith('/'));
+      });
+    });
+
+    property('generates file URIs from Windows paths when windows is set', () {
+      forAll(uri(schemes: ['file'], allowFile: true, windows: true), (u) {
+        expect(u.scheme, 'file');
+        expect(u.host, isEmpty);
+        expect(u.path, matches(RegExp('^/[A-Z]:/')));
+        expect(u.toFilePath(windows: true), matches(RegExp(r'^[A-Z]:\\')));
+      });
+    });
+
     property('generates mailto URIs when enabled', () {
       forAll(uri(allowMailto: true), (u) {
         if (u.scheme == 'mailto') {

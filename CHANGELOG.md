@@ -1,5 +1,7 @@
 ## develop
 
+- [ADD] Add the `windows` option to `uri` to generate file URIs from Windows paths such as `C:\dir\file`
+- [FIX] `uri` now generates the same file URIs on every platform; on Windows it threw "Illegal character in path"
 - [CHANGE] **Breaking:** `StatefulFalsifyingExample.exception` is now `Object?` instead of `Exception?`, so that it can hold an `Error`
 - [FIX] A property failing with an `Error` (a `RangeError`, a `StateError`, a failed `assert`, a `StackOverflowError` and so on) is now shrunk like one failing with an `Exception`, and its tear-down callbacks run. An `OutOfMemoryError` is rethrown without shrinking
 - [FIX] In stateful tests, a command now runs with the value its precondition was checked with during generation, instead of a value generated again, which could fail the precondition and the property
