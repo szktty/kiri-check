@@ -82,7 +82,8 @@ void property(
 ///   - `onShrink`: A callback function that is called after each shrink operation,
 ///     useful for logging or analysis.
 ///   - `onFalsify`: A callback function that is called when a counterexample is found,
-///     before any shrinking has occurred.
+///     after shrinking has occurred. It receives the shrunk example, or the original
+///     example if shrinking is disabled.
 ///   - `ignoreFalsify`: If set to true, the test will not be marked as failed even if
 ///     a counterexample that falsifies the property is found. This allows the test to
 ///     continue executing and attempting to verify the property with other examples,

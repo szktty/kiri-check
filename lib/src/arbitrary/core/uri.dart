@@ -9,6 +9,7 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
     this.allowFile = false,
     this.allowMailto = false,
     this.allowDataUri = false,
+    this.windows = false,
   });
 
   /// List of URI schemes to generate.
@@ -22,6 +23,11 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
 
   /// Whether to include data: URIs.
   final bool allowDataUri;
+
+  /// Whether to generate file URIs from Windows paths such as `C:\dir\file`
+  /// instead of POSIX paths such as `/dir/file`. Either way, the URIs do not
+  /// depend on the platform the test runs on.
+  final bool windows;
 
   @override
   bool get isExhaustive => false;
@@ -44,6 +50,11 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
   static final _pathSegment = CharacterSet.fromCharacters(
     'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
     r"0123456789-._~!$&'()*+,;=:@",
+  );
+
+  static final _windowsPathSegment = CharacterSet.fromCharacters(
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    r"0123456789-._~!$&'()+,;=@",
   );
 
   // Generate a valid domain label (RFC 1035)
@@ -125,6 +136,24 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
     );
   }
 
+  // A path segment of a Windows path, without the characters Windows does not
+  // allow in a file name.
+  static Arbitrary<String> _windowsPathSegmentArb() {
+    return string(
+      minLength: 1,
+      maxLength: 20,
+      characterSet: _windowsPathSegment,
+    );
+  }
+
+  static Arbitrary<String> _windowsDriveArb() {
+    return string(
+      minLength: 1,
+      maxLength: 1,
+      characterSet: CharacterSet.fromCharacters('ABCDEFGHIJKLMNOPQRSTUVWXYZ'),
+    );
+  }
+
   // Generate a path
   static Arbitrary<String> _pathArb() {
     return frequency([
@@ -171,7 +200,9 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
     final firstScheme = schemes.isNotEmpty ? schemes.first : 'http';
 
     if (firstScheme == 'file' || (allowFile && schemes.contains('file'))) {
-      return Uri.file('/example/path');
+      return windows
+          ? Uri.file(r'C:\example\path', windows: true)
+          : Uri.file('/example/path', windows: false);
     } else if (firstScheme == 'mailto' ||
         (allowMailto && schemes.contains('mailto'))) {
       return Uri.parse('mailto:user@example.com');
@@ -217,10 +248,20 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
     }
 
     if (scheme == 'file') {
+      if (windows) {
+        final driveArb = _windowsDriveArb() as ArbitraryInternal<String>;
+        final drive = driveArb.generate(random);
+        final segmentsArb =
+            list(_windowsPathSegmentArb(), minLength: 1, maxLength: 5)
+                as ArbitraryInternal<List<String>>;
+        final segments = segmentsArb.generate(random);
+        return Uri.file('$drive:\\${segments.join(r'\')}', windows: true);
+      }
       final segmentsArb = list(_pathSegmentArb(), minLength: 1, maxLength: 5)
           as ArbitraryInternal<List<String>>;
       final segments = segmentsArb.generate(random);
-      return Uri.file('/${segments.join('/')}');
+      // Parse the path by POSIX rules on every platform.
+      return Uri.file('/${segments.join('/')}', windows: false);
     }
 
     if (scheme == 'data') {
@@ -382,6 +423,10 @@ final class UriArbitrary extends ArbitraryBase<Uri> {
 /// - [allowMailto]: Include mailto: URIs
 /// - [allowDataUri]: Include data: URIs
 ///
+/// File URIs are generated from POSIX paths such as `/dir/file`, the same on
+/// every platform. Set [windows] to generate them from Windows paths such as
+/// `C:\dir\file` instead, also on every platform.
+///
 /// Example:
 /// ```dart
 /// property('URIs are valid', () {
@@ -403,11 +448,13 @@ Arbitrary<Uri> uri({
   bool allowFile = false,
   bool allowMailto = false,
   bool allowDataUri = false,
+  bool windows = false,
 }) {
   return UriArbitrary(
     schemes: schemes,
     allowFile: allowFile,
     allowMailto: allowMailto,
     allowDataUri: allowDataUri,
+    windows: windows,
   );
 }
