@@ -6,22 +6,31 @@ on:
       - main
       - develop
       - feature/*
+      - fix/*
       - release/*
   push:
     branches:
       - main
       - develop
       - feature/*
+      - fix/*
       - release/*
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
 
       - run: dart pub get
-      - run: dart format --output=none --set-exit-if-changed .
-      - run: dart analyze
+      # Formatting and static analysis do not depend on the platform.
+      - if: matrix.os == 'ubuntu-latest'
+        run: dart format --output=none --set-exit-if-changed .
+      - if: matrix.os == 'ubuntu-latest'
+        run: dart analyze
       - run: dart test

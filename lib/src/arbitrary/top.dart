@@ -219,6 +219,10 @@ Arbitrary<Set<T>> set<T>(
 /// - [allowMailto]: Include mailto: URIs
 /// - [allowDataUri]: Include data: URIs
 ///
+/// File URIs are generated from POSIX paths such as `/dir/file`, the same on
+/// every platform. Set [windows] to generate them from Windows paths such as
+/// `C:\dir\file` instead, also on every platform.
+///
 /// Example:
 /// ```dart
 /// property('URIs are valid', () {
@@ -240,12 +244,14 @@ Arbitrary<Uri> uri({
   bool allowFile = false,
   bool allowMailto = false,
   bool allowDataUri = false,
+  bool windows = false,
 }) =>
     UriArbitrary(
       schemes: schemes,
       allowFile: allowFile,
       allowMailto: allowMailto,
       allowDataUri: allowDataUri,
+      windows: windows,
     );
 
 /// Returns an arbitrary that generates a deck.
