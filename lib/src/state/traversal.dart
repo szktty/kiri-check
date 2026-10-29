@@ -120,10 +120,6 @@ final class TraversalSequence<State, System> {
     steps.add(step);
   }
 
-  void truncateSteps(int index) {
-    steps.removeRange(index, steps.length);
-  }
-
   static bool equals<State, System>(
     List<TraversalSequence<State, System>> a,
     List<TraversalSequence<State, System>> b,

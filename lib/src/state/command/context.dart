@@ -33,8 +33,6 @@ final class CommandContext<State, System> {
   ArbitraryBase<dynamic>? get _arbitraryBase =>
       arbitrary as ArbitraryBase<dynamic>?;
 
-  bool useCache = false;
-
   CommandShrinkingState _shrinkState = CommandShrinkingState.notStarted;
   int _shrinkGranularity = 1;
   List<dynamic>? _previousShrunk;
@@ -56,7 +54,7 @@ final class CommandContext<State, System> {
         randomImpl.xorshift.state =
             RandomStateXorshift.fromState(stateToRestore);
       }
-    } else if (!useCache) {
+    } else {
       _current = _arbitraryBase?.generateWithState(random);
     }
   }
