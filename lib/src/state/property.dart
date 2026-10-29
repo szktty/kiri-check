@@ -75,7 +75,7 @@ final class StateContext<State, System> {
 
   Behavior<State, System> get behavior => property.behavior;
 
-  Future<bool> runCommand(CommandContext<State, System> commandContext) {
+  Future<void> runCommand(CommandContext<State, System> commandContext) {
     return property._runCommand(this, commandContext);
   }
 }
@@ -86,12 +86,7 @@ final class StatefulPropertyContext<State, System> {
   final StatefulProperty<State, System> property;
   final PropertyTest test;
   int cycle = 0;
-  int step = 0;
   int shrinkCycle = 0;
-
-  bool get hasNextCycle => cycle < property.maxCycles;
-
-  bool get hasNextShrinkCycle => shrinkCycle < property.maxShrinkingCycles;
 
   Behavior<State, System> get behavior => property.behavior;
 }
@@ -235,10 +230,7 @@ final class StatefulProperty<State, System> extends Property<State> {
         // Run the value generated with the sequence, which its precondition
         // was checked with.
         try {
-          final result = await stateContext.runCommand(step.commandContext);
-          if (!result) {
-            i--;
-          }
+          await stateContext.runCommand(step.commandContext);
         } catch (e, s) {
           // A failing property may throw an Error too, but after an
           // OutOfMemoryError too little memory may be left to shrink.
@@ -277,13 +269,12 @@ final class StatefulProperty<State, System> extends Property<State> {
     await behavior.tearDown();
   }
 
-  Future<bool> _runCommand(
+  Future<void> _runCommand(
     StateContext<State, System> context,
     CommandContext<State, System> commandContext,
   ) async {
     if (await commandContext.precondition(context.state)) {
       await _executeCommand(context, commandContext);
-      return true;
     } else {
       throw PropertyException('precondition is not satisfied');
     }
@@ -337,9 +328,6 @@ final class _StatefulPropertyShrinker<State, System> {
 
   Future<StatefulShrinkingResult<State, System>> shrink() async {
     propertyContext.shrinkCycle = 0;
-    for (final step in originalSequence.steps) {
-      step.commandContext.useCache = true;
-    }
 
     final partial = await _checkPartialSequences(originalSequence);
     final reduced = await _checkReducedSequences(partial);
