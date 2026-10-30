@@ -1,5 +1,7 @@
 ## develop
 
+- [ADD] Add the `scheduler` arbitrary to test asynchronous code against interleavings. It runs microtasks in an order of its own, runs timers on virtual time, and shrinks a failing order towards the order Dart uses
+
 ## 1.4.0
 
 - [CHANGE] **Breaking:** `StatefulFalsifyingExample.exception` is now `Object?` instead of `Exception?`, so that it can hold an `Error`

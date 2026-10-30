@@ -26,6 +26,7 @@ export 'top.dart'
         oneOf,
         recursive,
         runes,
+        scheduler,
         set,
         string,
         uri;

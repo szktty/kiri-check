@@ -257,6 +257,32 @@ Arbitrary<Uri> uri({
 /// Returns an arbitrary that generates a deck.
 Arbitrary<Deck> deck() => DeckArbitraries.deck();
 
+/// Returns an arbitrary that generates a scheduler, which runs
+/// asynchronous code in an order of its own to find interleavings
+/// that break the code.
+///
+/// Parameters:
+///
+/// - `maxSteps`: The maximum number of tasks to run in one call to
+///   [Scheduler.run]. The run fails when it is exceeded, as the code
+///   may not terminate.
+///
+/// Example:
+///
+/// ```dart
+/// property('concurrent increments are not lost', () {
+///   forAll(scheduler(), (s) async {
+///     final counter = Counter();
+///     await s.run(
+///       () => Future.wait([counter.increment(), counter.increment()]),
+///     );
+///     expect(counter.value, 2);
+///   });
+/// });
+/// ```
+Arbitrary<Scheduler> scheduler({int? maxSteps}) =>
+    SchedulerArbitraries.scheduler(maxSteps: maxSteps);
+
 /// Returns an arbitrary that generates a value using the provided builder.
 Arbitrary<T> build<T>(T Function() builder) =>
     BuildArbitraries.build<T>(builder);

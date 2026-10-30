@@ -9,6 +9,8 @@ kiri-check is a property-based testing library for Dart.
 - Customization of the exploration method is easy. You can specify data ranges, increase or decrease the number of
   trials, and prioritize edge cases.
 - Supports stateful testing. You can test the behavior of a system that changes state over time.
+- Supports testing asynchronous code against interleavings. A scheduler runs the code in various orders to find
+  race conditions, and shrinks a failing order to a minimal one.
 
 ## Install
 
@@ -79,6 +81,42 @@ void main() {
   });
 }
 ```
+
+## Testing interleavings of asynchronous code
+
+Dart runs asynchronous code on a single thread, but code running concurrently interleaves wherever it waits for a
+future, which may cause race conditions. The `scheduler` arbitrary generates a scheduler which runs microtasks, such
+as the continuations after `await`, in an order of its own instead of the order Dart itself uses. Timers run on
+virtual time, so `Future.delayed` completes without waiting.
+
+```dart
+class Counter {
+  int value = 0;
+
+  Future<void> increment() async {
+    final current = value;
+    await Future<void>.delayed(const Duration(milliseconds: 10)); // Saves the value
+    value = current + 1;
+  }
+}
+
+void main() {
+  property('concurrent increments are not lost', () {
+    forAll(scheduler(), (s) async {
+      final counter = Counter();
+      await s.run(() => Future.wait([counter.increment(), counter.increment()]));
+      expect(counter.value, 2);
+    });
+  });
+}
+```
+
+When the property fails, the order is shrunk towards the order Dart uses, and the falsifying example shows the
+choices made by the scheduler, such as `Scheduler(choices: [1, 1], steps: 3)`. Each choice is the index of the
+microtask that ran next among the ready ones, where `0` is the oldest one. The scheduler can be combined with other
+arbitraries, such as `combine2(list(integer()), scheduler())`.
+
+The scheduler controls only Dart code. I/O and other code outside of Dart complete in their own order.
 
 ## Stateful testing
 
