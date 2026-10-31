@@ -206,7 +206,139 @@ void main() {
     });
   });
 
+  group('describe', () {
+    test(
+      'shows where the reordered microtasks wait',
+      () async {
+        final s = SchedulerImpl(maxSteps: 100, choices: const [1, 1]);
+        await runCounter(s);
+        final description = s.toString();
+        expect(description, startsWith('Scheduler(choices: [1, 1], steps: '));
+        expect(description, contains('step 1: ran microtask waiting at'));
+        expect(description, contains('Counter.incrementTwice'));
+        expect(description, contains('before microtask waiting at'));
+        expect(description, contains('Counter.incrementOnce'));
+      },
+      testOn: 'vm',
+    );
+
+    test('shows the reordered microtasks', () async {
+      final s = SchedulerImpl(maxSteps: 100, choices: const [1, 1]);
+      await runCounter(s);
+      expect(s.toString(), contains('step 1: ran microtask'));
+    });
+
+    test('shows nothing reordered in the order Dart uses', () async {
+      final s = SchedulerImpl(maxSteps: 100, choices: const []);
+      await runCounter(s);
+      expect(s.toString(), isNot(contains('ran')));
+    });
+  });
+
+  group('schedule', () {
+    Future<List<int>> runScheduled(Scheduler s) async {
+      final order = <int>[];
+      await s.run(
+        () => Future.wait([
+          s.schedule(Future.value(1), label: 'one').then(order.add),
+          s.schedule(Future.value(2), label: 'two').then(order.add),
+          s.schedule(Future.value(3), label: 'three').then(order.add),
+        ]),
+      );
+      return order;
+    }
+
+    test('completes in the order of scheduling without choices', () async {
+      final s = Scheduler.withChoices(const [], microtasks: false);
+      expect(await runScheduled(s), [1, 2, 3]);
+    });
+
+    test('completes in the order of the choices', () async {
+      final s = Scheduler.withChoices(const [2, 1], microtasks: false);
+      expect(await runScheduled(s), [3, 2, 1]);
+      expect(s.toString(), contains("ran scheduled 'three'"));
+      expect(s.toString(), contains("before scheduled 'one'"));
+    });
+
+    test('does not reorder microtasks if disabled', () async {
+      final s = SchedulerImpl(
+        maxSteps: 100,
+        microtasks: false,
+        choices: const [],
+        seed: 123,
+      );
+      expect(await runCounter(s), 2);
+      expect(s.trace, isEmpty);
+    });
+
+    test('waits for the scheduled future to complete', () async {
+      final s = Scheduler.withChoices(const [], microtasks: false);
+      final order = <int>[];
+      await s.run(
+        () => Future.wait([
+          s
+              .schedule(
+                Future<int>.delayed(const Duration(seconds: 1), () => 1),
+              )
+              .then(order.add),
+          s.schedule(Future.value(2)).then(order.add),
+        ]),
+      );
+      expect(order, [1, 2]);
+    });
+
+    test('completes with the error of the future', () async {
+      final s = Scheduler.withChoices(const []);
+      await expectLater(
+        s.run(() => s.schedule(Future<int>.error(StateError('error')))),
+        throwsStateError,
+      );
+    });
+
+    test('cannot be called outside of run', () {
+      final s = Scheduler.withChoices(const []);
+      expect(() => s.schedule(Future.value(1)), throwsStateError);
+    });
+  });
+
+  group('withChoices', () {
+    test('rejects negative choices', () {
+      expect(() => Scheduler.withChoices(const [-1]), throwsRangeError);
+    });
+
+    test('rejects non-positive max steps', () {
+      expect(
+        () => Scheduler.withChoices(const [], maxSteps: 0),
+        throwsArgumentError,
+      );
+    });
+  });
+
   group('property', () {
+    property('finds a race of scheduled futures', () {
+      SchedulerImpl? falsified;
+      forAll(
+        scheduler(microtasks: false),
+        (s) async {
+          // Saves the latest value, but a stale response may overwrite it.
+          var saved = 0;
+          Future<void> save(int value) async {
+            final response = await s.schedule(Future.value(value));
+            saved = response;
+          }
+
+          await s.run(() => Future.wait([save(1), save(2)]));
+          expect(saved, 2);
+        },
+        onFalsify: (s) => falsified = s as SchedulerImpl,
+        ignoreFalsify: true,
+        tearDownAll: () {
+          expect(falsified, isNotNull);
+          expect(falsified!.trace, [1]);
+        },
+      );
+    });
+
     property('finds a lost increment and shrinks the schedule', () {
       SchedulerImpl? falsified;
       forAll(

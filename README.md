@@ -112,9 +112,40 @@ void main() {
 ```
 
 When the property fails, the order is shrunk towards the order Dart uses, and the falsifying example shows the
-choices made by the scheduler, such as `Scheduler(choices: [1, 1], steps: 3)`. Each choice is the index of the
-microtask that ran next among the ready ones, where `0` is the oldest one. The scheduler can be combined with other
-arbitraries, such as `combine2(list(integer()), scheduler())`.
+choices made by the scheduler and where the reordered microtasks wait:
+
+```
+Falsifying example: Scheduler(choices: [1, 1], steps: 3)
+  step 1: ran microtask waiting at Counter.increment (test/counter_test.dart 12:5)
+    before microtask waiting at Counter.increment (test/counter_test.dart 12:5)
+  ...
+```
+
+Each choice is the index of the task that ran next among the ready ones, where `0` is the oldest one. The locations
+are shown on the Dart VM only. The scheduler can be combined with other arbitraries, such as
+`combine2(list(integer()), scheduler())`. To keep a failing order as a regression test, create a scheduler with the
+choices:
+
+```dart
+test('concurrent increments are not lost', () async {
+  final s = Scheduler.withChoices([1, 1]);
+  final counter = Counter();
+  await s.run(() => Future.wait([counter.increment(), counter.increment()]));
+  expect(counter.value, 2);
+});
+```
+
+Reordering every microtask may also produce orders that cannot occur in Dart, if the code depends on the order of the
+microtasks. With `scheduler(microtasks: false)`, only the futures passed to `Scheduler.schedule` are reordered, such
+as the responses of a mocked server:
+
+```dart
+forAll(scheduler(microtasks: false), (s) async {
+  final client = Client(fetch: (id) => s.schedule(server.fetch(id), label: 'fetch $id'));
+  await s.run(() => Future.wait([client.select(1), client.select(2)]));
+  expect(client.selected, 2);
+});
+```
 
 The scheduler controls only Dart code. I/O and other code outside of Dart complete in their own order.
 

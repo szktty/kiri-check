@@ -266,6 +266,10 @@ Arbitrary<Deck> deck() => DeckArbitraries.deck();
 /// - `maxSteps`: The maximum number of tasks to run in one call to
 ///   [Scheduler.run]. The run fails when it is exceeded, as the code
 ///   may not terminate.
+/// - `microtasks`: If set to false, the microtasks run in the order Dart
+///   itself uses, and only the futures passed to [Scheduler.schedule] are
+///   reordered. This avoids orders that cannot occur in Dart, for code
+///   which depends on the order of the microtasks.
 ///
 /// Example:
 ///
@@ -280,8 +284,11 @@ Arbitrary<Deck> deck() => DeckArbitraries.deck();
 ///   });
 /// });
 /// ```
-Arbitrary<Scheduler> scheduler({int? maxSteps}) =>
-    SchedulerArbitraries.scheduler(maxSteps: maxSteps);
+Arbitrary<Scheduler> scheduler({int? maxSteps, bool microtasks = true}) =>
+    SchedulerArbitraries.scheduler(
+      maxSteps: maxSteps,
+      microtasks: microtasks,
+    );
 
 /// Returns an arbitrary that generates a value using the provided builder.
 Arbitrary<T> build<T>(T Function() builder) =>

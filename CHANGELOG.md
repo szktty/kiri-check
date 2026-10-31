@@ -1,6 +1,6 @@
 ## develop
 
-- [ADD] Add the `scheduler` arbitrary to test asynchronous code against interleavings. It runs microtasks in an order of its own, runs timers on virtual time, and shrinks a failing order towards the order Dart uses
+- [ADD] Add the `scheduler` arbitrary to test asynchronous code against interleavings. It runs microtasks in an order of its own, runs timers on virtual time, and shrinks a failing order towards the order Dart uses. A falsifying example shows where the reordered microtasks wait on the Dart VM. `Scheduler.schedule` with `scheduler(microtasks: false)` reorders only the given futures, and `Scheduler.withChoices` reproduces a failing order in a test
 
 ## 1.4.0
 
